@@ -37,6 +37,7 @@ import {
   FaShieldAlt,
   FaTelegramPlane,
   FaUserCircle,
+  FaLinkedin,
 } from 'react-icons/fa';
 
 const heroCards = [
@@ -123,6 +124,22 @@ const jobList = [
     verified: true,
   },
 ];
+
+const employerProfile = {
+  name: 'Enisra Talent & Placement',
+  logo: '/logo.jpg',
+  industry: 'Talent solutions, career services & international placement',
+  size: '200–500 employees',
+  locations: ['Addis Ababa, Ethiopia', 'Dubai, UAE', 'Remote global team'],
+  description:
+    'We build trusted bridges between Ethiopian talent and international employers by blending data, coaching, and local insight.',
+  website: 'https://enisra.com',
+  social: [
+    { label: 'LinkedIn', url: 'https://www.linkedin.com/company/enisra', icon: FaLinkedin },
+    { label: 'Telegram', url: 'https://t.me/enisrajobmatching', icon: FaTelegramPlane },
+  ],
+  verified: true,
+};
 
 const trainingHighlights = [
   'CV Writing',
@@ -255,8 +272,8 @@ const WelcomePage = () => {
         </Container>
       </Box>
 
-      <Box as="main">
-        <Box py={12} bg={softGoldBg}>
+        <Box as="main">
+          <Box py={12} bg={softGoldBg}>
           <Container maxW="7xl">
             <SimpleGrid columns={{ base: 1, lg: 2 }} alignItems="center" spacing={10} mb={10}>
               <Stack spacing={4}>
@@ -370,6 +387,132 @@ const WelcomePage = () => {
             </SimpleGrid>
           </Container>
         </Box>
+
+        <Container maxW="7xl" py={12}>
+          <Box
+            bg={cardBg}
+            borderRadius="2xl"
+            p={6}
+            boxShadow="xl"
+            border="1px solid"
+            borderColor={border}
+          >
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align="flex-start"
+              justify="space-between"
+              gap={6}
+              mb={4}
+            >
+              <HStack align="center" spacing={4}>
+                <Box
+                  boxSize={16}
+                  borderRadius="xl"
+                  overflow="hidden"
+                  border="1px solid"
+                  borderColor={softGreenBg}
+                  bg={softGreenBg}
+                >
+                  <Image
+                    src={employerProfile.logo}
+                    alt={`${employerProfile.name} logo`}
+                    boxSize={16}
+                    objectFit="cover"
+                  />
+                </Box>
+                <VStack align="flex-start" spacing={0}>
+                  <Flex align="center" gap={2}>
+                    <Heading size="lg" color={textPrimary}>
+                      {employerProfile.name}
+                    </Heading>
+                    {employerProfile.verified && (
+                      <Badge colorScheme="green" borderRadius="full">
+                        Verified
+                      </Badge>
+                    )}
+                  </Flex>
+                  <Text fontSize="sm" color={textSecondary} maxW="lg">
+                    {employerProfile.industry}
+                  </Text>
+                </VStack>
+              </HStack>
+              <Flex gap={4} flexWrap="wrap">
+                <Badge variant="solid" colorScheme="green" borderRadius="full">
+                  Company size: {employerProfile.size}
+                </Badge>
+                <Badge variant="subtle" colorScheme="teal" borderRadius="full">
+                  HR verified
+                </Badge>
+              </Flex>
+            </Flex>
+
+            <Text mb={4} color={textSecondary}>
+              {employerProfile.description}
+            </Text>
+
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
+              <Box>
+                <Text fontSize="xs" color={textMuted}>
+                  Headquarters
+                </Text>
+                <Text fontWeight="semibold" color={textPrimary}>
+                  {employerProfile.locations[0]}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color={textMuted}>
+                  Additional presence
+                </Text>
+                <Text fontWeight="semibold" color={textPrimary}>
+                  {employerProfile.locations.slice(1).join(' · ')}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="xs" color={textMuted}>
+                  Status
+                </Text>
+                <Text fontWeight="semibold" color={textPrimary}>
+                  Trusted Partner for Ethiopia
+                </Text>
+              </Box>
+            </SimpleGrid>
+
+            <Divider borderColor={sectionDivider} mb={4} />
+
+            <Flex direction={{ base: 'column', md: 'row' }} gap={6} align="center" flexWrap="wrap">
+              <Stack spacing={1}>
+                <Text fontSize="xs" color={textMuted}>
+                  Website
+                </Text>
+                <ChakraLink
+                  href={employerProfile.website}
+                  isExternal
+                  fontWeight="semibold"
+                  color={primaryBlue}
+                >
+                  {employerProfile.website}
+                </ChakraLink>
+              </Stack>
+              <Stack direction="row" spacing={4} flexWrap="wrap">
+                {employerProfile.social.map((social) => (
+                  <ChakraLink
+                    key={social.label}
+                    href={social.url}
+                    isExternal
+                    display="inline-flex"
+                    alignItems="center"
+                    gap={2}
+                    fontWeight="medium"
+                    color={textPrimary}
+                  >
+                    <Icon as={social.icon} boxSize={4} />
+                    {social.label}
+                  </ChakraLink>
+                ))}
+              </Stack>
+            </Flex>
+          </Box>
+        </Container>
 
         <Container maxW="7xl" py={12}>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
