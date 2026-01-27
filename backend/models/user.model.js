@@ -114,6 +114,11 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed, // Supports various types (e.g., URL, file path)
         required: false, // Optional
     },
+    requiresApproval: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
 }, {
     timestamps: true,
 });

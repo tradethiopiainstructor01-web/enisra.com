@@ -7,6 +7,7 @@ import Addresource from "./pages/Addresource";
 import HomePage from "./pages/HomePage";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import CustomerFollowUpForm from "./components/CustomerFollowForm.jsx";
 import FollowUpList from "./components/FollowUpList";
 import SecondPage from "./pages/SecondPage";
@@ -130,6 +131,7 @@ function App() {
 return (
     <Routes>
       <Route path="/" element={<WelcomePage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/InfoForm" element={<InfoForm />} />
       <Route path="/secondpage" element={<SecondPage />} />

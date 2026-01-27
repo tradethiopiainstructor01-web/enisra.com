@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user.model.js');
 const jwt = require('jsonwebtoken');
+const { logRegistrationEvent } = require('./registrationAnalyticsController.js');
 
 // Health check endpoint for users
 const userHealthCheck = async (req, res) => {
@@ -58,6 +59,9 @@ const loginUser = async (req, res) => {
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
             return res.status(401).json({ success: false, message: "Invalid email or password" });
+        }
+        if (user.status !== 'active') {
+            return res.status(403).json({ success: false, message: "Account is not active yet. Awaiting approval." });
         }
 
         // Generate a token
@@ -137,7 +141,9 @@ const createuser = async (req, res) => {
         }
 
         // Set default status if not provided
-        const userStatus = status || (role === "admin" || role === "HR" ? "active" : "inactive");
+        const normalizedRole = (role || '').toLowerCase();
+        const requiresApproval = !['admin', 'hr'].includes(normalizedRole);
+        const userStatus = status || (requiresApproval ? 'pending' : 'active');
 
         const newUser = new User({ 
             username, 
@@ -145,6 +151,7 @@ const createuser = async (req, res) => {
             password, 
             role, 
             status: userStatus,
+            requiresApproval,
             fullName,
             altEmail,
             altPhone,
@@ -165,6 +172,17 @@ const createuser = async (req, res) => {
             salary: salary !== undefined && salary !== null ? Number(salary) : undefined
         });
         await newUser.save();
+        try {
+            await logRegistrationEvent({
+                email,
+                role,
+                status: userStatus,
+                requiresApproval,
+                source: 'public-register',
+            });
+        } catch (logError) {
+            console.warn('Registration analytics tracking failed:', logError.message);
+        }
         res.status(201).json({ success: true, data: newUser });
 
     } catch (error) {

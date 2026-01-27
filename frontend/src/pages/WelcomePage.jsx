@@ -21,6 +21,7 @@ import {
   MenuList,
   Select,
   SimpleGrid,
+  Spinner,
   Stack,
   Text,
   VStack,
@@ -39,6 +40,8 @@ import {
   FaUserCircle,
   FaLinkedin,
 } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
+import apiClient from '../utils/apiClient.js';
 
 const heroCards = [
   {
@@ -125,7 +128,7 @@ const jobList = [
   },
 ];
 
-const employerProfile = {
+const employerProfileDefaults = {
   name: 'Enisra Talent & Placement',
   logo: '/logo.jpg',
   industry: 'Talent solutions, career services & international placement',
@@ -139,6 +142,27 @@ const employerProfile = {
     { label: 'Telegram', url: 'https://t.me/enisrajobmatching', icon: FaTelegramPlane },
   ],
   verified: true,
+  dashboardUrl: '/employer/dashboard',
+  profileEditUrl: '/employer/profile/edit',
+};
+
+const socialIconMap = {
+  LinkedIn: FaLinkedin,
+  Telegram: FaTelegramPlane,
+};
+
+const normalizeEmployerProfile = (rawProfile = {}) => {
+  const mergedProfile = {
+    ...employerProfileDefaults,
+    ...rawProfile,
+  };
+
+  mergedProfile.social = (rawProfile.social || employerProfileDefaults.social).map((social) => ({
+    ...social,
+    icon: social.icon || socialIconMap[social.label] || FaGlobe,
+  }));
+
+  return mergedProfile;
 };
 
 const trainingHighlights = [
@@ -173,6 +197,43 @@ const WelcomePage = () => {
     warning,
     info,
   } = themeColors;
+
+  const [employerProfile, setEmployerProfile] = useState(employerProfileDefaults);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProfile = async () => {
+      try {
+        const response = await apiClient.get('employer-profile');
+        if (!isMounted) return;
+
+        const fetchedProfile = response?.data?.data;
+        if (response?.data?.success && fetchedProfile) {
+          setEmployerProfile(normalizeEmployerProfile(fetchedProfile));
+          setProfileError(null);
+        } else if (fetchedProfile) {
+          setEmployerProfile(normalizeEmployerProfile(fetchedProfile));
+          setProfileError(response?.data?.message || null);
+        } else {
+          setProfileError('Employer profile unavailable right now.');
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        setProfileError(error?.message || 'Failed to load employer profile');
+      } finally {
+        if (isMounted) setProfileLoading(false);
+      }
+    };
+
+    fetchProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <Box minH="100vh" bg={bgMain} color={textPrimary}>
@@ -249,6 +310,8 @@ const WelcomePage = () => {
                   Login
                 </Button>
                 <Button
+                  as={RouterLink}
+                  to="/register"
                   size="sm"
                   bg={primaryGreen}
                   color="white"
@@ -283,15 +346,37 @@ const WelcomePage = () => {
                 <Text color={textSecondary} fontSize="lg">
                   Scan curated listings, join Telegram alerts, and secure verified international placements with ease.
                 </Text>
-                <Button
-                  w="fit-content"
-                  bg={primaryGreen}
-                  color="white"
-                  borderRadius="full"
-                  _hover={{ bg: primaryGreenHover }}
-                >
-                  Explore more
-                </Button>
+                <Stack direction={{ base: 'column', sm: 'row' }} spacing={4} align="center">
+                  <Button
+                    as={RouterLink}
+                    to="/register"
+                    w="fit-content"
+                    bg={primaryGreen}
+                    color="white"
+                    borderRadius="full"
+                    _hover={{ bg: primaryGreenHover }}
+                    boxShadow="lg"
+                  >
+                    Register as Employer
+                  </Button>
+                  <Button
+                    w="fit-content"
+                    variant="outline"
+                    color={primaryGreen}
+                    borderRadius="full"
+                    _hover={{ bg: softGreenBg }}
+                  >
+                    Browse trusted jobs
+                  </Button>
+                </Stack>
+                <HStack spacing={3} mt={4}>
+                  <Badge colorScheme="green" borderRadius="full">
+                    HR-safe
+                  </Badge>
+                  <Text color={textSecondary} fontSize="sm">
+                    Trusted by over 1,200 employers
+                  </Text>
+                </HStack>
               </Stack>
               <Box
                 borderRadius="xl"
@@ -450,6 +535,20 @@ const WelcomePage = () => {
               {employerProfile.description}
             </Text>
 
+            {profileLoading && (
+              <Flex align="center" gap={2} mb={4}>
+                <Spinner size="sm" color={primaryGreen} />
+                <Text fontSize="sm" color={textSecondary}>
+                  Loading employer profile…
+                </Text>
+              </Flex>
+            )}
+            {profileError && (
+              <Text fontSize="sm" color={warning} mb={4}>
+                {profileError}
+              </Text>
+            )}
+
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
               <Box>
                 <Text fontSize="xs" color={textMuted}>
@@ -510,6 +609,26 @@ const WelcomePage = () => {
                   </ChakraLink>
                 ))}
               </Stack>
+            </Flex>
+            <Flex mt={6} gap={3} flexWrap="wrap">
+              <Button
+                as={RouterLink}
+                to={employerProfile.profileEditUrl || '/employer/profile/edit'}
+                variant="outline"
+                borderRadius="full"
+              >
+                Edit Company Profile
+              </Button>
+              <Button
+                as={RouterLink}
+                to={employerProfile.dashboardUrl || '/employer/dashboard'}
+                bg={primaryGreen}
+                color="white"
+                borderRadius="full"
+                _hover={{ bg: primaryGreenHover }}
+              >
+                Open Employer Dashboard
+              </Button>
             </Flex>
           </Box>
         </Container>
