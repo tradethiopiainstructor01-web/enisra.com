@@ -21,7 +21,7 @@ import {
 } from '@chakra-ui/react';
 import axios from 'axios';
 import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import 'quill/dist/quill.snow.css';
 import NotesContainer from './NotesContainer';
 
 const NotesDrawer = ({ isOpen, onClose, onNotesUpdate }) => {

@@ -110,7 +110,7 @@ import {
   FiInfo
 } from 'react-icons/fi';
 import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import 'quill/dist/quill.snow.css';
 
 const TaskDashboard = () => {
   const [tasks, setTasks] = useState([]);
