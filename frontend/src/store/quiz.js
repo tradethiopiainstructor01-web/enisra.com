@@ -8,7 +8,7 @@ export const useQuizStore = create((set) => ({
 
     fetchQuizs: async () => {
         try {
-            const res = await fetch("${import.meta.env.VITE_API_URL}/api/quiz");
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/quiz`);
             if (!res.ok) {
                 throw new Error('Network response was not ok');
             }

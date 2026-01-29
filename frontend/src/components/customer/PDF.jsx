@@ -11,7 +11,7 @@ export const PDFList = () => {
     // Fetch PDFs from the backend
     const fetchPDFs = async () => {
       try {
-        const response = await fetch("${import.meta.env.VITE_API_URL}/api/resources/pdf");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/resources/pdf`);
         const data = await response.json();
         setPdfList(data);
       } catch (error) {

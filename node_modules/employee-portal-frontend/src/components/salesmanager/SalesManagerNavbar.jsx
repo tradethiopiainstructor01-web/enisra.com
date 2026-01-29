@@ -127,7 +127,10 @@ const SalesManagerNavbar = ({ onMenuClick, onToggleSidebar, isSidebarCollapsed }
     if (!currentUser?._id) return;
     
     // Create Socket.IO connection
-    const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    const socketUrl = import.meta.env.VITE_SOCKET_URL ?? import.meta.env.VITE_API_URL ?? '';
+    if (!socketUrl) return;
+    if (socketUrl.includes('.vercel.app') || socketUrl.includes('.vercel.live')) return;
+    const newSocket = io(socketUrl);
 
     
     // Register user with the server

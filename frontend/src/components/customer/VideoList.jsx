@@ -12,7 +12,7 @@ const VideoList = () => {
     // Fetch videos from the backend
     const fetchVideos = async () => {
       try {
-        const response = await fetch("${import.meta.env.VITE_API_URL}/api/resources/video"); // Adjust endpoint if needed
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/resources/video`); // Adjust endpoint if needed
         const data = await response.json();
         setVideoList(data);
       } catch (error) {

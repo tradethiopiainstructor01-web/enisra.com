@@ -13,7 +13,7 @@ const Items = () => {
     formData.append('file', file);
     console.log(title, file);
 
-    const result=await axios.post("${import.meta.env.VITE_API_URL}/upload-files",
+    const result=await axios.post(`${import.meta.env.VITE_API_URL}/upload-files`,
     formData,
     {
       headers: { "content-Type": "multipart/form-data"},

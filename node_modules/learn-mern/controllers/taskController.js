@@ -74,9 +74,10 @@ const createTask = asyncHandler(async (req, res) => {
   // Emit real-time notification to the assigned user
   const io = req.app.get('io');
   const connectedUsers = req.app.get('connectedUsers');
-  const userSocketId = connectedUsers.get(assignedTo);
+  const socketKey = assignedTo?.toString?.() ?? assignedTo;
+  const userSocketId = connectedUsers?.get?.(socketKey);
   
-  if (userSocketId) {
+  if (io && userSocketId) {
     // Send notification to the specific user
     io.to(userSocketId).emit('newNotification', {
       id: notification._id,

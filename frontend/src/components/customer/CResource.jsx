@@ -48,7 +48,7 @@ const PDFList = () => {
   useEffect(() => {
     const fetchPDFs = async () => {
       try {
-        const response = await fetch("${import.meta.env.VITE_API_URL}/api/resources/pdf");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/resources/pdf`);
         const data = await response.json();
         setPdfList(data);
         setFilteredPdfs(data);
@@ -89,7 +89,7 @@ const PDFList = () => {
     if (formData.file) data.append("file", formData.file);
 
     try {
-      const response = await fetch("${import.meta.env.VITE_API_URL}/api/resources/upload", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/resources/upload`, {
         method: "POST",
         body: data,
       });
@@ -104,7 +104,7 @@ const PDFList = () => {
         });
         onClose();
         // Reload resources
-        const updatedResources = await fetch("${import.meta.env.VITE_API_URL}/api/resources/pdf");
+        const updatedResources = await fetch(`${import.meta.env.VITE_API_URL}/api/resources/pdf`);
         const updatedData = await updatedResources.json();
         setPdfList(updatedData);
         setFilteredPdfs(updatedData);

@@ -4,10 +4,10 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const mongoose = require('mongoose');
-const http = require('http');
-const socketIo = require('socket.io');
 
 dotenv.config();
+
+const isServerless = !!process.env.VERCEL;
 
 const { connectDB, disconnectDB } = require('./config/db.js');
 const userRoutes = require('./routes/user.route.js');
@@ -62,49 +62,65 @@ const registrationAnalyticsRoutes = require('./routes/registrationAnalyticsRoute
 // Initialize Express app
 const app = express();
 
-// Create HTTP server and initialize Socket.IO
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
-
 // Store connected users
 const connectedUsers = new Map();
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-  
-  // Register user with their ID
-  socket.on('registerUser', (userId) => {
-    connectedUsers.set(userId, socket.id);
-    console.log(`User ${userId} registered with socket ${socket.id}`);
-  });
-  
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    // Remove user from connected users map
-    for (let [userId, socketId] of connectedUsers.entries()) {
-      if (socketId === socket.id) {
-        connectedUsers.delete(userId);
-        break;
-      }
+const createNoopIo = () => ({
+  to: () => ({ emit: () => {} }),
+  emit: () => {},
+  on: () => {}
+});
+
+let io = createNoopIo();
+let server;
+
+if (!isServerless) {
+  const http = require('http');
+  const socketIo = require('socket.io');
+
+  server = http.createServer(app);
+  io = socketIo(server, {
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST'],
+      credentials: true
     }
   });
-});
+
+  // Socket.IO connection handling
+  io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+    
+    // Register user with their ID
+    socket.on('registerUser', (userId) => {
+      connectedUsers.set(userId, socket.id);
+      console.log(`User ${userId} registered with socket ${socket.id}`);
+    });
+    
+    // Handle disconnection
+    socket.on('disconnect', () => {
+      console.log('User disconnected:', socket.id);
+      // Remove user from connected users map
+      for (let [userId, socketId] of connectedUsers.entries()) {
+        if (socketId === socket.id) {
+          connectedUsers.delete(userId);
+          break;
+        }
+      }
+    });
+  });
+}
 
 // Make io available to other modules
 app.set('io', io);
 app.set('connectedUsers', connectedUsers);
 
 // CORS configuration
+const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
+
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  vercelUrl,
   'https://www.tradeethiopian.com',
   'https://tradeethiopian.com',
   'https://main.d21vr1wgzmn1c2.amplifyapp.com',
@@ -118,15 +134,28 @@ const allowedOrigins = [
   'http://localhost:3004'
 ].filter(Boolean);
 
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (origin === 'null') return true;
+  if (allowedOrigins.includes(origin)) return true;
+
+  try {
+    const { hostname } = new URL(origin);
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    if (hostname.endsWith('.vercel.app') || hostname.endsWith('.vercel.live')) return true;
+  } catch (error) {
+    return false;
+  }
+
+  return false;
+};
+
 const corsOptions = {
   origin: (origin, callback) => {
     console.log('CORS check - Origin:', origin);
     console.log('Allowed origins:', allowedOrigins);
 
-    // Allow requests with no origin (Postman, curl, mobile apps)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
@@ -327,29 +356,33 @@ if (require.main === module) {
     // Connect to database and start server
     connectDB()
       .then(() => {
-        const server = app.listen(PORT, HOST, () => {
-          console.log(`Server running on http://${HOST}:${PORT}`);
-        });
-        
-        // Initialize Socket.IO with the HTTP server
-        const io = app.get('io');
-        io.attach(server, {
-          cors: {
-            origin: '*',
-    methods: ['GET', 'POST', 'PATCH'],
-            credentials: true
-          }
-        });
+        let httpServer;
+        if (server) {
+          server.listen(PORT, HOST, () => {
+            console.log(`Server running on http://${HOST}:${PORT}`);
+          });
+          httpServer = server;
+        } else {
+          httpServer = app.listen(PORT, HOST, () => {
+            console.log(`Server running on http://${HOST}:${PORT}`);
+          });
+        }
         
         // Handle EADDRINUSE error gracefully
-        server.on('error', (e) => {
+        httpServer.on('error', (e) => {
           if (e.code === 'EADDRINUSE') {
             console.log(`Port ${PORT} is busy, trying ${PORT + 1}`);
             setTimeout(() => {
-              server.close();
-              app.listen(PORT + 1, HOST, () => {
+              httpServer.close();
+              if (server) {
+                server.listen(PORT + 1, HOST, () => {
+                  console.log(`Server running on http://${HOST}:${PORT + 1}`);
+                });
+              } else {
+                app.listen(PORT + 1, HOST, () => {
                 console.log(`Server running on http://${HOST}:${PORT + 1}`);
-              });
+                });
+              }
             }, 1000);
           }
         });

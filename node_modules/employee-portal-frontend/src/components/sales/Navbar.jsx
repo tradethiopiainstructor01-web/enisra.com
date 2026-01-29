@@ -21,7 +21,7 @@ import { IoMoon } from "react-icons/io5";
 import { SunIcon } from "react-icons/sun";
 import { BsBell, BsChat } from "react-icons/bs";
 import { useNavigate, Link } from "react-router-dom";
-import { useUserStore } from '../store/user'; // Adjust the path as necessary
+import { useUserStore } from '../../store/user';
 
 const NavbarPage = () => {
   const { colorMode, toggleColorMode } = useColorMode();

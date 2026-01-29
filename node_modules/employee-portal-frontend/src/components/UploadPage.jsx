@@ -46,7 +46,7 @@ const UploadResource = () => {
     if (formData.file) data.append("file", formData.file);
 
     try {
-      const response = await fetch("${import.meta.env.VITE_API_URL}/api/resources/upload", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/resources/upload`, {
         method: "POST",
         body: data,
       });

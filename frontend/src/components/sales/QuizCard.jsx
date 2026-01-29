@@ -1,6 +1,6 @@
 import { Box, Heading, HStack, IconButton, Text, useColorModeValue, useToast, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button, VStack, Input } from '@chakra-ui/react';
 import { EditIcon, DeleteIcon, ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
-import { useQuizStore } from '../store/quiz';
+import { useQuizStore } from '../../store/quiz';
 import { useState, useEffect } from 'react';
 
 const QuizCard = ({ quiz }) => {
