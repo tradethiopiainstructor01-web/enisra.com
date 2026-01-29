@@ -96,6 +96,10 @@ import AppLayout from "./components/AppLayout"; // Import the new AppLayout comp
 import SupervisorLayout from "./pages/supervisor/SupervisorLayout.jsx";
 import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage.jsx";
 import SupervisorAccountPage from "./pages/supervisor/SupervisorAccountPage.jsx";
+import EmployerLayout from "./pages/employer/EmployerLayout";
+import EmployerProfile from "./pages/employer/EmployerProfile";
+import EmployerPostJob from "./pages/employer/EmployerPostJob";
+import EmployerEmployees from "./pages/employer/EmployerEmployees";
 
 function App() {
   const location = useLocation();
@@ -108,7 +112,7 @@ function App() {
     "/finance/messages", "/finance/team-requests",
     "/addcustomer", "/resource", "/videolist", "/uploadpage", "/my-payroll",
     "/cdashboard", "/waitingforapproval", "/training","/comingsoonpage", "/customerreport", "/followup-report", "/customerfollowup", "/b2b-dashboard",
-    "/coo-dashboard", "/tradextv-dashboard", "/customer-settings", "/it", "/salesmanager", "/social-media", "/requests", "/finance-dashboard/payroll", "/finance-dashboard/commission-approval", "/supervisor", "/supervisor/account", "/finance/requests", "/reception-dashboard"
+    "/coo-dashboard", "/tradextv-dashboard", "/customer-settings", "/it", "/salesmanager", "/social-media", "/requests", "/finance-dashboard/payroll", "/finance-dashboard/commission-approval", "/supervisor", "/supervisor/account", "/finance/requests", "/reception-dashboard", "/employer"
   ].map((path) => path.toLowerCase());
 
   // Hide the navbar and sidebar for legacy/fullscreen pages; root should only match exactly
@@ -305,6 +309,20 @@ return (
       <Route path="/coo-dashboard" element={<COODashboard />} />
       <Route path="/tradextv-dashboard" element={<TradexTVDashboard />} />
       <Route path="/reception-dashboard" element={<LayoutWrapper><ReceptionDashboard /></LayoutWrapper>} />
+      <Route
+        path="/employer"
+        element={
+          <RoleProtectedRoute allowedRoles={["employer"]}>
+            <EmployerLayout />
+          </RoleProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="profile" replace />} />
+        <Route path="dashboard/*" element={<Navigate to="profile" replace />} />
+        <Route path="profile" element={<EmployerProfile />} />
+        <Route path="post" element={<EmployerPostJob />} />
+        <Route path="employees" element={<EmployerEmployees />} />
+      </Route>
       <Route
         path="/customer-settings"
         element={

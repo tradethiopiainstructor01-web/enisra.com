@@ -55,7 +55,7 @@ const RegisterPage = () => {
   };
 
   const getRoleFromAccountType = () => {
-    if (accountType === 'employer') return 'hr';
+    if (accountType === 'employer') return 'employer';
     return 'customerservice';
   };
 

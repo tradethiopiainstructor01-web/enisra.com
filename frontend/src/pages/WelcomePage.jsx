@@ -142,7 +142,7 @@ const employerProfileDefaults = {
     { label: 'Telegram', url: 'https://t.me/enisrajobmatching', icon: FaTelegramPlane },
   ],
   verified: true,
-  dashboardUrl: '/employer/dashboard',
+  dashboardUrl: '/employer/profile',
   profileEditUrl: '/employer/profile/edit',
 };
 
@@ -621,7 +621,7 @@ const WelcomePage = () => {
               </Button>
               <Button
                 as={RouterLink}
-                to={employerProfile.dashboardUrl || '/employer/dashboard'}
+                to={employerProfile.dashboardUrl || '/employer/profile'}
                 bg={primaryGreen}
                 color="white"
                 borderRadius="full"

@@ -25,6 +25,7 @@ const ROLE_DEPARTMENT_MAP = {
   coo: "Operations",
   instructor: "Training",
   eventmanager: "Events",
+  employer: "Employer",
 };
 
 const ROLE_DEPARTMENT_PATTERNS = [
@@ -37,6 +38,7 @@ const ROLE_DEPARTMENT_PATTERNS = [
   { regex: /success/, department: "Customer Success" },
   { regex: /it/, department: "IT" },
   { regex: /hr/, department: "HR" },
+  { regex: /employer/, department: "Employer" },
 ];
 
 const normalizeText = (value) => {

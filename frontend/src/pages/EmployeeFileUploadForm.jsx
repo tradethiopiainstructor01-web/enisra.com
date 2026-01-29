@@ -161,6 +161,9 @@ const EmployeeFileUploadForm = () => {
                                 case 'hr':
                                     navigate('/hdashboard');
                                     break;
+                                case 'employer':
+                                    navigate('/employer/profile');
+                                    break;
                                 default:
                                     navigate('/home'); // Optional: handle unknown roles
                                     break;

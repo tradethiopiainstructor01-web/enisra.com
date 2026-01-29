@@ -65,7 +65,12 @@ const LoginPage = () => {
         duration: 4000,
         isClosable: true
       });
-      navigate('/dashboard');
+      const normalizedRole = (data.user?.role || '').toString().trim().toLowerCase();
+      if (normalizedRole === 'employer') {
+        navigate('/employer/profile');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
       const friendlyMessage =
         error.response?.data?.message || error.message || 'Unable to log in right now.';

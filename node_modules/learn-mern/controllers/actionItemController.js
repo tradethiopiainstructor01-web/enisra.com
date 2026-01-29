@@ -20,6 +20,7 @@ const ROLE_DEPARTMENT_MAP = {
   coo: 'Operations',
   operations: 'Operations',
   eventmanager: 'Events',
+  employer: 'Employer',
 };
 
 const PRIVILEGED_ROLES = new Set([

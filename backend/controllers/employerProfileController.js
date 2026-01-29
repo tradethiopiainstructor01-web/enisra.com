@@ -23,7 +23,7 @@ const employerProfile = {
     },
   ],
   verified: process.env.EMPLOYER_VERIFIED !== 'false',
-  dashboardUrl: process.env.EMPLOYER_DASHBOARD_URL || '/employer/dashboard',
+  dashboardUrl: process.env.EMPLOYER_DASHBOARD_URL || '/employer/profile',
   profileEditUrl: process.env.EMPLOYER_PROFILE_EDIT_URL || '/employer/profile/edit',
 };
 
