@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Badge,
   Box,
@@ -22,14 +22,25 @@ import {
 } from "@chakra-ui/react";
 import { FiPlus } from "react-icons/fi";
 import { formatDate, useEmployerData } from "./employerData";
+import apiClient from "../../utils/apiClient";
 
 const EmployerPostJob = () => {
   const toast = useToast();
   const { jobs, setJobs, applicants } = useEmployerData();
   const [selectedJobId, setSelectedJobId] = useState("");
+  const [isPosting, setIsPosting] = useState(false);
+  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [isSubmittingPartner, setIsSubmittingPartner] = useState(false);
+  const [partnerSubmissions, setPartnerSubmissions] = useState([]);
+  const [partnerForm, setPartnerForm] = useState({
+    name: "",
+    logoUrl: "",
+    website: "",
+  });
   const [jobForm, setJobForm] = useState({
     title: "",
     department: "",
+    category: "",
     location: "",
     type: "",
     salary: "",
@@ -43,16 +54,48 @@ const EmployerPostJob = () => {
   const mutedText = useColorModeValue("gray.600", "gray.300");
   const activeJobBg = useColorModeValue("green.50", "green.900");
 
+  const loadPartnerSubmissions = async () => {
+    setPartnersLoading(true);
+    try {
+      const response = await apiClient.get("/partners/mine");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setPartnerSubmissions(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load company submissions",
+        description: error?.message || "Unable to load your company submissions.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setPartnersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPartnerSubmissions();
+  }, []);
+
   const handleFormChange = (field) => (event) => {
     setJobForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
-  const handleAddJob = (event) => {
+  const handlePartnerChange = (field) => (event) => {
+    setPartnerForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleAddJob = async (event) => {
     event.preventDefault();
-    if (!jobForm.title.trim() || !jobForm.location.trim() || !jobForm.type.trim()) {
+    if (
+      !jobForm.title.trim() ||
+      !jobForm.category.trim() ||
+      !jobForm.location.trim() ||
+      !jobForm.type.trim()
+    ) {
       toast({
         title: "Missing details",
-        description: "Please add a job title, location, and employment type.",
+        description: "Please add a job title, category, location, and job type.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -60,39 +103,102 @@ const EmployerPostJob = () => {
       return;
     }
 
-    const newJob = {
-      id: `job-${Date.now()}`,
+    const payload = {
       title: jobForm.title.trim(),
       department: jobForm.department.trim(),
+      category: jobForm.category.trim(),
       location: jobForm.location.trim(),
       type: jobForm.type.trim(),
       salary: jobForm.salary.trim(),
-      deadline: jobForm.deadline,
+      deadline: jobForm.deadline || undefined,
       description: jobForm.description.trim(),
       flow: jobForm.flow.trim(),
-      postedAt: new Date().toISOString(),
     };
 
-    setJobs((prev) => [newJob, ...prev]);
-    setSelectedJobId(newJob.id);
-    setJobForm({
-      title: "",
-      department: "",
-      location: "",
-      type: "",
-      salary: "",
-      deadline: "",
-      description: "",
-      flow: "",
-    });
+    try {
+      setIsPosting(true);
+      const response = await apiClient.post('/jobs', payload);
+      const savedJob = response?.data?.data ?? response?.data ?? payload;
+      const normalizedJob = {
+        ...payload,
+        ...savedJob,
+        id: savedJob.id || savedJob._id || `job-${Date.now()}`,
+        postedAt: savedJob.postedAt || savedJob.createdAt || new Date().toISOString(),
+      };
+      setJobs((prev) => [normalizedJob, ...prev]);
+      setSelectedJobId(normalizedJob.id);
+      setJobForm({
+        title: "",
+        department: "",
+        category: "",
+        location: "",
+        type: "",
+        salary: "",
+        deadline: "",
+        description: "",
+        flow: "",
+      });
 
-    toast({
-      title: "Job posted",
-      description: "Your job posting is now visible in the pipeline.",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
+      toast({
+        title: "Job posted",
+        description: "Your job posting is now visible in the pipeline.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to post job",
+        description: error?.message || "Unable to save job to the database.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handleSubmitPartner = async (event) => {
+    event.preventDefault();
+    if (!partnerForm.name.trim() || !partnerForm.logoUrl.trim()) {
+      toast({
+        title: "Missing details",
+        description: "Please add a company name and logo URL.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingPartner(true);
+      await apiClient.post("/partners", {
+        name: partnerForm.name.trim(),
+        logoUrl: partnerForm.logoUrl.trim(),
+        website: partnerForm.website.trim(),
+      });
+      setPartnerForm({ name: "", logoUrl: "", website: "" });
+      await loadPartnerSubmissions();
+      toast({
+        title: "Company submitted",
+        description: "Your company is now waiting for admin approval.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to submit company",
+        description: error?.message || "Unable to send company for approval.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmittingPartner(false);
+    }
   };
 
   return (
@@ -118,13 +224,21 @@ const EmployerPostJob = () => {
                   onChange={handleFormChange("title")}
                 />
               </FormControl>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                 <FormControl>
                   <FormLabel>Department</FormLabel>
                   <Input
                     placeholder="Customer Success"
                     value={jobForm.department}
                     onChange={handleFormChange("department")}
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Category</FormLabel>
+                  <Input
+                    placeholder="Customer Support"
+                    value={jobForm.category}
+                    onChange={handleFormChange("category")}
                   />
                 </FormControl>
                 <FormControl isRequired>
@@ -138,7 +252,7 @@ const EmployerPostJob = () => {
               </SimpleGrid>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl isRequired>
-                  <FormLabel>Employment type</FormLabel>
+                  <FormLabel>Job type</FormLabel>
                   <Select
                     placeholder="Select type"
                     value={jobForm.type}
@@ -191,7 +305,7 @@ const EmployerPostJob = () => {
                   minH="120px"
                 />
               </FormControl>
-              <Button leftIcon={<FiPlus />} colorScheme="green" type="submit">
+              <Button leftIcon={<FiPlus />} colorScheme="green" type="submit" isLoading={isPosting}>
                 Post job
               </Button>
             </Stack>
@@ -239,19 +353,19 @@ const EmployerPostJob = () => {
                       cursor="pointer"
                       onClick={() => setSelectedJobId(job.id)}
                     >
-                      <CardBody>
-                        <Stack spacing={2}>
-                          <Flex justify="space-between" align="center">
-                            <Heading size="sm">{job.title}</Heading>
-                            <Badge colorScheme="green">{applicantCount} applicants</Badge>
-                          </Flex>
-                          <Text fontSize="sm" color={mutedText}>
-                            {job.department || "General"} - {job.location} - {job.type}
-                          </Text>
-                          <Text fontSize="xs" color={mutedText}>
-                            Posted {formatDate(job.postedAt)}
-                          </Text>
-                        </Stack>
+                        <CardBody>
+                          <Stack spacing={2}>
+                            <Flex justify="space-between" align="center">
+                              <Heading size="sm">{job.title}</Heading>
+                              <Badge colorScheme="green">{applicantCount} applicants</Badge>
+                            </Flex>
+                            <Text fontSize="sm" color={mutedText}>
+                              {job.category || job.department || "General"} - {job.location} - {job.type}
+                            </Text>
+                            <Text fontSize="xs" color={mutedText}>
+                              Posted {formatDate(job.postedAt)}
+                            </Text>
+                          </Stack>
                       </CardBody>
                     </Card>
                   );
@@ -261,6 +375,87 @@ const EmployerPostJob = () => {
           </CardBody>
         </Card>
       </SimpleGrid>
+
+      <Card bg={cardBg} borderColor={borderColor} borderWidth="1px" mt={8}>
+        <CardHeader>
+          <Heading size="md">Companies worked with us</Heading>
+          <Text color={mutedText} mt={1}>
+            Submit a partner company for approval. Approved companies appear on the home page.
+          </Text>
+        </CardHeader>
+        <CardBody>
+          <Stack spacing={6}>
+            <Stack spacing={4} as="form" onSubmit={handleSubmitPartner}>
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Company name</FormLabel>
+                  <Input
+                    placeholder="Company name"
+                    value={partnerForm.name}
+                    onChange={handlePartnerChange("name")}
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Logo URL</FormLabel>
+                  <Input
+                    placeholder="https://..."
+                    value={partnerForm.logoUrl}
+                    onChange={handlePartnerChange("logoUrl")}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Website</FormLabel>
+                  <Input
+                    placeholder="https://..."
+                    value={partnerForm.website}
+                    onChange={handlePartnerChange("website")}
+                  />
+                </FormControl>
+              </SimpleGrid>
+              <Button colorScheme="green" type="submit" isLoading={isSubmittingPartner}>
+                Submit company
+              </Button>
+            </Stack>
+
+            <Divider />
+
+            <Box>
+              <Heading size="sm" mb={3}>
+                Your submissions
+              </Heading>
+              <Stack spacing={3}>
+                {partnersLoading ? (
+                  <Text color={mutedText}>Loading submissions...</Text>
+                ) : partnerSubmissions.length ? (
+                  partnerSubmissions.map((company) => (
+                    <Flex
+                      key={company._id}
+                      align="center"
+                      justify="space-between"
+                      p={3}
+                      border="1px solid"
+                      borderColor={borderColor}
+                      borderRadius="md"
+                    >
+                      <Box>
+                        <Text fontWeight="semibold">{company.name}</Text>
+                        <Text fontSize="sm" color={mutedText}>
+                          {company.website || "Website not provided"}
+                        </Text>
+                      </Box>
+                      <Badge colorScheme={company.approved ? "green" : "orange"}>
+                        {company.approved ? "Approved" : "Pending"}
+                      </Badge>
+                    </Flex>
+                  ))
+                ) : (
+                  <Text color={mutedText}>No company submissions yet.</Text>
+                )}
+              </Stack>
+            </Box>
+          </Stack>
+        </CardBody>
+      </Card>
     </Box>
   );
 };

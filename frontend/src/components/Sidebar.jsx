@@ -9,12 +9,20 @@ import {
   Icon,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { FiFolder, FiHome, FiPlusCircle, FiMenu, FiUsers, FiBookOpen, FiSearch, FiBriefcase, FiBarChart, FiDollarSign } from "react-icons/fi";
+import { FiFolder, FiHome, FiPlusCircle, FiMenu, FiUsers, FiBookOpen, FiSearch, FiBriefcase, FiBarChart, FiDollarSign, FiShield } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { FiFileText } from 'react-icons/fi';
+import { useUserStore } from "../store/user";
 const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawer = false, topOffset = "52px" }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const breakpointValue = useBreakpointValue({ base: true, md: false });
+  const currentUser = useUserStore((state) => state.currentUser);
+  const normalizedRole = (currentUser?.normalizedRole || currentUser?.role || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+  const isAdmin = normalizedRole === "admin";
   
   // Use controlled prop if provided, otherwise use internal state
   const effectiveIsCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : isCollapsed;
@@ -71,6 +79,15 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             {!effectiveIsCollapsed && <Text ml={3} fontSize="sm">Dashboard</Text>}
           </Flex>
         </Link>
+
+        {isAdmin && (
+          <Link as={RouterLink} to="/admin" _hover={{ textDecoration: "none" }}>
+            <Flex align="center" p={1} borderRadius="md" _hover={{ bg: "gray.700" }}>
+              <Icon as={FiShield} boxSize={4} />
+              {!effectiveIsCollapsed && <Text ml={3} fontSize="sm">Admin</Text>}
+            </Flex>
+          </Link>
+        )}
 
         {/* COO Dashboard Link removed */}
 

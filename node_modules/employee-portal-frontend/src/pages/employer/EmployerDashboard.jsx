@@ -45,6 +45,7 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import { useUserStore } from "../../store/user";
+import apiClient from "../../utils/apiClient";
 
 const STORAGE_KEY = "employerDashboard.v1";
 
@@ -69,6 +70,7 @@ const DEFAULT_DATA = {
       id: "job-101",
       title: "Customer Support Specialist",
       department: "Customer Success",
+      category: "Customer Support",
       location: "Addis Ababa",
       type: "Full-time",
       salary: "ETB 12,000 - 16,000",
@@ -80,6 +82,7 @@ const DEFAULT_DATA = {
       id: "job-102",
       title: "Sales Coordinator",
       department: "Sales",
+      category: "Sales",
       location: "Remote",
       type: "Contract",
       salary: "ETB 15,000 - 20,000",
@@ -170,9 +173,11 @@ const EmployerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeSection, setActiveSection] = useState("employer-profile");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
   const [jobForm, setJobForm] = useState({
     title: "",
     department: "",
+    category: "",
     location: "",
     type: "",
     salary: "",
@@ -253,12 +258,17 @@ const EmployerDashboard = () => {
     }
   };
 
-  const handleAddJob = (event) => {
+  const handleAddJob = async (event) => {
     event.preventDefault();
-    if (!jobForm.title.trim() || !jobForm.location.trim() || !jobForm.type.trim()) {
+    if (
+      !jobForm.title.trim() ||
+      !jobForm.category.trim() ||
+      !jobForm.location.trim() ||
+      !jobForm.type.trim()
+    ) {
       toast({
         title: "Missing details",
-        description: "Please add a job title, location, and employment type.",
+        description: "Please add a job title, category, location, and job type.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -266,39 +276,60 @@ const EmployerDashboard = () => {
       return;
     }
 
-    const newJob = {
-      id: `job-${Date.now()}`,
+    const payload = {
       title: jobForm.title.trim(),
       department: jobForm.department.trim(),
+      category: jobForm.category.trim(),
       location: jobForm.location.trim(),
       type: jobForm.type.trim(),
       salary: jobForm.salary.trim(),
-      deadline: jobForm.deadline,
+      deadline: jobForm.deadline || undefined,
       description: jobForm.description.trim(),
       flow: jobForm.flow.trim(),
-      postedAt: new Date().toISOString(),
     };
 
-    setJobs((prev) => [newJob, ...prev]);
-    setSelectedJobId(newJob.id);
-    setJobForm({
-      title: "",
-      department: "",
-      location: "",
-      type: "",
-      salary: "",
-      deadline: "",
-      description: "",
-      flow: "",
-    });
+    try {
+      setIsPosting(true);
+      const response = await apiClient.post('/jobs', payload);
+      const savedJob = response?.data?.data ?? response?.data ?? payload;
+      const normalizedJob = {
+        ...payload,
+        ...savedJob,
+        id: savedJob.id || savedJob._id || `job-${Date.now()}`,
+        postedAt: savedJob.postedAt || savedJob.createdAt || new Date().toISOString(),
+      };
+      setJobs((prev) => [normalizedJob, ...prev]);
+      setSelectedJobId(normalizedJob.id);
+      setJobForm({
+        title: "",
+        department: "",
+        category: "",
+        location: "",
+        type: "",
+        salary: "",
+        deadline: "",
+        description: "",
+        flow: "",
+      });
 
-    toast({
-      title: "Job posted",
-      description: "Your job posting is now visible in the pipeline.",
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
+      toast({
+        title: "Job posted",
+        description: "Your job posting is now visible in the pipeline.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to post job",
+        description: error?.message || "Unable to save job to the database.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   const handleStatusUpdate = (applicantId, nextStatus) => {
@@ -528,13 +559,21 @@ const EmployerDashboard = () => {
                       onChange={handleFormChange("title")}
                     />
                   </FormControl>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <FormControl>
                       <FormLabel>Department</FormLabel>
                       <Input
                         placeholder="Customer Success"
                         value={jobForm.department}
                         onChange={handleFormChange("department")}
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>Category</FormLabel>
+                      <Input
+                        placeholder="Customer Support"
+                        value={jobForm.category}
+                        onChange={handleFormChange("category")}
                       />
                     </FormControl>
                     <FormControl isRequired>
@@ -546,14 +585,14 @@ const EmployerDashboard = () => {
                       />
                     </FormControl>
                   </SimpleGrid>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <FormControl isRequired>
-                      <FormLabel>Employment type</FormLabel>
-                      <Select
-                        placeholder="Select type"
-                        value={jobForm.type}
-                        onChange={handleFormChange("type")}
-                      >
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel>Job type</FormLabel>
+                    <Select
+                      placeholder="Select type"
+                      value={jobForm.type}
+                      onChange={handleFormChange("type")}
+                    >
                         <option value="Full-time">Full-time</option>
                         <option value="Part-time">Part-time</option>
                         <option value="Contract">Contract</option>
@@ -601,7 +640,7 @@ const EmployerDashboard = () => {
                       minH="120px"
                     />
                   </FormControl>
-                  <Button leftIcon={<FiPlus />} colorScheme="green" type="submit">
+                  <Button leftIcon={<FiPlus />} colorScheme="green" type="submit" isLoading={isPosting}>
                     Post job
                   </Button>
                 </Stack>
@@ -656,7 +695,7 @@ const EmployerDashboard = () => {
                                 <Badge colorScheme="green">{applicantCount} applicants</Badge>
                               </Flex>
                               <Text fontSize="sm" color={mutedText}>
-                                {job.department || "General"} - {job.location} - {job.type}
+                                {job.category || job.department || "General"} - {job.location} - {job.type}
                               </Text>
                               <Text fontSize="xs" color={mutedText}>
                                 Posted {formatDate(job.postedAt)}

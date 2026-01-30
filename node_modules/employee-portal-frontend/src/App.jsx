@@ -47,6 +47,7 @@ import WaitingForApproval from "./pages/WaitingForApproval";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import AdminTrainingUpload from "./pages/AdminTrainingUpload";
 import AdminCustomerReport from './components/AdminCSReport.jsx';
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import B2BDashboard from './pages/B2BDashboard';
 import CustomerSettings from "./components/customer/CustomerSettings";
 import COODashboard from './pages/COODashboard';
@@ -303,6 +304,16 @@ return (
               <AdminCustomerReport />
             </LayoutWrapper>
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <RoleProtectedRoute allowedRoles={["admin"]}>
+            <LayoutWrapper>
+              <AdminDashboard />
+            </LayoutWrapper>
+          </RoleProtectedRoute>
         }
       />
       <Route path="/b2b-dashboard" element={<B2BDashboard />} />

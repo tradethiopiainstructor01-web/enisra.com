@@ -14,11 +14,8 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   Link as ChakraLink,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
   Select,
   SimpleGrid,
   Spinner,
@@ -30,17 +27,14 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   FaBell,
   FaCheckCircle,
-  FaChevronDown,
   FaGlobe,
   FaGraduationCap,
   FaMedal,
   FaSearch,
-  FaShieldAlt,
   FaTelegramPlane,
   FaUserCircle,
-  FaLinkedin,
 } from 'react-icons/fa';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
 
 const heroCards = [
@@ -93,77 +87,13 @@ const themeColors = {
   info: '#2563EB',
 };
 
-const jobList = [
-  {
-    id: 1,
-    title: 'Warehouse Assistant',
-    location: 'Dubai, UAE',
-    flag: '🇦🇪',
-    deadline: '7 days left',
-    verified: true,
-  },
-  {
-    id: 2,
-    title: 'Customer Success Rep',
-    location: 'Addis Ababa, Ethiopia',
-    flag: '🇪🇹',
-    deadline: '4 days left',
-    verified: true,
-  },
-  {
-    id: 3,
-    title: 'Sales Associate',
-    location: 'Nairobi, Kenya',
-    flag: '🇰🇪',
-    deadline: '10 days left',
-    verified: false,
-  },
-  {
-    id: 4,
-    title: 'Data Analyst',
-    location: 'Toronto, Canada',
-    flag: '🇨🇦',
-    deadline: '2 days left',
-    verified: true,
-  },
+
+const partnerCompanies = [
+  { name: 'Trade Ethiopia', logo: '/logo.jpg' },
+  { name: 'Ethio Trade', logo: '/Ethio.jpg' },
+  { name: 'Tesbinn', logo: '/tesbinn.jpg' },
+  { name: 'Enisra', logo: '/enisra.jpg' },
 ];
-
-const employerProfileDefaults = {
-  name: 'Enisra Talent & Placement',
-  logo: '/logo.jpg',
-  industry: 'Talent solutions, career services & international placement',
-  size: '200–500 employees',
-  locations: ['Addis Ababa, Ethiopia', 'Dubai, UAE', 'Remote global team'],
-  description:
-    'We build trusted bridges between Ethiopian talent and international employers by blending data, coaching, and local insight.',
-  website: 'https://enisra.com',
-  social: [
-    { label: 'LinkedIn', url: 'https://www.linkedin.com/company/enisra', icon: FaLinkedin },
-    { label: 'Telegram', url: 'https://t.me/enisrajobmatching', icon: FaTelegramPlane },
-  ],
-  verified: true,
-  dashboardUrl: '/employer/profile',
-  profileEditUrl: '/employer/profile/edit',
-};
-
-const socialIconMap = {
-  LinkedIn: FaLinkedin,
-  Telegram: FaTelegramPlane,
-};
-
-const normalizeEmployerProfile = (rawProfile = {}) => {
-  const mergedProfile = {
-    ...employerProfileDefaults,
-    ...rawProfile,
-  };
-
-  mergedProfile.social = (rawProfile.social || employerProfileDefaults.social).map((social) => ({
-    ...social,
-    icon: social.icon || socialIconMap[social.label] || FaGlobe,
-  }));
-
-  return mergedProfile;
-};
 
 const trainingHighlights = [
   'CV Writing',
@@ -172,7 +102,6 @@ const trainingHighlights = [
   'International Job Readiness',
 ];
 
-const navFilters = ['Location', 'Category', 'Job Type'];
 const heroImageUrl = '/assets/hero-people.png';
 
 const WelcomePage = () => {
@@ -198,37 +127,131 @@ const WelcomePage = () => {
     info,
   } = themeColors;
 
-  const [employerProfile, setEmployerProfile] = useState(employerProfileDefaults);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileError, setProfileError] = useState(null);
+  const [showAllJobs, setShowAllJobs] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const [jobsError, setJobsError] = useState(null);
+  const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [jobFilters, setJobFilters] = useState({
+    location: '',
+    category: '',
+    type: '',
+  });
+  const [partners, setPartners] = useState([]);
+  const [partnersLoading, setPartnersLoading] = useState(true);
+  const [partnersError, setPartnersError] = useState(null);
+
+  const locationOptions = useMemo(() => {
+    const values = jobs.map((job) => job.location).filter(Boolean);
+    return Array.from(new Set(values));
+  }, [jobs]);
+
+  const categoryOptions = useMemo(() => {
+    const values = jobs.map((job) => job.category).filter(Boolean);
+    return Array.from(new Set(values));
+  }, [jobs]);
+
+  const typeOptions = useMemo(() => {
+    const baseTypes = ['Full-time', 'Part-time', 'Contract', 'Remote', 'Internship'];
+    const values = jobs.map((job) => job.type).filter(Boolean);
+    return Array.from(new Set([...baseTypes, ...values]));
+  }, [jobs]);
+
+  const fetchJobs = async () => {
+    setJobsLoading(true);
+    setJobsError(null);
+    try {
+      const response = await apiClient.get('jobs', {
+        params: {
+          q: jobSearchTerm.trim() || undefined,
+          location: jobFilters.location || undefined,
+          category: jobFilters.category || undefined,
+          type: jobFilters.type || undefined,
+          limit: 100,
+        },
+      });
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setJobs(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      setJobsError(error?.message || 'Failed to load jobs');
+      setJobs([]);
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
+  const handleJobSearch = () => {
+    fetchJobs();
+  };
+
+  const handleJobSearchKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      fetchJobs();
+    }
+  };
+
+  const formatDeadline = (value) => {
+    if (!value) return 'No deadline';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString();
+  };
+
+  const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 3);
+  const partnerList = partners.length ? partners : partnerCompanies;
+
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchProfile = async () => {
+    const loadJobs = async () => {
+      setJobsLoading(true);
+      setJobsError(null);
       try {
-        const response = await apiClient.get('employer-profile');
+        const response = await apiClient.get('jobs', {
+          params: { limit: 100 },
+        });
         if (!isMounted) return;
-
-        const fetchedProfile = response?.data?.data;
-        if (response?.data?.success && fetchedProfile) {
-          setEmployerProfile(normalizeEmployerProfile(fetchedProfile));
-          setProfileError(null);
-        } else if (fetchedProfile) {
-          setEmployerProfile(normalizeEmployerProfile(fetchedProfile));
-          setProfileError(response?.data?.message || null);
-        } else {
-          setProfileError('Employer profile unavailable right now.');
-        }
+        const payload = response?.data?.data ?? response?.data ?? [];
+        setJobs(Array.isArray(payload) ? payload : []);
       } catch (error) {
         if (!isMounted) return;
-        setProfileError(error?.message || 'Failed to load employer profile');
+        setJobsError(error?.message || 'Failed to load jobs');
+        setJobs([]);
       } finally {
-        if (isMounted) setProfileLoading(false);
+        if (isMounted) setJobsLoading(false);
       }
     };
 
-    fetchProfile();
+    loadJobs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPartners = async () => {
+      setPartnersLoading(true);
+      setPartnersError(null);
+      try {
+        const response = await apiClient.get('partners');
+        if (!isMounted) return;
+        const payload = response?.data?.data ?? response?.data ?? [];
+        setPartners(Array.isArray(payload) ? payload : []);
+      } catch (error) {
+        if (!isMounted) return;
+        setPartnersError(error?.message || 'Failed to load partner companies');
+        setPartners([]);
+      } finally {
+        if (isMounted) setPartnersLoading(false);
+      }
+    };
+
+    loadPartners();
 
     return () => {
       isMounted = false;
@@ -250,44 +273,112 @@ const WelcomePage = () => {
         <Container maxW="7xl" py={4}>
           <Flex align="center" gap={6}>
             <HStack spacing={3}>
-              <Icon as={FaShieldAlt} boxSize={6} color={primaryGreen} />
+              <Image
+                src="/enisra.jpg"
+                alt="Enisra logo"
+                boxSize={10}
+                objectFit="cover"
+                borderRadius="full"
+              />
               <Heading size="lg" letterSpacing="tight">
                 Enisra
               </Heading>
             </HStack>
 
             <Stack flex={1} spacing={3}>
-              <InputGroup>
+              <InputGroup size="md">
                 <InputLeftElement pointerEvents="none">
                   <Icon as={FaSearch} color="gray.400" />
                 </InputLeftElement>
+                <InputRightElement width="2.5rem">
+                  <IconButton
+                    aria-label="Search jobs"
+                    icon={<FaSearch />}
+                    size="xs"
+                    variant="ghost"
+                    onClick={handleJobSearch}
+                    isLoading={jobsLoading}
+                  />
+                </InputRightElement>
                 <Input
                   placeholder="Search jobs, scholarships, trainings..."
                   bg={softGreenBg}
                   borderColor={border}
                   borderRadius="full"
-                  size="lg"
+                  size="md"
                   color={textPrimary}
                   _focus={{ borderColor: primaryGreen }}
                   _placeholder={{ color: placeholder }}
+                  value={jobSearchTerm}
+                  onChange={(event) => setJobSearchTerm(event.target.value)}
+                  onKeyDown={handleJobSearchKeyDown}
+                  pr="2.5rem"
                 />
               </InputGroup>
-              <Flex gap={3}>
-                {navFilters.map((filter) => (
+              <Flex gap={3} flexWrap="nowrap" overflowX="auto" pb={1}>
+                <Box minW="180px">
                   <Select
-                    key={filter}
-                    placeholder={filter}
+                    placeholder="Location"
                     size="sm"
                     bg={softGreenBg}
                     borderColor={border}
                     _focus={{ borderColor: primaryGreen }}
                     _hover={{ borderColor: primaryGreen }}
                     color={textPrimary}
+                    value={jobFilters.location}
+                    onChange={(event) =>
+                      setJobFilters((prev) => ({ ...prev, location: event.target.value }))
+                    }
                   >
-                    <option value="any">Any {filter}</option>
-                    <option value="primary">Top {filter}</option>
+                    {locationOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
                   </Select>
-                ))}
+                </Box>
+                <Box minW="180px">
+                  <Select
+                    placeholder="Category"
+                    size="sm"
+                    bg={softGreenBg}
+                    borderColor={border}
+                    _focus={{ borderColor: primaryGreen }}
+                    _hover={{ borderColor: primaryGreen }}
+                    color={textPrimary}
+                    value={jobFilters.category}
+                    onChange={(event) =>
+                      setJobFilters((prev) => ({ ...prev, category: event.target.value }))
+                    }
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </Box>
+                <Box minW="180px">
+                  <Select
+                    placeholder="Job Type"
+                    size="sm"
+                    bg={softGreenBg}
+                    borderColor={border}
+                    _focus={{ borderColor: primaryGreen }}
+                    _hover={{ borderColor: primaryGreen }}
+                    color={textPrimary}
+                    value={jobFilters.type}
+                    onChange={(event) =>
+                      setJobFilters((prev) => ({ ...prev, type: event.target.value }))
+                    }
+                  >
+                    {typeOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Select>
+                </Box>
               </Flex>
             </Stack>
 
@@ -473,165 +564,155 @@ const WelcomePage = () => {
           </Container>
         </Box>
 
+        <Container maxW="7xl" py={10}>
+          <Box
+            bg={cardBg}
+            borderRadius="2xl"
+            p={{ base: 6, md: 8 }}
+            boxShadow="xl"
+            border="1px solid"
+            borderColor={border}
+          >
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} alignItems="center">
+              <Stack spacing={3}>
+                <Heading size="lg" color={textPrimary}>
+                  Employers can post jobs here
+                </Heading>
+                <Text color={textSecondary} fontSize="md">
+                  Use the Employer Dashboard to publish job openings, track applicants,
+                  and manage your postings in one place.
+                </Text>
+                <HStack spacing={3} flexWrap="wrap">
+                  <Button
+                    as={RouterLink}
+                    to="/employer/post"
+                    bg={primaryGreen}
+                    color="white"
+                    borderRadius="full"
+                    _hover={{ bg: primaryGreenHover }}
+                  >
+                    Post a Job
+                  </Button>
+                  <Button
+                    as={RouterLink}
+                    to="/employer/profile"
+                    variant="outline"
+                    borderRadius="full"
+                    borderColor={primaryGreen}
+                    color={primaryGreen}
+                    _hover={{ bg: softGreenBg }}
+                  >
+                    Go to Employer Dashboard
+                  </Button>
+                </HStack>
+              </Stack>
+              <Box
+                borderRadius="xl"
+                bg={softGreenBg}
+                p={6}
+                border="1px solid"
+                borderColor={border}
+              >
+                <Text fontWeight="semibold" color={textPrimary} mb={2}>
+                  Ready to create a new job post?
+                </Text>
+                <Text color={textSecondary} fontSize="sm" mb={4}>
+                  Click “Post a Job” to open the employer job form and publish in minutes.
+                </Text>
+                <Button
+                  as={RouterLink}
+                  to="/employer/post"
+                  size="sm"
+                  bg={primaryGold}
+                  color="white"
+                  borderRadius="full"
+                  _hover={{ bg: primaryGoldHover }}
+                >
+                  Create Job Post
+                </Button>
+              </Box>
+            </SimpleGrid>
+          </Box>
+        </Container>
         <Container maxW="7xl" py={12}>
           <Box
             bg={cardBg}
             borderRadius="2xl"
-            p={6}
+            p={{ base: 6, md: 8 }}
             boxShadow="xl"
             border="1px solid"
             borderColor={border}
           >
             <Flex
               direction={{ base: 'column', md: 'row' }}
-              align="flex-start"
+              align={{ base: 'flex-start', md: 'center' }}
               justify="space-between"
-              gap={6}
-              mb={4}
+              gap={4}
+              mb={6}
             >
-              <HStack align="center" spacing={4}>
-                <Box
-                  boxSize={16}
-                  borderRadius="xl"
-                  overflow="hidden"
-                  border="1px solid"
-                  borderColor={softGreenBg}
-                  bg={softGreenBg}
-                >
-                  <Image
-                    src={employerProfile.logo}
-                    alt={`${employerProfile.name} logo`}
-                    boxSize={16}
-                    objectFit="cover"
-                  />
-                </Box>
-                <VStack align="flex-start" spacing={0}>
-                  <Flex align="center" gap={2}>
-                    <Heading size="lg" color={textPrimary}>
-                      {employerProfile.name}
-                    </Heading>
-                    {employerProfile.verified && (
-                      <Badge colorScheme="green" borderRadius="full">
-                        Verified
-                      </Badge>
-                    )}
-                  </Flex>
-                  <Text fontSize="sm" color={textSecondary} maxW="lg">
-                    {employerProfile.industry}
-                  </Text>
-                </VStack>
-              </HStack>
-              <Flex gap={4} flexWrap="wrap">
-                <Badge variant="solid" colorScheme="green" borderRadius="full">
-                  Company size: {employerProfile.size}
-                </Badge>
-                <Badge variant="subtle" colorScheme="teal" borderRadius="full">
-                  HR verified
-                </Badge>
-              </Flex>
+              <Box>
+                <Heading size="lg" color={textPrimary}>
+                  Companies Worked With Us
+                </Heading>
+                <Text color={textSecondary} fontSize="sm">
+                  Swipe to explore partner companies.
+                </Text>
+              </Box>
+              <Badge colorScheme="green" borderRadius="full">
+                Trusted Partners
+              </Badge>
             </Flex>
-
-            <Text mb={4} color={textSecondary}>
-              {employerProfile.description}
-            </Text>
-
-            {profileLoading && (
-              <Flex align="center" gap={2} mb={4}>
-                <Spinner size="sm" color={primaryGreen} />
-                <Text fontSize="sm" color={textSecondary}>
-                  Loading employer profile…
-                </Text>
-              </Flex>
-            )}
-            {profileError && (
-              <Text fontSize="sm" color={warning} mb={4}>
-                {profileError}
-              </Text>
-            )}
-
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
-              <Box>
-                <Text fontSize="xs" color={textMuted}>
-                  Headquarters
-                </Text>
-                <Text fontWeight="semibold" color={textPrimary}>
-                  {employerProfile.locations[0]}
-                </Text>
-              </Box>
-              <Box>
-                <Text fontSize="xs" color={textMuted}>
-                  Additional presence
-                </Text>
-                <Text fontWeight="semibold" color={textPrimary}>
-                  {employerProfile.locations.slice(1).join(' · ')}
-                </Text>
-              </Box>
-              <Box>
-                <Text fontSize="xs" color={textMuted}>
-                  Status
-                </Text>
-                <Text fontWeight="semibold" color={textPrimary}>
-                  Trusted Partner for Ethiopia
-                </Text>
-              </Box>
-            </SimpleGrid>
-
-            <Divider borderColor={sectionDivider} mb={4} />
-
-            <Flex direction={{ base: 'column', md: 'row' }} gap={6} align="center" flexWrap="wrap">
-              <Stack spacing={1}>
-                <Text fontSize="xs" color={textMuted}>
-                  Website
-                </Text>
-                <ChakraLink
-                  href={employerProfile.website}
-                  isExternal
-                  fontWeight="semibold"
-                  color={primaryBlue}
-                >
-                  {employerProfile.website}
-                </ChakraLink>
-              </Stack>
-              <Stack direction="row" spacing={4} flexWrap="wrap">
-                {employerProfile.social.map((social) => (
-                  <ChakraLink
-                    key={social.label}
-                    href={social.url}
-                    isExternal
-                    display="inline-flex"
-                    alignItems="center"
-                    gap={2}
-                    fontWeight="medium"
-                    color={textPrimary}
+            <Flex
+              gap={4}
+              flexWrap="nowrap"
+              overflowX="auto"
+              pb={2}
+              sx={{ scrollSnapType: 'x mandatory' }}
+            >
+              {partnersLoading ? (
+                <Flex align="center" gap={2} py={4}>
+                  <Spinner size="sm" color={primaryGreen} />
+                  <Text color={textSecondary}>Loading partners...</Text>
+                </Flex>
+              ) : partnersError ? (
+                <Text color={warning}>{partnersError}</Text>
+              ) : (
+                partnerList.map((company) => (
+                  <Box
+                    key={company._id || company.name}
+                    minW={{ base: '160px', md: '200px' }}
+                    bg={softGreenBg}
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor={border}
+                    p={4}
+                    sx={{ scrollSnapAlign: 'start' }}
                   >
-                    <Icon as={social.icon} boxSize={4} />
-                    {social.label}
-                  </ChakraLink>
-                ))}
-              </Stack>
-            </Flex>
-            <Flex mt={6} gap={3} flexWrap="wrap">
-              <Button
-                as={RouterLink}
-                to={employerProfile.profileEditUrl || '/employer/profile/edit'}
-                variant="outline"
-                borderRadius="full"
-              >
-                Edit Company Profile
-              </Button>
-              <Button
-                as={RouterLink}
-                to={employerProfile.dashboardUrl || '/employer/profile'}
-                bg={primaryGreen}
-                color="white"
-                borderRadius="full"
-                _hover={{ bg: primaryGreenHover }}
-              >
-                Open Employer Dashboard
-              </Button>
+                    <Center
+                      boxSize={16}
+                      borderRadius="full"
+                      bg="white"
+                      boxShadow="sm"
+                      mb={3}
+                    >
+                      <Image
+                        src={company.logoUrl || company.logo}
+                        alt={company.name}
+                        boxSize={12}
+                        objectFit="cover"
+                        borderRadius="full"
+                      />
+                    </Center>
+                    <Text fontWeight="semibold" color={textPrimary} textAlign="center">
+                      {company.name}
+                    </Text>
+                  </Box>
+                ))
+              )}
             </Flex>
           </Box>
         </Container>
+
 
         <Container maxW="7xl" py={12}>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -722,43 +803,65 @@ const WelcomePage = () => {
               </Flex>
               <Divider borderColor={sectionDivider} mb={4} />
               <Stack spacing={4} maxH="420px" overflowY="auto" pr={2}>
-                {jobList.map((job) => (
-                  <Box
-                    key={job.id}
-                    p={4}
-                    borderRadius="lg"
-                    bg={cardBg}
-                    borderWidth="1px"
-                    borderColor={border}
-                    boxShadow="sm"
-                    transition="border-color 0.2s ease"
-                    _hover={{ borderColor: primaryGreen }}
-                  >
-                    <Flex justify="space-between" align="center">
-                      <Text fontSize="xl">{job.flag}</Text>
-                      <Badge bg={job.verified ? success : warning} color="white">
-                        {job.verified ? 'Verified Employer' : 'In Review'}
-                      </Badge>
-                    </Flex>
-                    <Heading size="md" mt={3} color={textPrimary}>
-                      {job.title}
-                    </Heading>
-                    <Text color={textSecondary}>{job.location}</Text>
-                    <Text mt={2} fontWeight="semibold" color={textPrimary}>
-                      Deadline: {job.deadline}
-                    </Text>
-                    <Button
-                      mt={4}
-                      size="sm"
-                      borderRadius="full"
-                      bg={primaryGreen}
-                      color="white"
-                      _hover={{ bg: primaryGreenHover }}
-                    >
-                      Apply Now
-                    </Button>
-                  </Box>
-                ))}
+                {jobsLoading ? (
+                  <Flex align="center" gap={2} py={6}>
+                    <Spinner size="sm" color={primaryGreen} />
+                    <Text color={textSecondary}>Loading jobs...</Text>
+                  </Flex>
+                ) : jobsError ? (
+                  <Text color={warning} fontSize="sm">
+                    {jobsError}
+                  </Text>
+                ) : visibleJobs.length ? (
+                  visibleJobs.map((job) => {
+                    const hasVerifiedFlag = typeof job.verified === 'boolean';
+                    const badgeLabel = hasVerifiedFlag
+                      ? job.verified
+                        ? 'Verified Employer'
+                        : 'In Review'
+                      : 'Open';
+                    const badgeBg = hasVerifiedFlag ? (job.verified ? success : warning) : info;
+                    return (
+                      <Box
+                        key={job._id || job.id}
+                        p={4}
+                        borderRadius="lg"
+                        bg={cardBg}
+                        borderWidth="1px"
+                        borderColor={border}
+                        boxShadow="sm"
+                        transition="border-color 0.2s ease"
+                        _hover={{ borderColor: primaryGreen }}
+                      >
+                        <Flex justify="space-between" align="center">
+                          <Text fontSize="xl">{job.flag || '💼'}</Text>
+                          <Badge bg={badgeBg} color="white">
+                            {badgeLabel}
+                          </Badge>
+                        </Flex>
+                        <Heading size="md" mt={3} color={textPrimary}>
+                          {job.title}
+                        </Heading>
+                        <Text color={textSecondary}>{job.location}</Text>
+                        <Text mt={2} fontWeight="semibold" color={textPrimary}>
+                          Deadline: {formatDeadline(job.deadline)}
+                        </Text>
+                        <Button
+                          mt={4}
+                          size="sm"
+                          borderRadius="full"
+                          bg={primaryGreen}
+                          color="white"
+                          _hover={{ bg: primaryGreenHover }}
+                        >
+                          Apply Now
+                        </Button>
+                      </Box>
+                    );
+                  })
+                ) : (
+                  <Text color={textSecondary}>No jobs available yet.</Text>
+                )}
               </Stack>
               <Button
                 mt={6}
@@ -768,8 +871,10 @@ const WelcomePage = () => {
                 color={primaryGreen}
                 bg="transparent"
                 _hover={{ bg: softGreenBg }}
+                onClick={() => setShowAllJobs((prev) => !prev)}
+                isDisabled={jobs.length <= 3}
               >
-                View All Jobs
+                {showAllJobs ? "Show Fewer Jobs" : "View All Jobs"}
               </Button>
             </Box>
 
