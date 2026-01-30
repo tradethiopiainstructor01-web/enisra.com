@@ -21,11 +21,12 @@ import {
 import { BsBell, BsChat } from "react-icons/bs";
 import { IoMoon } from "react-icons/io5";
 import { SunIcon } from "@chakra-ui/icons";
-import { Link, useNavigate } from "react-router-dom";
+import { FiMenu } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/user";
 import { useEffect, useState } from "react";
 
-const NavbarPage = ({ sidebarWidth = "0px" }) => {
+const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false }) => {
     const { colorMode, toggleColorMode } = useColorMode();
     const gradient = useColorModeValue(
         "linear(to-r,rgb(11, 11, 25),rgb(47, 24, 174))",
@@ -60,29 +61,39 @@ const NavbarPage = ({ sidebarWidth = "0px" }) => {
     return (
         <Container
             maxW="100%"
-            px={4}
-            py={2}
+            px={{ base: 3, md: 4 }}
+            py={{ base: 2, md: 2 }}
             bgGradient={gradient}
             color={textColor}
             zIndex="20"
             position="fixed"
             top="0"
-            left={sidebarWidth}
-            width={`calc(100% - ${sidebarWidth})`}
+            left={isMobile ? 0 : sidebarWidth}
+            width={isMobile ? "100%" : `calc(100% - ${sidebarWidth})`}
             boxShadow="lg"
             transition="background 0.3s ease"
             borderBottomWidth="1px"
             borderBottomColor={borderColor}
         >
             <Flex
-                h="52px"
+                minH="52px"
                 alignItems="center"
                 justifyContent="space-between"
                 px={3}
                 flexDir={{ base: "column", sm: "row" }}
+                gap={{ base: 2, sm: 0 }}
             >
                 {/* Dashboard Title */}
-                <Flex direction="row" alignItems="center">
+                <HStack spacing={3} w={{ base: "100%", sm: "auto" }} justifyContent={{ base: "space-between", sm: "flex-start" }}>
+                    <IconButton
+                        display={{ base: "inline-flex", md: "none" }}
+                        icon={<FiMenu />}
+                        onClick={onOpenSidebar}
+                        variant="ghost"
+                        color="white"
+                        aria-label="Open navigation"
+                        size="sm"
+                    />
                     <Text
                         fontSize="24px"
                         fontWeight="bold"
@@ -93,9 +104,9 @@ const NavbarPage = ({ sidebarWidth = "0px" }) => {
                     >
                         Dashboard
                     </Text>
-                </Flex>
+                </HStack>
 {/* Navigation Icons */}
-                <HStack spacing={4} alignItems="center">
+                <HStack spacing={{ base: 2, md: 4 }} alignItems="center" w={{ base: "100%", sm: "auto" }} justifyContent={{ base: "space-between", sm: "flex-end" }} flexWrap="wrap">
                     {/* Notifications Dropdown */}
                     <Menu>
                         <MenuButton as={Button} variant="ghost">

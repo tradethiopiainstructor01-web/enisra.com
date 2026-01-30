@@ -55,6 +55,14 @@ const connectDB = async () => {
         } else {
           mongoUri = trimmed;
         }
+
+        // If someone pasted a full .env line, try to recover the actual URI.
+        // Example: "MONGO_URI=mongodb+srv://..."
+        const schemeMatch = mongoUri.match(/mongodb(\+srv)?:\/\//i);
+        if (schemeMatch && schemeMatch.index > 0) {
+          console.warn('MONGO_URI contains a prefix, trimming to the mongodb scheme.');
+          mongoUri = mongoUri.slice(schemeMatch.index);
+        }
     }
     
     if (!mongoUri) {
@@ -63,7 +71,7 @@ const connectDB = async () => {
         throw error;
     }
     
-    if (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://')) {
+    if (!/^mongodb(\+srv)?:\/\//i.test(mongoUri)) {
         const error = new Error('MONGO_URI must start with "mongodb://" or "mongodb+srv://"');
         console.error('Database connection error:', error.message);
         throw error;

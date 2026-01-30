@@ -12,7 +12,7 @@ import {
 import { FiFolder, FiHome, FiPlusCircle, FiMenu, FiUsers, FiBookOpen, FiSearch, FiBriefcase, FiBarChart, FiDollarSign } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { FiFileText } from 'react-icons/fi';
-const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse }) => {
+const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawer = false, topOffset = "52px" }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const breakpointValue = useBreakpointValue({ base: true, md: false });
   
@@ -37,26 +37,30 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse }) => {
   return (
     <Box
       as="nav"
-      width={effectiveIsCollapsed ? "50px" : "200px"}      height="100vh"
-      position="fixed"
+      width={isDrawer ? "100%" : effectiveIsCollapsed ? "50px" : "200px"}
+      height={isDrawer ? "100%" : "100vh"}
+      position={isDrawer ? "relative" : "fixed"}
       left={0}
       top={0}
       bg="gray.800"
       color="white"
       transition="width 0.3s"
       zIndex="1"
-      paddingTop="80px" // Adjusting to account for the Navbar height
+      paddingTop={isDrawer ? "56px" : topOffset}
+      overflowY="auto"
     >
       {/* Collapse Toggle Button */}
-      <Flex justify="flex-end" align="center" p={4}>
-        <IconButton
-          icon={<Icon as={FiMenu} boxSize={4} />}
-          variant="ghost"
-          color="white"
-          onClick={toggleCollapse}
-          aria-label="Toggle Sidebar"
-        />
-      </Flex>
+      {!isDrawer && (
+        <Flex justify="flex-end" align="center" p={4}>
+          <IconButton
+            icon={<Icon as={FiMenu} boxSize={4} />}
+            variant="ghost"
+            color="white"
+            onClick={toggleCollapse}
+            aria-label="Toggle Sidebar"
+          />
+        </Flex>
+      )}
 
       {/* Sidebar Links */}
       <VStack align="start" spacing={1} p={1}>
