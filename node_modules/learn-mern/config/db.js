@@ -43,10 +43,28 @@ const connectDB = async () => {
     }
     
     // Get MongoDB URI from environment variables
-    const mongoUri = process.env.MONGO_URI;
+    let mongoUri = process.env.MONGO_URI;
+    if (mongoUri) {
+        // Trim whitespace and strip a single pair of wrapping quotes (common in platform env UIs)
+        const trimmed = mongoUri.trim();
+        if (
+          (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+          (trimmed.startsWith("'") && trimmed.endsWith("'"))
+        ) {
+          mongoUri = trimmed.slice(1, -1);
+        } else {
+          mongoUri = trimmed;
+        }
+    }
     
     if (!mongoUri) {
         const error = new Error('MONGO_URI is not defined in environment variables');
+        console.error('Database connection error:', error.message);
+        throw error;
+    }
+    
+    if (!mongoUri.startsWith('mongodb://') && !mongoUri.startsWith('mongodb+srv://')) {
+        const error = new Error('MONGO_URI must start with "mongodb://" or "mongodb+srv://"');
         console.error('Database connection error:', error.message);
         throw error;
     }
