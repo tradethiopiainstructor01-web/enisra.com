@@ -47,7 +47,6 @@ import {
   DrawerCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
 import { createPayment } from '../../services/paymentService';
 
 const ProductFollowupTable = ({ items, onDelete, onUpdate, onAdd }) => {
@@ -76,13 +75,12 @@ const ProductFollowupTable = ({ items, onDelete, onUpdate, onAdd }) => {
   const [processingOrder, setProcessingOrder] = useState(false);
   const toast = useToast();
   const [allocationPreview, setAllocationPreview] = useState({});
-  const navigate = useNavigate();
   const [editingPaymentId, setEditingPaymentId] = useState(null);
   const [editingPaymentAmount, setEditingPaymentAmount] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
   const fetchProducts = async () => {
-    // fetch inventory from finance (stock API), fall back to sample list
+    // fetch inventory from stock API, fall back to sample list
     try {
       const token = localStorage.getItem('userToken');
       const res = await fetch( `${import.meta.env.VITE_API_URL}/api/stock`, {
@@ -117,7 +115,7 @@ const ProductFollowupTable = ({ items, onDelete, onUpdate, onAdd }) => {
 
   const userRole = localStorage.getItem('userRole') || 'agent';
   const headerColor = useColorModeValue('teal.800', 'teal.200');
-  const canSetDelivered = ['sales','sales_manager','admin','finance','customerservice'].includes(userRole);
+  const canSetDelivered = ['sales','sales_manager','admin','customerservice'].includes(userRole);
 
   const formatDate = (dateString) => {
     try {
@@ -567,7 +565,7 @@ const ProductFollowupTable = ({ items, onDelete, onUpdate, onAdd }) => {
                 onConfirmClose();
                 setProductsDrawerItem(null);
                 onProductsClose();
-                toast({ title: 'Order processed', description: 'Inventory updated and order recorded. Proceed to payment.', status: 'success', duration: 4000, isClosable: true });
+                toast({ title: 'Order processed', description: 'Inventory updated and order recorded. Record payment in the Payment column.', status: 'success', duration: 4000, isClosable: true });
                 // Navigate to payments page with followup id as query so user can record payment
                 try {
                   navigate(`/finance/payments?followup=${productsDrawerItem._id}`);

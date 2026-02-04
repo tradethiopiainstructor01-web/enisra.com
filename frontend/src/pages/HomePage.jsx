@@ -91,7 +91,7 @@ const HomePage = () => {
                         justifyContent={{ base: "flex-start", md: "space-between" }} 
                         wrap="wrap"
                     >
-                        <InputGroup flex={1} maxW={{ base: "100%", md: "450px" }}>
+                        <InputGroup flex={1} maxW={{ base: "100%", md: "260px" }}>
                             <InputLeftElement pointerEvents="none">
                                 <SearchIcon color={useColorModeValue("gray.500", "gray.300")} />
                             </InputLeftElement>

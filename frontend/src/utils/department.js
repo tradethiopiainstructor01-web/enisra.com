@@ -1,6 +1,5 @@
 const ROLE_DEPARTMENT_MAP = {
   admin: "Admin",
-  finance: "Finance",
   hr: "HR",
   sales: "Sales",
   salesmanager: "Sales",
@@ -21,7 +20,6 @@ const ROLE_DEPARTMENT_MAP = {
 };
 
 const ROLE_DEPARTMENT_PATTERNS = [
-  { regex: /finance/, department: "Finance" },
   { regex: /admin/, department: "Admin" },
   { regex: /sales/, department: "Sales" },
   { regex: /tradex/, department: "TradexTV" },
@@ -33,7 +31,7 @@ const ROLE_DEPARTMENT_PATTERNS = [
   { regex: /employer/, department: "Employer" },
 ];
 
-const ROLE_EXEMPTIONS = new Set(["finance", "admin"]);
+const ROLE_EXEMPTIONS = new Set(["admin"]);
 
 const normalizeText = (value) => (value ? value.toString().trim() : "");
 

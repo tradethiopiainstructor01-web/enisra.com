@@ -88,7 +88,6 @@ const RegisterPage = () => {
         email,
         password,
         role: computedRole,
-        status: 'active',
       });
       if (response.data?.success) {
         toast({

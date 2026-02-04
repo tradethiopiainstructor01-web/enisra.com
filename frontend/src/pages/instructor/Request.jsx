@@ -17,7 +17,7 @@ const InstructorRequest = () => {
         Submit a request
       </Heading>
       <Text mb={6} color="gray.500">
-        Override the department if needed, add attachments, and let finance route approvals.
+        Override the department if needed, add attachments, and let admin route approvals.
       </Text>
       <RequestPage maxWidth="960px" />
     </Box>

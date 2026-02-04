@@ -139,7 +139,6 @@ return (
                             <option value="supervisor">Supervisor</option>
                             <option value="tradextv">tradextv</option>
                             <option value="IT">IT</option>
-                            <option value="finance">Finance</option>
                             <option value="employer">Employer</option>
                             <option value="Instructor">Instructor</option>
                             <option value="EventManager">Event Manager</option>

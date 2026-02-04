@@ -65,12 +65,36 @@ const LoginPage = () => {
         duration: 4000,
         isClosable: true
       });
-      const normalizedRole = (data.user?.role || '').toString().trim().toLowerCase();
-      if (normalizedRole === 'employer') {
-        navigate('/employer/profile');
-      } else {
-        navigate('/dashboard');
-      }
+      const normalizedRole = (data.user?.role || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+      const roleRouteMap = {
+        admin: '/admin',
+        hr: '/dashboard',
+        employer: '/employer/profile',
+        sales: '/sales/dashboard',
+        salesmanager: '/salesmanager',
+        customerservice: '/cdashboard',
+        customersuccess: '/cdashboard',
+        customersuccessmanager: '/cdashboard',
+        socialmedia: '/social-media',
+        socialmediamanager: '/social-media',
+        it: '/it',
+        supervisor: '/supervisor',
+        tradextv: '/tradextv-dashboard',
+        tradex: '/tradextv-dashboard',
+        tetv: '/tradextv-dashboard',
+        coo: '/coo-dashboard',
+        reception: '/reception-dashboard',
+        instructor: '/instructor',
+        enisra: '/enisra',
+      };
+
+      const destination = roleRouteMap[normalizedRole] || '/';
+      navigate(destination);
     } catch (error) {
       const friendlyMessage =
         error.response?.data?.message || error.message || 'Unable to log in right now.';

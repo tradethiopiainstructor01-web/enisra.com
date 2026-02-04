@@ -1,25 +1,41 @@
 import { useState } from "react";
 import {
+  Avatar,
+  Badge,
   Box,
   Button,
   Divider,
   Flex,
+  HStack,
   Icon,
   IconButton,
   Stack,
   Text,
+  VStack,
   Tooltip,
   useBreakpointValue,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { FiChevronLeft, FiChevronRight, FiClipboard, FiLogOut, FiUser, FiUsers } from "react-icons/fi";
+import {
+  FiBriefcase,
+  FiChevronLeft,
+  FiChevronRight,
+  FiClipboard,
+  FiLogOut,
+  FiStar,
+  FiTrendingUp,
+  FiUser,
+  FiUsers,
+} from "react-icons/fi";
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useUserStore } from "../../store/user";
 
 const NAV_ITEMS = [
   { label: "Profile", icon: FiUser, to: "/employer/profile" },
   { label: "Post", icon: FiClipboard, to: "/employer/post" },
-  { label: "Employee", icon: FiUsers, to: "/employer/employees" },
+  { label: "Promotion", icon: FiTrendingUp, to: "/employer/promotion" },
+  { label: "Upgrade Package", icon: FiStar, to: "/employer/upgrade" },
+  { label: "Employee List", icon: FiUsers, to: "/employer/employees" },
 ];
 
 const EmployerLayout = () => {
@@ -39,12 +55,14 @@ const EmployerLayout = () => {
   const sidebarActiveColor = useColorModeValue("green.700", "green.200");
   const sidebarIconColor = useColorModeValue("gray.600", "gray.300");
   const mutedText = useColorModeValue("gray.500", "gray.300");
+  const sidebarAccent = useColorModeValue("green.600", "green.300");
+  const sidebarShadow = useColorModeValue("xl", "dark-lg");
 
   const handleLogout = () => {
     if (typeof clearUser === "function") {
       clearUser();
     }
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -61,23 +79,49 @@ const EmployerLayout = () => {
           top="0"
           minH={{ base: "auto", md: "100vh" }}
           zIndex="1"
+          boxShadow={{ base: "none", md: sidebarShadow }}
+          borderRadius={{ base: "0", md: "2xl" }}
+          mx={{ base: 0, md: 4 }}
+          my={{ base: 0, md: 6 }}
+          overflow="hidden"
         >
-          <Flex direction="column" minH={{ base: "auto", md: "100vh" }}>
-            <Flex align="center" justify={showSidebarLabels ? "space-between" : "center"} p={4}>
-              {showSidebarLabels && (
-                <Text fontWeight="bold" fontSize="sm" color={mutedText}>
-                  Employer
-                </Text>
+          <Flex direction="column" minH={{ base: "auto", md: "100%" }}>
+            <Box
+              bgGradient={useColorModeValue(
+                "linear(to-br, green.500, teal.500)",
+                "linear(to-br, green.600, teal.600)"
               )}
-              <IconButton
-                aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                icon={isSidebarCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-              />
-            </Flex>
-            <Stack spacing={1} px={2} pb={4}>
+              color="white"
+              px={4}
+              py={4}
+            >
+              <Flex align="center" justify={showSidebarLabels ? "space-between" : "center"}>
+                <HStack spacing={3}>
+                  <Avatar size="sm" bg="whiteAlpha.300" icon={<FiBriefcase />} />
+                  {showSidebarLabels && (
+                    <Stack spacing={0}>
+                      <Text fontWeight="bold" fontSize="sm">
+                        Employer Hub
+                      </Text>
+                      <Text fontSize="xs" opacity={0.85}>
+                        Manage company access
+                      </Text>
+                    </Stack>
+                  )}
+                </HStack>
+                <IconButton
+                  aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  icon={isSidebarCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+                  size="sm"
+                  variant="ghost"
+                  color="white"
+                  _hover={{ bg: "whiteAlpha.200" }}
+                  onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+                />
+              </Flex>
+            </Box>
+
+            <VStack spacing={1} px={3} py={4} align="stretch">
               {NAV_ITEMS.map((item) => {
                 const isActive = location.pathname.startsWith(item.to);
                 return (
@@ -96,20 +140,45 @@ const EmployerLayout = () => {
                       iconSpacing={showSidebarLabels ? 3 : 0}
                       color={isActive ? sidebarActiveColor : sidebarIconColor}
                       bg={isActive ? sidebarActiveBg : "transparent"}
-                      _hover={{ bg: isActive ? sidebarActiveBg : sidebarHover }}
+                      borderLeftWidth={isActive ? "3px" : "3px"}
+                      borderLeftColor={isActive ? sidebarAccent : "transparent"}
+                      _hover={{ bg: isActive ? sidebarActiveBg : sidebarHover, transform: "translateX(2px)" }}
                       _active={{ bg: sidebarActiveBg }}
+                      borderRadius="xl"
                       width="100%"
                       size="sm"
+                      fontWeight={isActive ? "semibold" : "medium"}
                     >
                       {showSidebarLabels && item.label}
                     </Button>
                   </Tooltip>
                 );
               })}
-            </Stack>
+            </VStack>
 
             <Box mt={{ base: 0, md: "auto" }} px={2} pb={4}>
               <Divider mb={3} borderColor={sidebarBorder} />
+              {showSidebarLabels && (
+                <Box
+                  bg={useColorModeValue("green.50", "gray.700")}
+                  borderRadius="xl"
+                  px={3}
+                  py={3}
+                  mb={3}
+                >
+                  <HStack justify="space-between" align="center">
+                    <Text fontSize="xs" color={mutedText}>
+                      Account status
+                    </Text>
+                    <Badge colorScheme="green" variant="subtle">
+                      Active
+                    </Badge>
+                  </HStack>
+                  <Text fontSize="xs" color={mutedText} mt={2}>
+                    Keep listings and employee records updated.
+                  </Text>
+                </Box>
+              )}
               <Tooltip label="Logout" placement="right" isDisabled={showSidebarLabels}>
                 <Button
                   onClick={handleLogout}
@@ -119,6 +188,7 @@ const EmployerLayout = () => {
                   iconSpacing={showSidebarLabels ? 3 : 0}
                   color={sidebarIconColor}
                   _hover={{ bg: sidebarHover }}
+                  borderRadius="xl"
                   width="100%"
                   size="sm"
                 >

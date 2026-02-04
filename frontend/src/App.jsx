@@ -1,6 +1,5 @@
 
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
 import CreatePage from "./pages/CreatePage";
 import CreateQuiz from "./pages/CreateQuiz";
 import Addresource from "./pages/Addresource";
@@ -17,13 +16,6 @@ import FifthPage from "./pages/FifthPage.jsx";
 import QuizPage from "./pages/quizPage.jsx";
 import Sdashboard from "./pages/sales/Sdashboard.jsx";
 import Srequest from "./pages/sales/Srequest.jsx";
-import FinanceLayout from "./pages/sales/FinanceLayout.jsx";
-import FinanceDashboardPage from "./pages/sales/FinanceDashboardPage.jsx";
-import FinanceReportsPage from "./pages/sales/FinanceReportsPage.jsx";
-import InventoryPage from "./pages/sales/InventoryPage.jsx";
-import OrdersPage from "./pages/sales/OrdersPage.jsx";
-import FinancePayrollPage from "./pages/sales/FinancePayrollPage.jsx";
-import CommissionApprovalPage from "./pages/sales/CommissionApprovalPage.jsx";
 import PDFList from './components/PDFList';
 import InfoForm from './pages/InfoForm';
 import EmployeeInfoPage from './pages/EmployeeInfoPage';
@@ -48,15 +40,12 @@ import ComingSoonPage from "./pages/ComingSoonPage";
 import AdminTrainingUpload from "./pages/AdminTrainingUpload";
 import AdminCustomerReport from './components/AdminCSReport.jsx';
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import HRDashboard from "./pages/hr/HRDashboard";
 import B2BDashboard from './pages/B2BDashboard';
 import CustomerSettings from "./components/customer/CustomerSettings";
 import COODashboard from './pages/COODashboard';
 import ReceptionDashboard from './pages/ReceptionDashboard';
 import TradexTVDashboard from './pages/TradexTVDashboard';
-import PricingPage from './pages/sales/PricingPage.jsx';
-import RevenuePage from './pages/sales/RevenuePage.jsx';
-import PurchasePage from './pages/sales/PurchasePage.jsx';
-import CostManagementPage from './pages/sales/CostManagementPage.jsx';
 import ITDashboard from "./pages/ITDashboard";
 import ENISRALayout from "./components/ENSRA/ENSRALayout";
 import ENISRADashboard from "./components/ENSRA/ENSRADashboard";
@@ -82,12 +71,10 @@ import TaskManagementPage from "./components/salesmanager/TaskManagementPage";
 import ReportsPage from "./components/salesmanager/ReportsPage";
 import CalendarPage from "./components/salesmanager/CalendarPage";
 import SettingsPage from "./components/salesmanager/SettingsPage";
-import PayrollPage from "./components/Payroll/PayrollPage";
-import EmployeePayrollView from "./components/Payroll/EmployeePayrollView";
 
 import MessagesPage from "./pages/MessagesPage";
 import SalesMessagesPage from "./pages/SalesMessagesPage";
-import FinanceMessagesPage from "./pages/FinanceMessagesPage";
+import NoticeBoardPage from "./pages/NoticeBoardPage";
 import ITMessagesPage from "./pages/ITMessagesPage";
 import RedirectMessagesPage from "./pages/RedirectMessagesPage";
 import SocialMediaDashboardPage from "./pages/socialmedia/SocialMediaDashboardPage";
@@ -101,6 +88,8 @@ import EmployerLayout from "./pages/employer/EmployerLayout";
 import EmployerProfile from "./pages/employer/EmployerProfile";
 import EmployerPostJob from "./pages/employer/EmployerPostJob";
 import EmployerEmployees from "./pages/employer/EmployerEmployees";
+import EmployerPromotion from "./pages/employer/EmployerPromotion";
+import EmployerUpgradePackage from "./pages/employer/EmployerUpgradePackage";
 
 function App() {
   const location = useLocation();
@@ -108,12 +97,10 @@ function App() {
   // Define the paths where Sidebar and Navbar should not appear
   const noNavSidebarRoutes = [
     "/", "/login", "/secondpage", "/employee-info", "/employee-file-upload", 
-    "/thirdpage", "/ttv", "/fourthpage", "/fifthpage", "/exam", "/sdashboard", "/sales", "/sales/dashboard", "/finance-dashboard", "/finance-dashboard/reports",
-    "/finance-dashboard/inventory", "/finance-dashboard/orders", "/finance-dashboard/pricing", "/finance-dashboard/revenue", "/finance-dashboard/purchase",
-    "/finance/messages", "/finance/team-requests",
-    "/addcustomer", "/resource", "/videolist", "/uploadpage", "/my-payroll",
+    "/thirdpage", "/ttv", "/fourthpage", "/fifthpage", "/exam", "/sdashboard", "/sales", "/sales/dashboard",
+    "/addcustomer", "/resource", "/videolist", "/uploadpage",
     "/cdashboard", "/waitingforapproval", "/training","/comingsoonpage", "/customerreport", "/followup-report", "/customerfollowup", "/b2b-dashboard",
-    "/coo-dashboard", "/tradextv-dashboard", "/customer-settings", "/it", "/salesmanager", "/social-media", "/requests", "/finance-dashboard/payroll", "/finance-dashboard/commission-approval", "/supervisor", "/supervisor/account", "/finance/requests", "/reception-dashboard", "/employer"
+    "/coo-dashboard", "/tradextv-dashboard", "/customer-settings", "/it", "/salesmanager", "/social-media", "/requests", "/supervisor", "/supervisor/account", "/reception-dashboard", "/employer"
   ].map((path) => path.toLowerCase());
 
   // Hide the navbar and sidebar for legacy/fullscreen pages; root should only match exactly
@@ -149,30 +136,20 @@ return (
       <Route path="/sales" element={<Sdashboard />} />
       <Route path="/sales/dashboard" element={<Sdashboard />} />
       <Route path="/srequest" element={<Srequest />} />
-      <Route path="/finance-dashboard" element={<FinanceLayout><FinanceDashboardPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/reports" element={<FinanceLayout><FinanceReportsPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/inventory" element={<FinanceLayout><InventoryPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/orders" element={<FinanceLayout><OrdersPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/pricing" element={<FinanceLayout><PricingPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/revenue" element={<FinanceLayout><RevenuePage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/purchase" element={<FinanceLayout><PurchasePage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/costs" element={<FinanceLayout><CostManagementPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/payroll" element={<FinanceLayout><FinancePayrollPage /></FinanceLayout>} />
-      <Route path="/finance-dashboard/commission-approval" element={<FinanceLayout><CommissionApprovalPage /></FinanceLayout>} />
-      <Route path="/finance/team-requests" element={<FinanceLayout><TeamRequestsPage /></FinanceLayout>} />
-      <Route
-        path="/finance/messages"
-        element={
-          <FinanceLayout>
-            <FinanceMessagesPage embedded />
-          </FinanceLayout>
-        }
-      />
       <Route path="/resource" element={<Navigate to="/resources" replace />} />
       <Route path="/employee-info" element={<EmployeeInfoPage />} />
       <Route path="/employee-file-upload" element={<EmployeeFileUploadForm />} />
       <Route path="/users" element={<LayoutWrapper><HomePage /></LayoutWrapper>} />
-      <Route path="/dashboard" element={<LayoutWrapper><Dashboard /></LayoutWrapper>} />
+      <Route
+        path="/dashboard"
+        element={
+          <RoleProtectedRoute allowedRoles={["hr"]}>
+            <LayoutWrapper>
+              <HRDashboard />
+            </LayoutWrapper>
+          </RoleProtectedRoute>
+        }
+      />
       <Route path="/documentupload" element={<DocumentUploadForm />} />
       <Route path="/category" element={<LayoutWrapper><Category /></LayoutWrapper>} />
       <Route path="/documentlist" element={<LayoutWrapper><DocumentList /></LayoutWrapper>} />
@@ -310,8 +287,16 @@ return (
         path="/admin"
         element={
           <RoleProtectedRoute allowedRoles={["admin"]}>
+            <AdminDashboard />
+          </RoleProtectedRoute>
+        }
+      />
+      <Route
+        path="/hr"
+        element={
+          <RoleProtectedRoute allowedRoles={["hr"]}>
             <LayoutWrapper>
-              <AdminDashboard />
+              <HRDashboard />
             </LayoutWrapper>
           </RoleProtectedRoute>
         }
@@ -332,6 +317,8 @@ return (
         <Route path="dashboard/*" element={<Navigate to="profile" replace />} />
         <Route path="profile" element={<EmployerProfile />} />
         <Route path="post" element={<EmployerPostJob />} />
+        <Route path="promotion" element={<EmployerPromotion />} />
+        <Route path="upgrade" element={<EmployerUpgradePackage />} />
         <Route path="employees" element={<EmployerEmployees />} />
       </Route>
       <Route
@@ -346,7 +333,6 @@ return (
       />
       <Route path="/social-media" element={<LayoutWrapper><SocialMediaDashboardPage /></LayoutWrapper>} />
       <Route path="/requests" element={<LayoutWrapper><RequestPage /></LayoutWrapper>} />
-      <Route path="/finance/requests" element={<LayoutWrapper><RequestPage /></LayoutWrapper>} />
       <Route path="/it" element={<ITDashboard />} />
       <Route
         path="/instructor"
@@ -370,16 +356,13 @@ return (
         <Route path="notice-board" element={<ENISRANoticeBoard />} />
         <Route path="request" element={<ENISRARequestEmbedded />} />
       </Route>
-      <Route path="/payroll" element={<LayoutWrapper><PayrollPage /></LayoutWrapper>} />
-      <Route path="/my-payroll" element={<EmployeePayrollView />} />
       <Route path="/messages" element={<RedirectMessagesPage />} />
       <Route path="/sales/messages" element={<SalesMessagesPage />} />
       <Route path="/customer/messages" element={<CustomerMessagesPage />} />
       <Route path="/supervisor" element={<SupervisorLayout />}>
         <Route index element={<SupervisorDashboardPage />} />
         <Route path="requests" element={<TeamRequestsPage />} />
-        <Route path="notice-board" element={<FinanceMessagesPage embedded />} />
-        <Route path="revenue-expense" element={<RevenuePage />} />
+        <Route path="notice-board" element={<NoticeBoardPage embedded />} />
       </Route>
       <Route path="/supervisor/account" element={<SupervisorAccountPage />} />
       <Route

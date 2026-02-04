@@ -37,9 +37,9 @@ const DEPARTMENT_ROUTE_MAP = {
   sdashboard: "/sales/dashboard",
   salesmanager: "/salesmanager",
   it: "/it",
-  finance: "/finance-dashboard",
+  finance: "/requests",
   admin: "/dashboard",
-  hr: "/payroll",
+  hr: "/dashboard",
   payroll: "/payroll",
   operations: "/coo-dashboard",
   coo: "/coo-dashboard",
@@ -277,10 +277,10 @@ export default function RequestPage({
           <Box maxW={{ base: "100%", md: "70%" }}>
             <Heading size="2xl">Request Center</Heading>
             <Text fontSize="md" color={cardHelperColor}>
-              All departments can submit their requests here. Finance reviews and approves everything centrally.
+              All departments can submit their requests here. Admin reviews and approves everything centrally.
             </Text>
             <Text fontSize="sm" mt={2}>
-              Finance is the single source of truth for approvals. Pick a department, add the details, and let the team handle the follow up.
+              Admin is the single source of truth for approvals. Pick a department, add the details, and let the team handle the follow up.
             </Text>
           </Box>
         </Flex>

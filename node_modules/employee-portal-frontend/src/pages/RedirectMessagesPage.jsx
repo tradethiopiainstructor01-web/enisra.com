@@ -11,8 +11,6 @@ const RedirectMessagesPage = () => {
     // Check if the user came from a specific dashboard
     if (referrer.includes('/sdashboard') || referrer.includes('/sales')) {
       navigate('/sales/messages');
-    } else if (referrer.includes('/finance-dashboard') || referrer.includes('/finance')) {
-      navigate('/finance/messages');
     } else if (referrer.includes('/it') || referrer.includes('/ITDashboard')) {
       navigate('/it/messages');
     } else if (referrer.includes('/cdashboard') || referrer.includes('/customer')) {

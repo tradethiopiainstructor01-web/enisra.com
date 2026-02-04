@@ -142,8 +142,8 @@ const createuser = async (req, res) => {
 
         // Set default status if not provided
         const normalizedRole = (role || '').toLowerCase();
-        const requiresApproval = !['admin', 'hr'].includes(normalizedRole);
-        const userStatus = status || (requiresApproval ? 'pending' : 'active');
+        const requiresApproval = normalizedRole === 'employer';
+        const userStatus = requiresApproval ? 'pending' : (status || 'active');
 
         const newUser = new User({ 
             username, 
