@@ -213,9 +213,6 @@ const DocumentUploadForm = () => {
                                        _hover={{ bg: useColorModeValue('gray.100', 'gray.700') }}
                                    >
                                        <option value="">Select Department</option>
-                                       <option value="HR">HR</option>
-                                       <option value="Sales">Sales</option>
-                                       <option value="Customer Service">Customer Service</option>
                                        <option value="Socialmedia Manager">Socialmedia Manager</option>
                                        <option value="Instructor">Instructor</option>
                                         <option value="Supervisor">Supervisor</option>

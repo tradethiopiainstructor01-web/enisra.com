@@ -136,7 +136,30 @@ const QuizPage = () => {
       if (response.data.success) {
         closeResults();
         alert('Your status has been updated to active!');
-        navigate('/sdashboard'); // Redirect to home after status update
+
+        const normalizedRole = (currentUser?.role || currentUser?.normalizedRole || '')
+          .toString()
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
+
+        const roleRouteMap = {
+          admin: '/admin',
+          employer: '/employer/profile',
+          socialmedia: '/social-media',
+          socialmediamanager: '/social-media',
+          it: '/it',
+          supervisor: '/supervisor',
+          tradextv: '/tradextv-dashboard',
+          tradex: '/tradextv-dashboard',
+          tetv: '/tradextv-dashboard',
+          coo: '/coo-dashboard',
+          reception: '/requests',
+          instructor: '/instructor',
+          enisra: '/enisra',
+        };
+
+        navigate(roleRouteMap[normalizedRole] || '/employee-info');
       } else {
         alert('Failed to update status: ' + response.data.message);
       }

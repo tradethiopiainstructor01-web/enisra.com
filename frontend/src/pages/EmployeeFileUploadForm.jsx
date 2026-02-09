@@ -70,7 +70,7 @@ const EmployeeFileUploadForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ infostatus: 'pending' }), // Set infostatus to pending
+                body: JSON.stringify({ infoStatus: 'pending' }), // Set infoStatus to pending
             });
 
             if (!updateResponse.ok) {
@@ -147,29 +147,46 @@ const EmployeeFileUploadForm = () => {
                             // Redirect based on normalized user role
                             switch (normalizedRole) {
                                 case 'admin':
-                                    navigate('/dashboard');
+                                    navigate('/admin');
                                     break;
-                                case 'sales':
-                                    navigate('/sdashboard');
-                                    break;
-                                case 'salesmanager':
-                                    navigate('/salesmanager');
-                                    break;
+                                case 'employee':
                                 case 'customerservice':
-                                    navigate('/Cdashboard');
-                                    break;
-                                case 'hr':
-                                    navigate('/hdashboard');
+                                case 'customersuccess':
+                                case 'customersuccessmanager':
+                                    navigate('/employee-info');
                                     break;
                                 case 'employer':
                                     navigate('/employer/profile');
                                     break;
+                                case 'it':
+                                    navigate('/it');
+                                    break;
+                                case 'supervisor':
+                                    navigate('/supervisor');
+                                    break;
+                                case 'coo':
+                                    navigate('/coo-dashboard');
+                                    break;
+                                case 'reception':
+                                    navigate('/requests');
+                                    break;
+                                case 'tradextv':
+                                case 'tradex':
+                                case 'tetv':
+                                    navigate('/tradextv-dashboard');
+                                    break;
+                                case 'instructor':
+                                    navigate('/instructor');
+                                    break;
+                                case 'enisra':
+                                    navigate('/enisra');
+                                    break;
                                 default:
-                                    navigate('/home'); // Optional: handle unknown roles
+                                    navigate('/'); // Optional: handle unknown roles
                                     break;
                             }
                         } else {
-                            navigate('/waitingForApproval');
+                            navigate('/WaitingForApproval');
                         }
                     }
                 }

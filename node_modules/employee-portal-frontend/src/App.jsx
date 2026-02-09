@@ -1,4 +1,3 @@
-
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import CreatePage from "./pages/CreatePage";
 import CreateQuiz from "./pages/CreateQuiz";
@@ -7,80 +6,46 @@ import HomePage from "./pages/HomePage";
 import WelcomePage from "./pages/WelcomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import CustomerFollowUpForm from "./components/CustomerFollowForm.jsx";
-import FollowUpList from "./components/FollowUpList";
 import SecondPage from "./pages/SecondPage";
 import ThirdPage from "./pages/ThirdPage";
 import FourthPage from "./pages/FourthPage";
 import FifthPage from "./pages/FifthPage.jsx";
 import QuizPage from "./pages/quizPage.jsx";
-import Sdashboard from "./pages/sales/Sdashboard.jsx";
-import Srequest from "./pages/sales/Srequest.jsx";
-import PDFList from './components/PDFList';
-import InfoForm from './pages/InfoForm';
-import EmployeeInfoPage from './pages/EmployeeInfoPage';
-import DocumentUploadForm from './components/DocumentUploadForm';
-import DocumentList from './components/DocumentList';
-import Category from './components/category';
+import PDFList from "./components/PDFList";
+import InfoForm from "./pages/InfoForm";
+import EmployeeInfoPage from "./pages/EmployeeInfoPage";
+import EmployeeFileUploadForm from "./pages/EmployeeFileUploadForm";
+import DocumentUploadForm from "./components/DocumentUploadForm";
+import DocumentList from "./components/DocumentList";
+import Category from "./components/category";
 import AssetCategoryPage from "./pages/AssetCategoryPage.jsx";
 import AssetManagementPage from "./pages/AssetManagementPage.jsx";
-import EmployeeFileUploadForm from "./pages/EmployeeFileUploadForm";
 import TTV from "./pages/ttv.jsx";
-import EmployeeDocumentList from './components/EmployeeDocument';
-import CustomerFollowup from "./components/customer/CustomerFollowup.jsx";
-import AddCustomer from "./components/customer/AddCustomer";
-import CDashboard from "./components/customer/Cdashboard";
-import CustomerReport from "./components/customer/CustomerReport";
-import CustomerFollowupReport from "./components/customer/CustomerFollowupReport";
-import VideoList from './components/customer/VideoList';
-import UploadResource from './components/customer/UploadPage';
-import TrainingPage from "./components/customer/TrainingPage";
+import EmployeeDocumentList from "./components/EmployeeDocument";
 import WaitingForApproval from "./pages/WaitingForApproval";
 import ComingSoonPage from "./pages/ComingSoonPage";
 import AdminTrainingUpload from "./pages/AdminTrainingUpload";
-import AdminCustomerReport from './components/AdminCSReport.jsx';
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import HRDashboard from "./pages/hr/HRDashboard";
-import B2BDashboard from './pages/B2BDashboard';
-import CustomerSettings from "./components/customer/CustomerSettings";
-import COODashboard from './pages/COODashboard';
-import ReceptionDashboard from './pages/ReceptionDashboard';
-import TradexTVDashboard from './pages/TradexTVDashboard';
+import B2BDashboard from "./pages/B2BDashboard";
+import COODashboard from "./pages/COODashboard";
+import TradexTVDashboard from "./pages/TradexTVDashboard";
 import ITDashboard from "./pages/ITDashboard";
 import ENISRALayout from "./components/ENSRA/ENSRALayout";
-import ENISRADashboard from "./components/ENSRA/ENSRADashboard";
 import ENISRAEnhancedDashboard from "./components/ENSRA/ENISRAEnhancedDashboard";
 import ENISRANoticeBoard from "./components/ENSRA/ENSRANoticeBoard";
-import ENISRARequest from "./components/ENSRA/ENSRARequest";
 import ENISRARequestEmbedded from "./components/ENSRA/ENISRARequestEmbedded";
-import ENISRAFollowUp from "./components/ENSRA/ENISRAFollowUp";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import InstructorLayout from "./components/instructor/InstructorLayout";
 import InstructorDashboard from "./pages/instructor/Dashboard";
 import InstructorRequest from "./pages/instructor/Request";
 import InstructorNoticeBoard from "./pages/instructor/NoticeBoard";
-import SalesManagerLayout from "./components/salesmanager/Layout";
-import SalesManagerDashboard from "./components/salesmanager/SalesManagerDashboard";
-import SalesManagerProtectedRoute from "./components/salesmanager/SalesManagerProtectedRoute";
-import CustomerMessagesPage from "./pages/CustomerMessagesPage.jsx";
-import AllSalesPage from "./components/salesmanager/AllSalesPage";
-import PerformancePage from "./components/salesmanager/PerformancePage";
-import TeamManagementPage from "./components/salesmanager/TeamManagementPage";
-import TaskManagementPage from "./components/salesmanager/TaskManagementPage";
-import ReportsPage from "./components/salesmanager/ReportsPage";
-import CalendarPage from "./components/salesmanager/CalendarPage";
-import SettingsPage from "./components/salesmanager/SettingsPage";
-
 import MessagesPage from "./pages/MessagesPage";
-import SalesMessagesPage from "./pages/SalesMessagesPage";
 import NoticeBoardPage from "./pages/NoticeBoardPage";
-import ITMessagesPage from "./pages/ITMessagesPage";
-import RedirectMessagesPage from "./pages/RedirectMessagesPage";
 import SocialMediaDashboardPage from "./pages/socialmedia/SocialMediaDashboardPage";
 import RequestPage from "./pages/RequestPage";
-import TeamRequestsPage from "./pages/sales/TeamRequestsPage.jsx";
-import AppLayout from "./components/AppLayout"; // Import the new AppLayout component
+import TeamRequestsPage from "./pages/supervisor/TeamRequestsPage.jsx";
+import AppLayout from "./components/AppLayout";
 import SupervisorLayout from "./pages/supervisor/SupervisorLayout.jsx";
 import SupervisorDashboardPage from "./pages/supervisor/SupervisorDashboardPage.jsx";
 import SupervisorAccountPage from "./pages/supervisor/SupervisorAccountPage.jsx";
@@ -96,11 +61,27 @@ function App() {
 
   // Define the paths where Sidebar and Navbar should not appear
   const noNavSidebarRoutes = [
-    "/", "/login", "/secondpage", "/employee-info", "/employee-file-upload", 
-    "/thirdpage", "/ttv", "/fourthpage", "/fifthpage", "/exam", "/sdashboard", "/sales", "/sales/dashboard",
-    "/addcustomer", "/resource", "/videolist", "/uploadpage",
-    "/cdashboard", "/waitingforapproval", "/training","/comingsoonpage", "/customerreport", "/followup-report", "/customerfollowup", "/b2b-dashboard",
-    "/coo-dashboard", "/tradextv-dashboard", "/customer-settings", "/it", "/salesmanager", "/social-media", "/requests", "/supervisor", "/supervisor/account", "/reception-dashboard", "/employer"
+    "/",
+    "/login",
+    "/secondpage",
+    "/employee-info",
+    "/employee-file-upload",
+    "/thirdpage",
+    "/ttv",
+    "/fourthpage",
+    "/fifthpage",
+    "/exam",
+    "/resource",
+    "/waitingforapproval",
+    "/comingsoonpage",
+    "/coo-dashboard",
+    "/tradextv-dashboard",
+    "/it",
+    "/social-media",
+    "/requests",
+    "/supervisor",
+    "/supervisor/account",
+    "/employer",
   ].map((path) => path.toLowerCase());
 
   // Hide the navbar and sidebar for legacy/fullscreen pages; root should only match exactly
@@ -120,7 +101,7 @@ function App() {
     return children;
   };
 
-return (
+  return (
     <Routes>
       <Route path="/" element={<WelcomePage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -132,153 +113,115 @@ return (
       <Route path="/fifthpage" element={<FifthPage />} />
       <Route path="/exam" element={<QuizPage />} />
       <Route path="/WaitingForApproval" element={<WaitingForApproval />} />
-      <Route path="/sdashboard" element={<Sdashboard />} />
-      <Route path="/sales" element={<Sdashboard />} />
-      <Route path="/sales/dashboard" element={<Sdashboard />} />
-      <Route path="/srequest" element={<Srequest />} />
       <Route path="/resource" element={<Navigate to="/resources" replace />} />
       <Route path="/employee-info" element={<EmployeeInfoPage />} />
       <Route path="/employee-file-upload" element={<EmployeeFileUploadForm />} />
-      <Route path="/users" element={<LayoutWrapper><HomePage /></LayoutWrapper>} />
       <Route
-        path="/dashboard"
+        path="/users"
         element={
-          <RoleProtectedRoute allowedRoles={["hr"]}>
-            <LayoutWrapper>
-              <HRDashboard />
-            </LayoutWrapper>
-          </RoleProtectedRoute>
+          <LayoutWrapper>
+            <HomePage />
+          </LayoutWrapper>
         }
       />
       <Route path="/documentupload" element={<DocumentUploadForm />} />
-      <Route path="/category" element={<LayoutWrapper><Category /></LayoutWrapper>} />
-      <Route path="/documentlist" element={<LayoutWrapper><DocumentList /></LayoutWrapper>} />
-      <Route path="/EmployeeDocument" element={<LayoutWrapper><EmployeeDocumentList /></LayoutWrapper>} />
-      <Route path="/documentlist/:id" element={<LayoutWrapper><DocumentList /></LayoutWrapper>} />
-      <Route path="/create" element={<LayoutWrapper><CreatePage /></LayoutWrapper>} />
-      <Route path="/quiz" element={<LayoutWrapper><CreateQuiz /></LayoutWrapper>} />
-      <Route path="/resources" element={<LayoutWrapper><PDFList /></LayoutWrapper>} />
-      <Route path="/Addresource" element={<LayoutWrapper><Addresource /></LayoutWrapper>} />
       <Route
-        path="/FollowUpList"
+        path="/category"
         element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <FollowUpList />
-            </LayoutWrapper>
-          </ProtectedRoute>
+          <LayoutWrapper>
+            <Category />
+          </LayoutWrapper>
         }
       />
       <Route
-        path="/CustomerFollowUpForm"
+        path="/documentlist"
         element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <CustomerFollowUpForm />
-            </LayoutWrapper>
-          </ProtectedRoute>
+          <LayoutWrapper>
+            <DocumentList />
+          </LayoutWrapper>
         }
       />
-      <Route path="/assetcategory" element={<LayoutWrapper><AssetCategoryPage /></LayoutWrapper>} />
-      <Route path="/assets" element={<LayoutWrapper><AssetManagementPage /></LayoutWrapper>} />
+      <Route
+        path="/EmployeeDocument"
+        element={
+          <LayoutWrapper>
+            <EmployeeDocumentList />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/documentlist/:id"
+        element={
+          <LayoutWrapper>
+            <DocumentList />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/create"
+        element={
+          <LayoutWrapper>
+            <CreatePage />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/quiz"
+        element={
+          <LayoutWrapper>
+            <CreateQuiz />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/resources"
+        element={
+          <LayoutWrapper>
+            <PDFList />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/Addresource"
+        element={
+          <LayoutWrapper>
+            <Addresource />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/assetcategory"
+        element={
+          <LayoutWrapper>
+            <AssetCategoryPage />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/assets"
+        element={
+          <LayoutWrapper>
+            <AssetManagementPage />
+          </LayoutWrapper>
+        }
+      />
       <Route path="/ttv" element={<TTV />} />
-      <Route path="/PDF" element={<LayoutWrapper><PDFList /></LayoutWrapper>} />
       <Route
-        path="/CustomerFollowup"
+        path="/PDF"
         element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <CustomerFollowup />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/AddCustomer"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <AddCustomer />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/VideoList"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <VideoList />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/UploadPage"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <UploadResource />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/Cdashboard"
-        element={
-          <ProtectedRoute>
-            <CDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/CustomerReport"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <CustomerReport />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/followup-report"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <CustomerFollowupReport />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/training"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <TrainingPage />
-            </LayoutWrapper>
-          </ProtectedRoute>
+          <LayoutWrapper>
+            <PDFList />
+          </LayoutWrapper>
         }
       />
       <Route path="/ComingSoonPage" element={<ComingSoonPage />} />
+
       <Route
         path="/admin-training-upload"
         element={
           <ProtectedRoute>
             <LayoutWrapper>
               <AdminTrainingUpload />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/adminCustomerReport"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <AdminCustomerReport />
             </LayoutWrapper>
           </ProtectedRoute>
         }
@@ -291,20 +234,18 @@ return (
           </RoleProtectedRoute>
         }
       />
+
       <Route
-        path="/hr"
+        path="/b2b-dashboard"
         element={
-          <RoleProtectedRoute allowedRoles={["hr"]}>
-            <LayoutWrapper>
-              <HRDashboard />
-            </LayoutWrapper>
-          </RoleProtectedRoute>
+          <LayoutWrapper>
+            <B2BDashboard />
+          </LayoutWrapper>
         }
       />
-      <Route path="/b2b-dashboard" element={<B2BDashboard />} />
       <Route path="/coo-dashboard" element={<COODashboard />} />
       <Route path="/tradextv-dashboard" element={<TradexTVDashboard />} />
-      <Route path="/reception-dashboard" element={<LayoutWrapper><ReceptionDashboard /></LayoutWrapper>} />
+
       <Route
         path="/employer"
         element={
@@ -321,19 +262,25 @@ return (
         <Route path="upgrade" element={<EmployerUpgradePackage />} />
         <Route path="employees" element={<EmployerEmployees />} />
       </Route>
+
       <Route
-        path="/customer-settings"
+        path="/social-media"
         element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <CustomerSettings />
-            </LayoutWrapper>
-          </ProtectedRoute>
+          <LayoutWrapper>
+            <SocialMediaDashboardPage />
+          </LayoutWrapper>
         }
       />
-      <Route path="/social-media" element={<LayoutWrapper><SocialMediaDashboardPage /></LayoutWrapper>} />
-      <Route path="/requests" element={<LayoutWrapper><RequestPage /></LayoutWrapper>} />
+      <Route
+        path="/requests"
+        element={
+          <LayoutWrapper>
+            <RequestPage />
+          </LayoutWrapper>
+        }
+      />
       <Route path="/it" element={<ITDashboard />} />
+
       <Route
         path="/instructor"
         element={
@@ -348,44 +295,28 @@ return (
         <Route path="notice-board" element={<InstructorNoticeBoard />} />
       </Route>
 
-      {/* ENISRA section */}
       <Route path="/enisra" element={<ENISRALayout />}>
         <Route index element={<ENISRAEnhancedDashboard />} />
         <Route path="dashboard" element={<ENISRAEnhancedDashboard />} />
-        <Route path="follow-up" element={<ENISRAFollowUp />} />
         <Route path="notice-board" element={<ENISRANoticeBoard />} />
         <Route path="request" element={<ENISRARequestEmbedded />} />
       </Route>
-      <Route path="/messages" element={<RedirectMessagesPage />} />
-      <Route path="/sales/messages" element={<SalesMessagesPage />} />
-      <Route path="/customer/messages" element={<CustomerMessagesPage />} />
+
+      <Route
+        path="/messages"
+        element={
+          <LayoutWrapper>
+            <MessagesPage />
+          </LayoutWrapper>
+        }
+      />
+
       <Route path="/supervisor" element={<SupervisorLayout />}>
         <Route index element={<SupervisorDashboardPage />} />
         <Route path="requests" element={<TeamRequestsPage />} />
         <Route path="notice-board" element={<NoticeBoardPage embedded />} />
       </Route>
       <Route path="/supervisor/account" element={<SupervisorAccountPage />} />
-      <Route
-        path="/salesmanager/*"
-        element={
-          <SalesManagerProtectedRoute>
-            <SalesManagerLayout />
-          </SalesManagerProtectedRoute>
-        }
-      >
-        <Route index element={<SalesManagerDashboard />} />
-        <Route path="dashboard" element={<SalesManagerDashboard />} />
-        <Route path="all-sales" element={<AllSalesPage />} />
-        <Route path="performance" element={<PerformancePage />} />
-        <Route path="team" element={<TeamManagementPage />} />
-        <Route path="tasks" element={<TaskManagementPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="calendar" element={<CalendarPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="messages" element={<MessagesPage />} />
-        <Route path="trainings" element={<TrainingPage />} />
-        
-      </Route>
     </Routes>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Heading } from "@chakra-ui/react";
-import UploadTrainingMaterial from "../components/customer/UploadTrainingMaterial";
-import AdminTrainingMaterialList from "../components/customer/AdminTrainingMaterialList";
+import UploadTrainingMaterial from "../components/training/UploadTrainingMaterial";
+import AdminTrainingMaterialList from "../components/training/AdminTrainingMaterialList";
 
 const AdminTrainingUpload = () => {
   const [refresh, setRefresh] = useState(false);

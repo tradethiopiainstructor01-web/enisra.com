@@ -35,6 +35,9 @@ const HomePage = () => {
     const [sortOrder, setSortOrder] = useState('asc');
     const { isOpen, onOpen, onClose } = useDisclosure();
 
+    const normalizeRoleValue = (value = '') =>
+        value?.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
     useEffect(() => {
         fetchUsers();
     }, [fetchUsers]);
@@ -44,7 +47,7 @@ const HomePage = () => {
         const isValidUser = user.username !== "." && user.username !== "..";
         const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = selectedRole ? user.role === selectedRole : true;
+        const matchesRole = selectedRole ? normalizeRoleValue(user.role) === selectedRole : true;
         return isValidUser && matchesSearch && matchesRole;
     });
 
@@ -116,19 +119,18 @@ const HomePage = () => {
                             borderColor={useColorModeValue("gray.300", "gray.600")}
                         >
                             <option value="admin">Admin</option>
-                            <option value="sales">Sales</option>
-                            <option value="customerservice">Customer Service</option>
-                            <option value="CustomerSuccessManager">Customer Success Manager</option>
-                            <option value="SocialmediaManager">Socialmedia Manager</option>
-                            <option value="salesmanager">Sales Manager</option>
+                            <option value="employee">Employee</option>
                             <option value="supervisor">Supervisor</option>
-                            <option value="tradextv">tradextv</option>
-                            <option value="IT">IT</option>
-                            <option value="HR">HR</option>
+                            <option value="tradextv">TradexTV</option>
+                            <option value="it">IT</option>
+                            <option value="socialmediamanager">Social Media</option>
+                            <option value="coo">COO</option>
+                            <option value="reception">Reception</option>
+                            <option value="finance">Finance</option>
                             <option value="employer">Employer</option>
-                            <option value="Enisra">Enisra</option>
-                            <option value="Instructor">Instructor</option>
-                            <option value="EventManager">EventManager</option>          
+                            <option value="enisra">Enisra</option>
+                            <option value="instructor">Instructor</option>
+                            <option value="eventmanager">Event Manager</option>          
                                           </Select>
 
                         <HStack spacing={2}>

@@ -56,7 +56,6 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon, SearchIcon, RepeatIcon, ViewIcon, EditIcon, DeleteIcon, StarIcon, CloseIcon } from '@chakra-ui/icons';
 import axios from 'axios';
-import Layout from '../components/customer/Layout';
 import BuyerForm from '../components/BuyerForm';
 import SellerForm from '../components/SellerForm';
 import MatchDetails from '../components/MatchDetails';
@@ -470,8 +469,7 @@ const B2BDashboard = () => {
   }, []);
 
   return (
-    <Layout>
-      <Box p={6}>
+    <Box p={6}>
         <Flex justifyContent="space-between" alignItems="center" mb={6}>
           <Heading as="h1" size="xl">B2B International Marketplace</Heading>
           <HStack spacing={3}>
@@ -1026,7 +1024,6 @@ const B2BDashboard = () => {
             </TabPanel>
           </TabPanels>
         </Tabs>
-      </Box>
 
       {/* Buyer Form Drawer */}
       <Drawer isOpen={isBuyerDrawerOpen} placement="right" size="md" onClose={onBuyerDrawerClose}>
@@ -1110,7 +1107,7 @@ const B2BDashboard = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </Layout>
+    </Box>
   );
 };
 

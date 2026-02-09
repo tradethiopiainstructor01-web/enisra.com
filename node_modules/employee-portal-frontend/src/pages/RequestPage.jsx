@@ -30,27 +30,18 @@ import { getUserDepartment } from "../utils/department";
 
 const PRIORITIES = ["High", "Medium", "Low"];
 
-const DEFAULT_BACK_ROUTE = "/dashboard";
+const DEFAULT_BACK_ROUTE = "/";
 
 const DEPARTMENT_ROUTE_MAP = {
-  sales: "/sales/dashboard",
-  sdashboard: "/sales/dashboard",
-  salesmanager: "/salesmanager",
   it: "/it",
   finance: "/requests",
-  admin: "/dashboard",
-  hr: "/dashboard",
-  payroll: "/payroll",
+  admin: "/admin",
   operations: "/coo-dashboard",
   coo: "/coo-dashboard",
-  customersuccess: "/cdashboard",
-  customerservice: "/cdashboard",
-  customersuccessmanager: "/cdashboard",
   tradextv: "/tradextv-dashboard",
   tradex: "/tradextv-dashboard",
   socialmedia: "/social-media",
   social: "/social-media",
-  training: "/training",
 };
 
 const normalizeDepartmentKey = (value) =>

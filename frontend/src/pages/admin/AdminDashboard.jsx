@@ -5,15 +5,21 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Divider,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
   DrawerContent,
   DrawerOverlay,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
   Icon,
   IconButton,
+  Input,
+  InputGroup,
+  InputLeftElement,
   Stack,
   Text,
   Tooltip,
@@ -22,18 +28,22 @@ import {
   useDisclosure,
   useToast,
 } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   FiBriefcase,
   FiChevronLeft,
   FiChevronRight,
+  FiLogOut,
   FiMenu,
   FiPackage,
+  FiSearch,
   FiTrendingUp,
+  FiUser,
   FiUsers,
 } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import apiClient from "../../utils/apiClient";
+import { useUserStore } from "../../store/user";
 
 const AdminDashboard = () => {
   const cardBg = useColorModeValue("white", "gray.800");
@@ -46,11 +56,22 @@ const AdminDashboard = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const toast = useToast();
+  const navigate = useNavigate();
+  const clearUser = useUserStore((state) => state.clearUser);
 
   const [pendingJobs, setPendingJobs] = useState([]);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [pendingEmployers, setPendingEmployers] = useState([]);
   const [employersLoading, setEmployersLoading] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [employeesLoading, setEmployeesLoading] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState("");
+
+  const normalizeRoleValue = (value = "") =>
+    value?.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // "Employee" accounts are users whose role is explicitly `employee`.
+  const EMPLOYEE_ROLE_SET = new Set(["employee"]);
 
   const adminSections = [
     {
@@ -79,6 +100,15 @@ const AdminDashboard = () => {
       tone: "blue",
       to: "/users",
       cta: "View employer accounts",
+    },
+    {
+      id: "employee",
+      title: "Employee",
+      description: "Browse registered employees and search employee accounts.",
+      icon: FiUser,
+      tone: "orange",
+      to: "/employee-info",
+      cta: "Open employee info form",
     },
     {
       id: "package",
@@ -130,10 +160,58 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadEmployees = async () => {
+    setEmployeesLoading(true);
+    try {
+      const response = await apiClient.get("/users");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      const users = Array.isArray(payload) ? payload : [];
+      const employeeUsers = users.filter((user) => {
+        const normalizedRole = normalizeRoleValue(user?.role);
+        const username = user?.username?.toString?.() || "";
+        return (
+          EMPLOYEE_ROLE_SET.has(normalizedRole) &&
+          normalizedRole !== "employer" &&
+          username !== "." &&
+          username !== ".."
+        );
+      });
+      setEmployees(employeeUsers);
+    } catch (error) {
+      toast({
+        title: "Failed to load employees",
+        description: error?.message || "Unable to load registered employees.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setEmployeesLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadPendingJobs();
     loadEmployers();
   }, []);
+
+  useEffect(() => {
+    if (activeSectionId === "employee" && employees.length === 0 && !employeesLoading) {
+      loadEmployees();
+    }
+  }, [activeSectionId]);
+
+  const handleLogout = () => {
+    clearUser();
+    toast({
+      title: "Signed out",
+      description: "You have been logged out.",
+      status: "info",
+      duration: 2000,
+      isClosable: true,
+    });
+    navigate("/login");
+  };
 
   const handleApproveJob = async (jobId) => {
     try {
@@ -321,6 +399,104 @@ const AdminDashboard = () => {
       );
     }
 
+    if (section.id === "employee") {
+      const normalizedQuery = employeeSearch.trim().toLowerCase();
+      const filteredEmployees = employees.filter((user) => {
+        if (!normalizedQuery) return true;
+        const haystack = [
+          user?.fullName,
+          user?.username,
+          user?.email,
+          user?.role,
+          user?.jobTitle,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      });
+
+      return (
+        <Stack spacing={4}>
+          <Flex
+            gap={3}
+            direction={{ base: "column", md: "row" }}
+            align={{ md: "flex-end" }}
+            justify="space-between"
+          >
+            <FormControl>
+              <FormLabel fontSize="sm">Search employees</FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <Icon as={FiSearch} color={mutedText} />
+                </InputLeftElement>
+                <Input
+                  placeholder="Name, username, email, role..."
+                  value={employeeSearch}
+                  onChange={(event) => setEmployeeSearch(event.target.value)}
+                />
+              </InputGroup>
+            </FormControl>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={loadEmployees}
+              isLoading={employeesLoading}
+            >
+              Refresh list
+            </Button>
+          </Flex>
+
+          {employeesLoading ? (
+            <Text color={mutedText}>Loading employees...</Text>
+          ) : filteredEmployees.length ? (
+            <Stack spacing={3}>
+              <Text color={mutedText} fontSize="sm">
+                Showing {filteredEmployees.length} employee{filteredEmployees.length === 1 ? "" : "s"}.
+              </Text>
+              {filteredEmployees.map((user) => (
+                <Box
+                  key={user._id}
+                  p={4}
+                  border="1px solid"
+                  borderColor={borderColor}
+                  borderRadius="md"
+                >
+                  <Flex justify="space-between" align="center" mb={1} gap={3} wrap="wrap">
+                    <Heading size="sm">
+                      {user.fullName || user.username || "Employee"}
+                    </Heading>
+                    <Badge colorScheme={user.status === "active" ? "green" : "red"}>
+                      {user.status || "unknown"}
+                    </Badge>
+                  </Flex>
+                  <Text fontSize="sm" color={mutedText}>
+                    {(user.email || "No email")}{" "}
+                    {user.role ? `· ${user.role}` : ""}
+                    {user.jobTitle ? `· ${user.jobTitle}` : ""}
+                  </Text>
+                </Box>
+              ))}
+            </Stack>
+          ) : (
+            <Text color={mutedText}>No employees found.</Text>
+          )}
+
+          <Button
+            as={RouterLink}
+            to={section.to}
+            size="sm"
+            variant="outline"
+            leftIcon={<Icon as={section.icon} />}
+            alignSelf="flex-start"
+          >
+            {section.cta}
+          </Button>
+        </Stack>
+      );
+    }
+
     return (
       <Button
         as={RouterLink}
@@ -402,6 +578,19 @@ const AdminDashboard = () => {
               </Tooltip>
               );
             })}
+            <Divider borderColor={borderColor} />
+            <Button
+              justifyContent={isCollapsed ? "center" : "flex-start"}
+              leftIcon={<Icon as={FiLogOut} />}
+              variant="ghost"
+              size="sm"
+              iconSpacing={isCollapsed ? 0 : 2}
+              onClick={handleLogout}
+              _hover={{ bg: "red.50", color: "red.600" }}
+              _dark={{ _hover: { bg: "red.900", color: "red.200" } }}
+            >
+              {!isCollapsed && "Log out"}
+            </Button>
           </Stack>
         </Box>
 
@@ -460,6 +649,19 @@ const AdminDashboard = () => {
                   {section.title}
                 </Button>
               ))}
+              <Divider />
+              <Button
+                justifyContent="flex-start"
+                leftIcon={<Icon as={FiLogOut} />}
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  handleLogout();
+                  onClose();
+                }}
+              >
+                Log out
+              </Button>
             </Stack>
           </DrawerBody>
         </DrawerContent>

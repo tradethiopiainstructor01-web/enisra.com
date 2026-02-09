@@ -26,8 +26,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['admin', 'HR', 'Enisra', 'Enisra', 'sales', 'salesmanager', 'tradextv', 'customerservice', 'SocialmediaManager', 'CustomerSuccessManager', 'TETV', 'IT', 'HR', 'supervisor', 'Instructor', 'EventManager', 'COO', 'TradeXTV', 'finance', 'reception', 'employer'],
-        default: 'sales',
+        enum: ['admin', 'employee', 'HR', 'Enisra', 'Enisra', 'sales', 'salesmanager', 'tradextv', 'customerservice', 'SocialmediaManager', 'CustomerSuccessManager', 'TETV', 'IT', 'HR', 'supervisor', 'Instructor', 'EventManager', 'COO', 'TradeXTV', 'finance', 'reception', 'employer'],
+        default: 'employee',
         index: true, // Add index for faster queries
     },
     status: {

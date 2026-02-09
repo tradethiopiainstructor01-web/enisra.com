@@ -25,6 +25,9 @@ const UserCard = ({ user }) => {
 
     const salaryLabel = formatSalary(user.salary);
 
+    const normalizeRoleValue = (value = '') =>
+        value?.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
     const { deleteUser, updateUser, fetchUsers } = useUserStore();
     const toast = useToast();
 
@@ -243,20 +246,22 @@ const UserCard = ({ user }) => {
                             </Box>
                             <Select
                                 placeholder="Select Role"
-                                value={updatedUser.role || ''}
+                                value={normalizeRoleValue(updatedUser.role) || ''}
                                 onChange={(e) => setUpdatedUser({ ...updatedUser, role: e.target.value })}
                             >
                                 <option value="admin">Admin</option>
-                                <option value="customerservice">Customer Service</option>
-                                <option value="sales">Sales</option>
-                                <option value="salesmanager">Sales Manager</option>
-                            <option value="tradextv">tradextv</option>
-                            <option value="CustomerSuccessManager">Customer Success Manager</option>
-                            <option value="IT">IT</option>
-                            <option value="Enisra">Enisra</option>
-                            <option value="HR">HR</option>
-                            <option value="COO">COO</option>
-                            <option value="reception">Reception</option>
+                                <option value="employee">Employee</option>
+                                <option value="employer">Employer</option>
+                                <option value="it">IT</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="tradextv">TradexTV</option>
+                                <option value="socialmediamanager">Social Media</option>
+                                <option value="enisra">Enisra</option>
+                                <option value="instructor">Instructor</option>
+                                <option value="eventmanager">Event Manager</option>
+                                <option value="coo">COO</option>
+                                <option value="reception">Reception</option>
+                                <option value="finance">Finance</option>
                             </Select>
                             <Input
                                 placeholder="Salary"

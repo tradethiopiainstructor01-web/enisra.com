@@ -19,13 +19,13 @@ import {
   Badge,
   HStack,
 } from '@chakra-ui/react';
-import { FaEnvelope, FaLock, FaUser } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaPhone } from 'react-icons/fa';
 import axiosInstance from '../services/axiosInstance';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     fullName: '',
-    username: '',
+    phoneNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -56,7 +56,7 @@ const RegisterPage = () => {
 
   const getRoleFromAccountType = () => {
     if (accountType === 'employer') return 'employer';
-    return 'customerservice';
+    return 'employee';
   };
 
   const handleAccountSwitch = (type) => {
@@ -66,9 +66,9 @@ const RegisterPage = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const { fullName, username, email, password, confirmPassword, role } = formData;
-    if (!fullName.trim() || !username.trim() || !email.trim() || !password) {
-      setErrorMessage('Full name, username, email, and password are required.');
+    const { fullName, phoneNumber, email, password, confirmPassword } = formData;
+    if (!fullName.trim() || !phoneNumber.trim() || !email.trim() || !password) {
+      setErrorMessage('Full name, phone number, email, and password are required.');
       return;
     }
     if (password !== confirmPassword) {
@@ -84,7 +84,7 @@ const RegisterPage = () => {
     try {
       const response = await axiosInstance.post('/users', {
         fullName,
-        username,
+        username: phoneNumber,
         email,
         password,
         role: computedRole,
@@ -172,17 +172,18 @@ const RegisterPage = () => {
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Username</FormLabel>
+            <FormLabel>Phone Number</FormLabel>
             <InputGroup>
               <InputLeftElement pointerEvents="none">
-                <Icon as={FaUser} color="gray.400" />
+                <Icon as={FaPhone} color="gray.400" />
               </InputLeftElement>
               <Input
-                placeholder="jdoe"
+                placeholder="(555) 555-5555"
+                type="tel"
                 bg={inputBg}
-                value={formData.username}
-                onChange={handleChange('username')}
-                autoComplete="username"
+                value={formData.phoneNumber}
+                onChange={handleChange('phoneNumber')}
+                autoComplete="tel"
               />
             </InputGroup>
           </FormControl>

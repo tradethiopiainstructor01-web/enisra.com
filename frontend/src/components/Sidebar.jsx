@@ -9,20 +9,12 @@ import {
   Icon,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { FiFolder, FiHome, FiPlusCircle, FiMenu, FiUsers, FiBookOpen, FiSearch, FiBriefcase, FiBarChart, FiDollarSign, FiClipboard } from "react-icons/fi";
+import { FiFolder, FiMenu, FiUsers, FiBookOpen, FiSearch, FiBriefcase, FiBarChart } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { FiFileText } from 'react-icons/fi';
-import { useUserStore } from "../store/user";
 const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawer = false, topOffset = "52px" }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const breakpointValue = useBreakpointValue({ base: true, md: false });
-  const currentUser = useUserStore((state) => state.currentUser);
-  const normalizedRole = (currentUser?.normalizedRole || currentUser?.role || "")
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "");
-  const isHr = normalizedRole === "hr";
   
   // Use controlled prop if provided, otherwise use internal state
   const effectiveIsCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : isCollapsed;
@@ -72,27 +64,6 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
 
       {/* Sidebar Links */}
       <VStack align="start" spacing={1} p={1}>
-        {/* Dashboard Link (HR only) */}
-        {isHr && (
-          <Link as={RouterLink} to="/dashboard" _hover={{ textDecoration: "none" }}>
-            <Flex align="center" p={1} borderRadius="md" _hover={{ bg: "gray.700" }}>
-              <Icon as={FiHome} boxSize={4} />
-              {!effectiveIsCollapsed && <Text ml={3} fontSize="sm">Dashboard</Text>}
-            </Flex>
-          </Link>
-        )}
-
-        {isHr && (
-          <Link as={RouterLink} to="/hr" _hover={{ textDecoration: "none" }}>
-            <Flex align="center" p={1} borderRadius="md" _hover={{ bg: "gray.700" }}>
-              <Icon as={FiClipboard} boxSize={4} />
-              {!effectiveIsCollapsed && <Text ml={3} fontSize="sm">HR</Text>}
-            </Flex>
-          </Link>
-        )}
-
-        {/* COO Dashboard Link removed */}
-
         {/* Account Management Link */}
         <Link as={RouterLink} to="/users" _hover={{ textDecoration: "none" }}>
           <Flex align="center" p={1} borderRadius="md" _hover={{ bg: "gray.700" }}>
@@ -133,14 +104,6 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
           </Flex>
         </Link>
 
-        {/* Customer List Link */}
-        <Link as={RouterLink} to="/FollowUpList" _hover={{ textDecoration: "none" }}>
-          <Flex align="center" p={1} borderRadius="md" _hover={{ bg: "gray.700" }}>
-            <Icon as={FiUsers} boxSize={4} />
-            {!effectiveIsCollapsed && <Text ml={3} fontSize="sm">Customer List</Text>}
-          </Flex>
-        </Link>
-
 
         {/* Training Tab */}
         <Link as={RouterLink} to="/admin-training-upload" _hover={{ textDecoration: "none" }}>
@@ -159,7 +122,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
         </Link>
       
         {/* Notes Board Link */}
-        <Link as={RouterLink} to="/customer/messages" _hover={{ textDecoration: "none" }}>
+        <Link as={RouterLink} to="/messages" _hover={{ textDecoration: "none" }}>
           <Flex align="center" p={1} borderRadius="md" _hover={{ bg: "gray.700" }}>
             <Icon as={FiFileText} boxSize={4} />
             {!effectiveIsCollapsed && <Text ml={3} fontSize="sm">Notes Board</Text>}

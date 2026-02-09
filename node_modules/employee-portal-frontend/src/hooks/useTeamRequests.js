@@ -6,10 +6,12 @@ export const REQUEST_DEPARTMENTS = [
   "Social Media",
   "TradexTV",
   "IT",
-  "HR",
-  "Sales",
-  "Customer Success",
   "Finance",
+  "Operations",
+  "Training",
+  "Events",
+  "Employer",
+  "Reception",
 ];
 export const REQUEST_STATUSES = ["Pending", "Approved", "Completed"];
 export const REQUEST_PRIORITIES = ["High", "Medium", "Low"];

@@ -1,12 +1,8 @@
 const ROLE_DEPARTMENT_MAP = {
   admin: "Admin",
-  hr: "HR",
-  sales: "Sales",
-  salesmanager: "Sales",
-  salessupervisor: "Sales",
-  customerservice: "Customer Success",
-  customersuccess: "Customer Success",
-  customersuccessmanager: "Customer Success",
+  employee: "Employee",
+  finance: "Finance",
+  reception: "Reception",
   socialmediamanager: "Social Media",
   socialmedia: "Social Media",
   it: "IT",
@@ -17,21 +13,26 @@ const ROLE_DEPARTMENT_MAP = {
   instructor: "Training",
   eventmanager: "Events",
   employer: "Employer",
+  enisra: "Enisra",
 };
 
 const ROLE_DEPARTMENT_PATTERNS = [
   { regex: /admin/, department: "Admin" },
-  { regex: /sales/, department: "Sales" },
+  { regex: /employee/, department: "Employee" },
+  { regex: /finance/, department: "Finance" },
+  { regex: /reception/, department: "Reception" },
+  { regex: /coo/, department: "Operations" },
+  { regex: /operations/, department: "Operations" },
   { regex: /tradex/, department: "TradexTV" },
   { regex: /social/, department: "Social Media" },
-  { regex: /customer/, department: "Customer Success" },
-  { regex: /success/, department: "Customer Success" },
   { regex: /it/, department: "IT" },
-  { regex: /hr/, department: "HR" },
   { regex: /employer/, department: "Employer" },
+  { regex: /instructor/, department: "Training" },
+  { regex: /event/, department: "Events" },
+  { regex: /enisra/, department: "Enisra" },
 ];
 
-const ROLE_EXEMPTIONS = new Set(["admin"]);
+const ROLE_EXEMPTIONS = new Set(["admin", "finance", "coo"]);
 
 const normalizeText = (value) => (value ? value.toString().trim() : "");
 

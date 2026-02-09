@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { fetchTrainingFollowups } from "../../services/api";
 import { useUserStore } from "../../store/user";
-import TrainingFollowupGrouped from "../customer/tabs/TrainingFollowupGrouped";
+import TrainingFollowupGrouped from "./TrainingFollowupGrouped";
 
 const normalizeIdentifier = (value = "") =>
   value

@@ -4,7 +4,7 @@ const User = require("../models/user.model");
 
 const ALLOWED_STATUSES = ["Pending", "Approved", "Completed"];
 const ALLOWED_PRIORITIES = ["High", "Medium", "Low"];
-const EXEMPT_ROLE_SET = new Set(["finance", "admin"]);
+const EXEMPT_ROLE_SET = new Set(["finance", "admin", "coo"]);
 
 const ROLE_DEPARTMENT_MAP = {
   admin: "Admin",

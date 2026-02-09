@@ -5,8 +5,9 @@ const NotificationSchema = new mongoose.Schema({
   text: { type: String, required: true },
   read: { type: Boolean, default: false },
   type: { type: String, enum: ['general', 'task', 'target'], default: 'general' },
-  taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
-  targetId: { type: mongoose.Schema.Types.ObjectId, ref: 'SalesTarget' },
+  // Kept for legacy notifications; these may reference different entities depending on the `type`.
+  taskId: { type: mongoose.Schema.Types.ObjectId },
+  targetId: { type: mongoose.Schema.Types.ObjectId },
   createdAt: { type: Date, default: Date.now },
 });
 

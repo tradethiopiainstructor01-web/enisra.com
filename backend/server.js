@@ -14,10 +14,8 @@ const userRoutes = require('./routes/user.route.js');
 const notificationRoutes = require('./routes/notificationRoutes.js');
 const messageRoutes = require('./routes/messageRoutes.js');
 const quizRoutes = require('./routes/quiz.route.js');
-const customerFollowUpRoutes = require('./routes/customerFollowRoutes.js');
 const noteRoutes = require('./routes/noteRoutes.js');
 const ResourceRoute = require('./routes/ResourceRoutes.js');
-const FollowUpRoutes = require('./routes/followupRoutes.js');
 const CategoryRoutes = require('./routes/categoryRoutes.js');
 const documentRoutes = require('./routes/documentRoutes.js');
 const assetCategoryRoutes = require('./routes/assetCategory.js');
@@ -29,24 +27,14 @@ const b2bMatchingRoutes = require('./routes/b2bMatchingRoutes.js');
 const savedMatchRoutes = require('./routes/savedMatchRoutes.js');
 const trainingFollowupRoutes = require('./routes/trainingFollowupRoutes.js');
 const ensraFollowupRoutes = require('./routes/ensraFollowupRoutes.js');
-const salesCustomerRoutes = require('./routes/salesCustomerRoutes.js');
 const packageRoutes = require('./routes/packageRoutes.js');
-const packageSalesRoutes = require('./routes/packageSalesRoutes.js');
 const serviceTypeRoutes = require('./routes/serviceTypeRoutes.js');
 const metricRoutes = require('./routes/metricRoutes.js');
 const tradexFollowupRoutes = require('./routes/tradexFollowupRoutes.js');
 const stockRoutes = require('./routes/stockRoutes.js');
-const orderRoutes = require('./routes/orderRoutes.js');
-const orderCustomerRoutes = require('./routes/orderCustomerRoutes.js');
-const salesManagerRoutes = require('./routes/salesManagerRoutes.js');
-const salesTargetRoutes = require('./routes/salesTargetRoutes.js');
-const taskRoutes = require('./routes/taskRoutes.js');
-const calendarRoutes = require('./routes/calendarRoutes.js');
 const courseRoutes = require('./routes/courseRoutes.js');
-const productFollowupRoutes = require('./routes/productFollowupRoutes.js');
 const itRoutes = require('./routes/itRoutes.js');
 const demandRoutes = require('./routes/demandRoutes.js');
-const payrollRoutes = require('./routes/payrollRoutes.js'); // Add this line
 const awardRoutes = require('./routes/awardRoutes.js');
 
 const consultancyRoutes = require('./routes/consultancyRoutes.js');
@@ -259,37 +247,14 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-app.get('/api/test-completed-sales', async (req, res) => {
-  try {
-    const SalesCustomer = require('./models/SalesCustomer');
-    const completedCount = await SalesCustomer.countDocuments({ followupStatus: 'Completed' });
-    const totalCount = await SalesCustomer.countDocuments();
-    
-    res.json({ 
-      success: true,
-      completedCount,
-      totalCount,
-      message: `Found ${completedCount} completed sales out of ${totalCount} total sales`
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: 'Test failed',
-      error: error.message 
-    });
-  }
-});
-
 // API Routes
 
 app.use("/api/users", userRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
-app.use('/api/followup', customerFollowUpRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/resources', ResourceRoute);
-app.use("/api/followups", FollowUpRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/assetcategories', assetCategoryRoutes);
 app.use('/api/assets', assetRoutes);
@@ -302,27 +267,15 @@ app.use('/api/saved-matches', savedMatchRoutes);
 app.use('/api/training-followups', trainingFollowupRoutes);
 app.use('/api/ensra-followups', ensraFollowupRoutes);
 app.use('/api/consultancies', consultancyRoutes);
-app.use('/api/salescustomers', salesCustomerRoutes);
-app.use('/api/sales-customers', salesCustomerRoutes);
-app.use('/api/packages/sales', packageSalesRoutes);
-app.use('/api/package-sales', packageSalesRoutes);
 app.use('/api/packages', packageRoutes);
 app.use('/api/service-types', serviceTypeRoutes);
 app.use('/api', metricRoutes);
 app.use('/api/tradex-followups', tradexFollowupRoutes);
 app.use('/api/stock', stockRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/order-customers', orderCustomerRoutes);
-app.use('/api/sales-manager', salesManagerRoutes);
-app.use('/api/sales-targets', salesTargetRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/calendar', calendarRoutes);
 app.use('/api/courses', courseRoutes);
-app.use('/api/product-followups', productFollowupRoutes);
 app.use('/api/it', itRoutes);
 app.use('/api/costs', costRoutes);
 app.use('/api/demands', demandRoutes);
-app.use('/api/payroll', payrollRoutes); // Add this line
 app.use('/api/requests', requestRoutes);
 app.use('/api/social-requests', requestRoutes);
 app.use('/api/action-items', actionItemRoutes);
