@@ -54,8 +54,8 @@ const consultancyRoutes = require('./routes/consultancyRoutes.js');
 const costRoutes = require('./routes/costRoutes.js');
 const requestRoutes = require('./routes/requestRoutes.js');
 const actionItemRoutes = require('./routes/actionItemRoutes.js');
-const commissionApprovalRoutes = require('./routes/commissionApprovalRoutes.js');
 const employerProfileRoutes = require('./routes/employerProfileRoutes.js');
+const employerDetailsRoutes = require('./routes/employerDetailsRoutes.js');
 const registrationAnalyticsRoutes = require('./routes/registrationAnalyticsRoutes.js');
 const jobRoutes = require('./routes/jobRoutes.js');
 const partnerCompanyRoutes = require('./routes/partnerCompanyRoutes.js');
@@ -123,6 +123,7 @@ const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
   vercelUrl,
   'https://www.tradeethiopian.com',
   'https://tradeethiopian.com',
@@ -319,8 +320,6 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/product-followups', productFollowupRoutes);
 app.use('/api/it', itRoutes);
-app.use('/api/finance', require('./routes/financeRoutes'));
-app.use('/api/purchases', require('./routes/purchaseRoutes'));
 app.use('/api/costs', costRoutes);
 app.use('/api/demands', demandRoutes);
 app.use('/api/payroll', payrollRoutes); // Add this line
@@ -331,13 +330,12 @@ app.use('/api/action-items', actionItemRoutes);
 app.use('/api/awards', awardRoutes);
 
 app.use('/api/employer-profile', employerProfileRoutes);
+app.use('/api/employer-details', employerDetailsRoutes);
 app.use('/api/analytics/registrations', registrationAnalyticsRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/partners', partnerCompanyRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Commission Approval
-app.use('/api/commissions', commissionApprovalRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

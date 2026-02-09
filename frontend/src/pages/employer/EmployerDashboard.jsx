@@ -174,6 +174,20 @@ const EmployerDashboard = () => {
   const [activeSection, setActiveSection] = useState("employer-profile");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [employerDetails, setEmployerDetails] = useState({
+    employerId: "",
+    companyName: "",
+    industry: "",
+    companyLocation: "",
+    contactPerson: "",
+    contactEmail: "",
+    contactPhone: "",
+    packageType: "",
+    jobPostingCredits: "",
+    contractEndDate: "",
+  });
+  const [detailsLoading, setDetailsLoading] = useState(true);
+  const [detailsSaving, setDetailsSaving] = useState(false);
   const [jobForm, setJobForm] = useState({
     title: "",
     department: "",
@@ -212,6 +226,57 @@ const EmployerDashboard = () => {
     );
   }, [jobs, applicants]);
 
+  useEffect(() => {
+    let isMounted = true;
+    const loadDetails = async () => {
+      if (!currentUser?.token) {
+        setDetailsLoading(false);
+        return;
+      }
+      try {
+        setDetailsLoading(true);
+        const response = await apiClient.get("/employer-details/me");
+        const payload = response?.data?.data;
+        if (!isMounted) return;
+        if (payload) {
+          setEmployerDetails({
+            employerId: payload.employerId || "",
+            companyName: payload.companyName || "",
+            industry: payload.industry || "",
+            companyLocation: payload.companyLocation || "",
+            contactPerson: payload.contactPerson || "",
+            contactEmail: payload.contactEmail || "",
+            contactPhone: payload.contactPhone || "",
+            packageType: payload.packageType || "",
+            jobPostingCredits: payload.jobPostingCredits ?? "",
+            contractEndDate: payload.contractEndDate
+              ? payload.contractEndDate.toString().split("T")[0]
+              : "",
+          });
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        if (error?.response?.status !== 404) {
+          toast({
+            title: "Failed to load employer details",
+            description: error?.message || "Please try again later.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      } finally {
+        if (isMounted) setDetailsLoading(false);
+      }
+    };
+
+    loadDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.token, toast]);
+
   const applicantsForJob = useMemo(() => {
     if (!selectedJobId) return applicants;
     return applicants.filter((applicant) => applicant.jobId === selectedJobId);
@@ -248,6 +313,51 @@ const EmployerDashboard = () => {
 
   const handleFormChange = (field) => (event) => {
     setJobForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleEmployerFormChange = (field) => (event) => {
+    setEmployerDetails((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleEmployerDetailsSave = async () => {
+    const missing = Object.entries(employerDetails).filter(
+      ([, value]) => !String(value ?? "").trim()
+    );
+    if (missing.length) {
+      toast({
+        title: "Complete employer details",
+        description: "Please fill all fields before saving.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setDetailsSaving(true);
+      await apiClient.put("/employer-details/me", {
+        ...employerDetails,
+        jobPostingCredits: Number(employerDetails.jobPostingCredits),
+      });
+      toast({
+        title: "Employer details saved",
+        description: "Your company details have been updated.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to save employer details",
+        description: error?.response?.data?.message || error?.message || "Please try again.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setDetailsSaving(false);
+    }
   };
 
   const handleSectionClick = (sectionId) => {
@@ -360,6 +470,7 @@ const EmployerDashboard = () => {
           as="aside"
           bg={sidebarBg}
           borderRight={{ base: "none", md: "1px solid" }}
+          borderBottom={{ base: "1px solid", md: "none" }}
           borderColor={sidebarBorder}
           width={{ base: "100%", md: sidebarWidth }}
           transition="width 0.2s ease"
@@ -380,9 +491,17 @@ const EmployerDashboard = () => {
               size="sm"
               variant="ghost"
               onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              display={{ base: "none", md: "inline-flex" }}
             />
           </Flex>
-          <Stack spacing={1} px={2} pb={4}>
+          <Stack
+            spacing={{ base: 2, md: 1 }}
+            direction={{ base: "row", md: "column" }}
+            px={2}
+            pb={4}
+            overflowX={{ base: "auto", md: "visible" }}
+            flexWrap={{ base: "nowrap", md: "wrap" }}
+          >
             {NAV_ITEMS.map((item) => {
               const isActive = activeSection === item.id;
               return (
@@ -402,7 +521,8 @@ const EmployerDashboard = () => {
                     _hover={{ bg: isActive ? sidebarActiveBg : sidebarHover }}
                     _active={{ bg: sidebarActiveBg }}
                     onClick={() => handleSectionClick(item.id)}
-                    width="100%"
+                    width={{ base: "auto", md: "100%" }}
+                    minW={{ base: "140px", md: "auto" }}
                     size="sm"
                   >
                     {showSidebarLabels && item.label}
@@ -435,6 +555,7 @@ const EmployerDashboard = () => {
                     leftIcon={<FiPlus />}
                     colorScheme="green"
                     onClick={() => handleSectionClick("job-posting")}
+                    width={{ base: "100%", sm: "auto" }}
                   >
                     Post a job
                   </Button>
@@ -474,6 +595,123 @@ const EmployerDashboard = () => {
                         </Text>
                       </Box>
                     </SimpleGrid>
+                  </CardBody>
+                </Card>
+
+                <Card bg={cardBg} borderColor={borderColor} borderWidth="1px" mt={6}>
+                  <CardHeader>
+                    <Heading size="md">Employer Form</Heading>
+                    <Text color={mutedText} mt={1}>
+                      Provide your company details to continue.
+                    </Text>
+                  </CardHeader>
+                  <CardBody>
+                    <Stack spacing={4}>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <FormControl>
+                          <FormLabel>Employer ID</FormLabel>
+                          <Input
+                            placeholder="EMP-0001"
+                            value={employerDetails.employerId}
+                            onChange={handleEmployerFormChange("employerId")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Company Name</FormLabel>
+                          <Input
+                            placeholder="Enisra"
+                            value={employerDetails.companyName}
+                            onChange={handleEmployerFormChange("companyName")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Industry</FormLabel>
+                          <Input
+                            placeholder="Talent & Placement"
+                            value={employerDetails.industry}
+                            onChange={handleEmployerFormChange("industry")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Company Location</FormLabel>
+                          <Input
+                            placeholder="Addis Ababa"
+                            value={employerDetails.companyLocation}
+                            onChange={handleEmployerFormChange("companyLocation")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Contact Person</FormLabel>
+                          <Input
+                            placeholder="Full name"
+                            value={employerDetails.contactPerson}
+                            onChange={handleEmployerFormChange("contactPerson")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Contact Email</FormLabel>
+                          <Input
+                            type="email"
+                            placeholder="name@company.com"
+                            value={employerDetails.contactEmail}
+                            onChange={handleEmployerFormChange("contactEmail")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Contact Phone</FormLabel>
+                          <Input
+                            type="tel"
+                            placeholder="+251 9xx xxx xxx"
+                            value={employerDetails.contactPhone}
+                            onChange={handleEmployerFormChange("contactPhone")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Package Type</FormLabel>
+                          <Input
+                            placeholder="Premium"
+                            value={employerDetails.packageType}
+                            onChange={handleEmployerFormChange("packageType")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Job Posting Credits</FormLabel>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            value={employerDetails.jobPostingCredits}
+                            onChange={handleEmployerFormChange("jobPostingCredits")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel>Contract End Date</FormLabel>
+                          <Input
+                            type="date"
+                            value={employerDetails.contractEndDate}
+                            onChange={handleEmployerFormChange("contractEndDate")}
+                            isDisabled={detailsLoading}
+                          />
+                        </FormControl>
+                      </SimpleGrid>
+                      <Button
+                        colorScheme="green"
+                        onClick={handleEmployerDetailsSave}
+                        isLoading={detailsSaving}
+                        isDisabled={detailsLoading}
+                        alignSelf="flex-start"
+                      >
+                        Save Employer Details
+                      </Button>
+                    </Stack>
                   </CardBody>
                 </Card>
               </Box>
@@ -690,7 +928,7 @@ const EmployerDashboard = () => {
                         >
                           <CardBody>
                             <Stack spacing={2}>
-                              <Flex justify="space-between" align="center">
+                              <Flex justify="space-between" align="center" flexWrap="wrap" gap={2}>
                                 <Heading size="sm">{job.title}</Heading>
                                 <Badge colorScheme="green">{applicantCount} applicants</Badge>
                               </Flex>
@@ -782,61 +1020,115 @@ const EmployerDashboard = () => {
                   </FormControl>
                 </SimpleGrid>
 
-                <TableContainer>
-                  <Table size="sm">
-                    <Thead>
-                      <Tr>
-                        <Th>Applicant</Th>
-                        <Th>Contact</Th>
-                        <Th>Job</Th>
-                        <Th>Stage</Th>
-                        <Th>Last update</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {filteredApplicants.map((applicant) => {
-                        const statusMeta = getStatusMeta(applicant.status);
-                        const jobTitle =
-                          jobs.find((job) => job.id === applicant.jobId)?.title || "Unknown";
-                        return (
-                          <Tr key={applicant.id}>
-                            <Td>
-                              <Text fontWeight="semibold">{applicant.name}</Text>
-                            </Td>
-                            <Td>
-                              <Text fontSize="sm">{applicant.email}</Text>
+                {isMobile ? (
+                  <Stack spacing={4}>
+                    {filteredApplicants.map((applicant) => {
+                      const statusMeta = getStatusMeta(applicant.status);
+                      const jobTitle =
+                        jobs.find((job) => job.id === applicant.jobId)?.title || "Unknown";
+                      return (
+                        <Card key={applicant.id} variant="outline" borderColor={borderColor}>
+                          <CardBody>
+                            <Stack spacing={3}>
+                              <Flex justify="space-between" align="flex-start" gap={3}>
+                                <Box>
+                                  <Text fontWeight="semibold">{applicant.name}</Text>
+                                  <Text fontSize="sm" color={mutedText}>
+                                    {jobTitle}
+                                  </Text>
+                                </Box>
+                                <Badge colorScheme={statusMeta.color}>{statusMeta.label}</Badge>
+                              </Flex>
+                              <Box>
+                                <Text fontSize="sm">{applicant.email}</Text>
+                                <Text fontSize="xs" color={mutedText}>
+                                  {applicant.phone}
+                                </Text>
+                              </Box>
+                              <Box>
+                                <Text fontSize="xs" color={mutedText} mb={1}>
+                                  Stage
+                                </Text>
+                                <Select
+                                  size="sm"
+                                  value={applicant.status}
+                                  onChange={(event) =>
+                                    handleStatusUpdate(applicant.id, event.target.value)
+                                  }
+                                >
+                                  {STATUS_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </Box>
                               <Text fontSize="xs" color={mutedText}>
-                                {applicant.phone}
+                                Last update: {formatDate(applicant.updatedAt)}
                               </Text>
-                            </Td>
-                            <Td>
-                              <Text fontSize="sm">{jobTitle}</Text>
-                            </Td>
-                            <Td>
-                              <Select
-                                size="sm"
-                                value={applicant.status}
-                                onChange={(event) =>
-                                  handleStatusUpdate(applicant.id, event.target.value)
-                                }
-                              >
-                                {STATUS_OPTIONS.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </Select>
-                              <Badge mt={2} colorScheme={statusMeta.color}>
-                                {statusMeta.label}
-                              </Badge>
-                            </Td>
-                            <Td>{formatDate(applicant.updatedAt)}</Td>
-                          </Tr>
-                        );
-                      })}
-                    </Tbody>
-                  </Table>
-                </TableContainer>
+                            </Stack>
+                          </CardBody>
+                        </Card>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <TableContainer overflowX="auto">
+                    <Table size="sm">
+                      <Thead>
+                        <Tr>
+                          <Th>Applicant</Th>
+                          <Th>Contact</Th>
+                          <Th>Job</Th>
+                          <Th>Stage</Th>
+                          <Th>Last update</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {filteredApplicants.map((applicant) => {
+                          const statusMeta = getStatusMeta(applicant.status);
+                          const jobTitle =
+                            jobs.find((job) => job.id === applicant.jobId)?.title || "Unknown";
+                          return (
+                            <Tr key={applicant.id}>
+                              <Td>
+                                <Text fontWeight="semibold">{applicant.name}</Text>
+                              </Td>
+                              <Td>
+                                <Text fontSize="sm">{applicant.email}</Text>
+                                <Text fontSize="xs" color={mutedText}>
+                                  {applicant.phone}
+                                </Text>
+                              </Td>
+                              <Td>
+                                <Text fontSize="sm">{jobTitle}</Text>
+                              </Td>
+                              <Td>
+                                <Select
+                                  size="sm"
+                                  value={applicant.status}
+                                  onChange={(event) =>
+                                    handleStatusUpdate(applicant.id, event.target.value)
+                                  }
+                                >
+                                  {STATUS_OPTIONS.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </Select>
+                                <Badge mt={2} colorScheme={statusMeta.color}>
+                                  {statusMeta.label}
+                                </Badge>
+                              </Td>
+                              <Td>{formatDate(applicant.updatedAt)}</Td>
+                            </Tr>
+                          );
+                        })}
+                      </Tbody>
+                    </Table>
+                  </TableContainer>
+                )}
 
                 {!filteredApplicants.length && (
                   <Box textAlign="center" py={10} color={mutedText}>

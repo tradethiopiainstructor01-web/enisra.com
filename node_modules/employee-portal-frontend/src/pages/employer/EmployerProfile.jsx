@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Avatar,
   Badge,
@@ -9,9 +10,12 @@ import {
   Container,
   Divider,
   Flex,
+  FormControl,
+  FormLabel,
   Heading,
   HStack,
   Icon,
+  Input,
   Progress,
   SimpleGrid,
   Stack,
@@ -20,13 +24,30 @@ import {
   StatNumber,
   Text,
   useColorModeValue,
+  useToast,
 } from "@chakra-ui/react";
-import { FiBriefcase, FiMail, FiShield, FiUsers } from "react-icons/fi";
+import { FiBriefcase, FiMail, FiShield } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { useUserStore } from "../../store/user";
+import apiClient from "../../utils/apiClient";
 
 const EmployerProfile = () => {
   const currentUser = useUserStore((state) => state.currentUser);
+  const toast = useToast();
+  const [employerDetails, setEmployerDetails] = useState({
+    employerId: "",
+    companyName: "",
+    industry: "",
+    companyLocation: "",
+    contactPerson: "",
+    contactEmail: "",
+    contactPhone: "",
+    packageType: "",
+    jobPostingCredits: "",
+    contractEndDate: "",
+  });
+  const [detailsLoading, setDetailsLoading] = useState(true);
+  const [detailsSaving, setDetailsSaving] = useState(false);
   const pageBg = useColorModeValue("gray.50", "gray.950");
   const panelBg = useColorModeValue("white", "gray.900");
   const heroBg = useColorModeValue("white", "gray.800");
@@ -50,6 +71,103 @@ const EmployerProfile = () => {
   const profileFields = [displayName, displayEmail, displayRole, displayDepartment];
   const completedFields = profileFields.filter(Boolean).length;
   const profileCompletion = Math.round((completedFields / profileFields.length) * 100);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadDetails = async () => {
+      if (!currentUser?.token) {
+        setDetailsLoading(false);
+        return;
+      }
+      try {
+        setDetailsLoading(true);
+        const response = await apiClient.get("/employer-details/me");
+        const payload = response?.data?.data;
+        if (!isMounted) return;
+        if (payload) {
+          setEmployerDetails({
+            employerId: payload.employerId || "",
+            companyName: payload.companyName || "",
+            industry: payload.industry || "",
+            companyLocation: payload.companyLocation || "",
+            contactPerson: payload.contactPerson || "",
+            contactEmail: payload.contactEmail || "",
+            contactPhone: payload.contactPhone || "",
+            packageType: payload.packageType || "",
+            jobPostingCredits: payload.jobPostingCredits ?? "",
+            contractEndDate: payload.contractEndDate
+              ? payload.contractEndDate.toString().split("T")[0]
+              : "",
+          });
+        }
+      } catch (error) {
+        if (!isMounted) return;
+        if (error?.response?.status !== 404) {
+          toast({
+            title: "Failed to load employer details",
+            description: error?.message || "Please try again later.",
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+      } finally {
+        if (isMounted) setDetailsLoading(false);
+      }
+    };
+
+    loadDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.token, toast]);
+
+  const handleEmployerDetailsChange = (field) => (event) => {
+    setEmployerDetails((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleEmployerDetailsSave = async () => {
+    const missing = Object.entries(employerDetails).filter(
+      ([, value]) => !String(value ?? "").trim()
+    );
+    if (missing.length) {
+      toast({
+        title: "Complete employer details",
+        description: "Please fill all fields before saving.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setDetailsSaving(true);
+      await apiClient.put("/employer-details/me", {
+        ...employerDetails,
+        jobPostingCredits: Number(employerDetails.jobPostingCredits),
+      });
+      window.dispatchEvent(new Event("employer-details-updated"));
+      toast({
+        title: "Employer details saved",
+        description: "Your company details have been updated.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to save employer details",
+        description: error?.response?.data?.message || error?.message || "Please try again.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setDetailsSaving(false);
+    }
+  };
 
   return (
     <Box bg={pageBg} minH="100vh">
@@ -110,15 +228,6 @@ const EmployerProfile = () => {
                   >
                     View employees
                   </Button>
-                  <Button
-                    as={RouterLink}
-                    to="/requests"
-                    variant="ghost"
-                    color={accent}
-                    size="sm"
-                  >
-                    Submit request
-                  </Button>
                 </HStack>
               </Stack>
 
@@ -159,116 +268,123 @@ const EmployerProfile = () => {
             </Flex>
           </Box>
 
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-            <Card bg={panelBg} borderWidth="1px" borderColor={borderColor} boxShadow="md">
-              <CardHeader>
-                <Heading size="sm">Company details</Heading>
-                <Text color={subtleText} fontSize="sm" mt={1}>
-                  Keep your profile consistent across the portal.
-                </Text>
-              </CardHeader>
-              <CardBody>
-                <Stack spacing={3}>
-                  <Box>
-                    <Text fontSize="xs" color={subtleText}>
-                      Company / Name
-                    </Text>
-                    <Text fontWeight="semibold">{displayName}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color={subtleText}>
-                      Role
-                    </Text>
-                    <Text fontWeight="semibold">{displayRole}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color={subtleText}>
-                      Department
-                    </Text>
-                    <Text fontWeight="semibold">{displayDepartment}</Text>
-                  </Box>
-                </Stack>
-              </CardBody>
-            </Card>
-
-            <Card bg={panelBg} borderWidth="1px" borderColor={borderColor} boxShadow="md">
-              <CardHeader>
-                <Heading size="sm">Contact</Heading>
-                <Text color={subtleText} fontSize="sm" mt={1}>
-                  Main points of contact for the employer account.
-                </Text>
-              </CardHeader>
-              <CardBody>
-                <Stack spacing={3}>
-                  <Box>
-                    <Text fontSize="xs" color={subtleText}>
-                      Email
-                    </Text>
-                    <Text fontWeight="semibold">{displayEmail}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color={subtleText}>
-                      Username
-                    </Text>
-                    <Text fontWeight="semibold">{currentUser?.username || "Not set"}</Text>
-                  </Box>
-                  <Box>
-                    <Text fontSize="xs" color={subtleText}>
-                      Status
-                    </Text>
-                    <Badge colorScheme={statusScheme} variant="subtle">
-                      {displayStatus}
-                    </Badge>
-                  </Box>
-                </Stack>
-              </CardBody>
-            </Card>
-
-            <Card bg={panelBg} borderWidth="1px" borderColor={borderColor} boxShadow="md">
-              <CardHeader>
-                <Heading size="sm">Profile health</Heading>
-                <Text color={subtleText} fontSize="sm" mt={1}>
-                  Complete profiles unlock more automation.
-                </Text>
-              </CardHeader>
-              <CardBody>
-                <Stack spacing={4}>
-                  <Box>
-                    <Stat>
-                      <StatLabel color={subtleText}>Profile completion</StatLabel>
-                      <StatNumber>{profileCompletion}%</StatNumber>
-                    </Stat>
-                    <Progress
-                      mt={3}
-                      value={profileCompletion}
-                      size="sm"
-                      borderRadius="full"
-                      colorScheme="green"
-                      bg={useColorModeValue("gray.100", "gray.700")}
+          <Card bg={panelBg} borderWidth="1px" borderColor={borderColor} boxShadow="md">
+            <CardHeader>
+              <Heading size="sm">Employer Form</Heading>
+              <Text color={subtleText} fontSize="sm" mt={1}>
+                Provide your company details to continue.
+              </Text>
+            </CardHeader>
+            <CardBody>
+              <Stack spacing={4}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <FormControl>
+                    <FormLabel>Employer ID</FormLabel>
+                    <Input
+                      placeholder="EMP-0001"
+                      value={employerDetails.employerId}
+                      onChange={handleEmployerDetailsChange("employerId")}
+                      isDisabled={detailsLoading}
                     />
-                  </Box>
-                  <Box>
-                    <HStack spacing={3}>
-                      <Icon as={FiUsers} color={accent} />
-                      <Text fontSize="sm" color={mutedText}>
-                        Track employee records and job postings from the Employer dashboard.
-                      </Text>
-                    </HStack>
-                  </Box>
-                  <Button
-                    as={RouterLink}
-                    to="/employer/employees"
-                    variant="outline"
-                    borderColor={borderColor}
-                    size="sm"
-                    alignSelf="flex-start"
-                  >
-                    Review employees
-                  </Button>
-                </Stack>
-              </CardBody>
-            </Card>
-          </SimpleGrid>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Company Name</FormLabel>
+                    <Input
+                      placeholder="Enisra"
+                      value={employerDetails.companyName}
+                      onChange={handleEmployerDetailsChange("companyName")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Industry</FormLabel>
+                    <Input
+                      placeholder="Talent & Placement"
+                      value={employerDetails.industry}
+                      onChange={handleEmployerDetailsChange("industry")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Company Location</FormLabel>
+                    <Input
+                      placeholder="Addis Ababa"
+                      value={employerDetails.companyLocation}
+                      onChange={handleEmployerDetailsChange("companyLocation")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Contact Person</FormLabel>
+                    <Input
+                      placeholder="Full name"
+                      value={employerDetails.contactPerson}
+                      onChange={handleEmployerDetailsChange("contactPerson")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Contact Email</FormLabel>
+                    <Input
+                      type="email"
+                      placeholder="name@company.com"
+                      value={employerDetails.contactEmail}
+                      onChange={handleEmployerDetailsChange("contactEmail")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Contact Phone</FormLabel>
+                    <Input
+                      type="tel"
+                      placeholder="+251 9xx xxx xxx"
+                      value={employerDetails.contactPhone}
+                      onChange={handleEmployerDetailsChange("contactPhone")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Package Type</FormLabel>
+                    <Input
+                      placeholder="Premium"
+                      value={employerDetails.packageType}
+                      onChange={handleEmployerDetailsChange("packageType")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Job Posting Credits</FormLabel>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={employerDetails.jobPostingCredits}
+                      onChange={handleEmployerDetailsChange("jobPostingCredits")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Contract End Date</FormLabel>
+                    <Input
+                      type="date"
+                      value={employerDetails.contractEndDate}
+                      onChange={handleEmployerDetailsChange("contractEndDate")}
+                      isDisabled={detailsLoading}
+                    />
+                  </FormControl>
+                </SimpleGrid>
+                <Button
+                  colorScheme="green"
+                  onClick={handleEmployerDetailsSave}
+                  isLoading={detailsSaving}
+                  isDisabled={detailsLoading}
+                  alignSelf="flex-start"
+                >
+                  Save Employer Details
+                </Button>
+              </Stack>
+            </CardBody>
+          </Card>
+
         </Stack>
       </Container>
     </Box>

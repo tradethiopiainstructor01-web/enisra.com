@@ -4,6 +4,12 @@ import {
   Button,
   Center,
   Container,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
   Divider,
   Flex,
   Heading,
@@ -21,10 +27,12 @@ import {
   Spinner,
   Stack,
   Text,
+  useDisclosure,
   VStack,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  FaBars,
   FaBell,
   FaCheckCircle,
   FaGlobe,
@@ -140,6 +148,7 @@ const WelcomePage = () => {
   const [partners, setPartners] = useState([]);
   const [partnersLoading, setPartnersLoading] = useState(true);
   const [partnersError, setPartnersError] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const locationOptions = useMemo(() => {
     const values = jobs.map((job) => job.location).filter(Boolean);
@@ -271,7 +280,7 @@ const WelcomePage = () => {
         boxShadow="sm"
       >
         <Container maxW="7xl" py={4}>
-          <Flex align="center" gap={6}>
+          <Flex align="center" gap={{ base: 3, md: 6 }} justify="space-between" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
             <HStack spacing={3}>
               <Image
                 src="/enisra.jpg"
@@ -280,109 +289,12 @@ const WelcomePage = () => {
                 objectFit="cover"
                 borderRadius="full"
               />
-              <Heading size="lg" letterSpacing="tight">
+              <Heading size={{ base: 'md', md: 'lg' }} letterSpacing="tight">
                 Enisra
               </Heading>
             </HStack>
 
-            <Stack flex={1} spacing={3}>
-              <InputGroup size="md">
-                <InputLeftElement pointerEvents="none">
-                  <Icon as={FaSearch} color="gray.400" />
-                </InputLeftElement>
-                <InputRightElement width="2.5rem">
-                  <IconButton
-                    aria-label="Search jobs"
-                    icon={<FaSearch />}
-                    size="xs"
-                    variant="ghost"
-                    onClick={handleJobSearch}
-                    isLoading={jobsLoading}
-                  />
-                </InputRightElement>
-                <Input
-                  placeholder="Search jobs, scholarships, trainings..."
-                  bg={softGreenBg}
-                  borderColor={border}
-                  borderRadius="full"
-                  size="md"
-                  color={textPrimary}
-                  _focus={{ borderColor: primaryGreen }}
-                  _placeholder={{ color: placeholder }}
-                  value={jobSearchTerm}
-                  onChange={(event) => setJobSearchTerm(event.target.value)}
-                  onKeyDown={handleJobSearchKeyDown}
-                  pr="2.5rem"
-                />
-              </InputGroup>
-              <Flex gap={3} flexWrap="nowrap" overflowX="auto" pb={1}>
-                <Box minW="180px">
-                  <Select
-                    placeholder="Location"
-                    size="sm"
-                    bg={softGreenBg}
-                    borderColor={border}
-                    _focus={{ borderColor: primaryGreen }}
-                    _hover={{ borderColor: primaryGreen }}
-                    color={textPrimary}
-                    value={jobFilters.location}
-                    onChange={(event) =>
-                      setJobFilters((prev) => ({ ...prev, location: event.target.value }))
-                    }
-                  >
-                    {locationOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-                <Box minW="180px">
-                  <Select
-                    placeholder="Category"
-                    size="sm"
-                    bg={softGreenBg}
-                    borderColor={border}
-                    _focus={{ borderColor: primaryGreen }}
-                    _hover={{ borderColor: primaryGreen }}
-                    color={textPrimary}
-                    value={jobFilters.category}
-                    onChange={(event) =>
-                      setJobFilters((prev) => ({ ...prev, category: event.target.value }))
-                    }
-                  >
-                    {categoryOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-                <Box minW="180px">
-                  <Select
-                    placeholder="Job Type"
-                    size="sm"
-                    bg={softGreenBg}
-                    borderColor={border}
-                    _focus={{ borderColor: primaryGreen }}
-                    _hover={{ borderColor: primaryGreen }}
-                    color={textPrimary}
-                    value={jobFilters.type}
-                    onChange={(event) =>
-                      setJobFilters((prev) => ({ ...prev, type: event.target.value }))
-                    }
-                  >
-                    {typeOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </Select>
-                </Box>
-              </Flex>
-            </Stack>
-
-            <HStack spacing={3}>
+            <HStack spacing={3} ml="auto">
               <IconButton
                 aria-label="Notifications"
                 icon={<FaBell />}
@@ -390,7 +302,7 @@ const WelcomePage = () => {
                 color={primaryGreen}
                 _hover={{ bg: softGreenBg }}
               />
-              <HStack spacing={2}>
+              <HStack spacing={2} display={{ base: 'none', md: 'flex' }}>
                 <Button
                   as={RouterLink}
                   to="/login"
@@ -420,11 +332,55 @@ const WelcomePage = () => {
                 borderColor={border}
                 color={textPrimary}
                 _hover={{ borderColor: primaryGreen }}
+                display={{ base: 'none', md: 'inline-flex' }}
+              />
+              <IconButton
+                aria-label="Open menu"
+                icon={<FaBars />}
+                variant="outline"
+                size="sm"
+                borderColor={border}
+                color={textPrimary}
+                _hover={{ borderColor: primaryGreen }}
+                display={{ base: 'inline-flex', md: 'none' }}
+                onClick={onOpen}
               />
             </HStack>
           </Flex>
         </Container>
       </Box>
+
+      <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerHeader>Account</DrawerHeader>
+          <DrawerBody>
+            <Stack spacing={3} mt={2}>
+              <Button as={RouterLink} to="/login" onClick={onClose} variant="ghost">
+                Login
+              </Button>
+              <Button
+                as={RouterLink}
+                to="/register"
+                onClick={onClose}
+                bg={primaryGreen}
+                color="white"
+                _hover={{ bg: primaryGreenHover }}
+              >
+                Register
+              </Button>
+              <Button
+                variant="outline"
+                leftIcon={<FaUserCircle />}
+                onClick={onClose}
+              >
+                Profile
+              </Button>
+            </Stack>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
 
         <Box as="main">
           <Box py={12} bg={softGoldBg}>
@@ -437,6 +393,110 @@ const WelcomePage = () => {
                 <Text color={textSecondary} fontSize="lg">
                   Scan curated listings, join Telegram alerts, and secure verified international placements with ease.
                 </Text>
+                <Stack spacing={3} w="100%">
+                  <Box maxW={{ base: '100%', md: '460px' }} w="100%">
+                    <InputGroup size="sm">
+                      <InputLeftElement pointerEvents="none">
+                        <Icon as={FaSearch} color="gray.400" />
+                      </InputLeftElement>
+                      <InputRightElement width="2.25rem">
+                        <IconButton
+                          aria-label="Search jobs"
+                          icon={<FaSearch />}
+                          size="xs"
+                          variant="ghost"
+                          onClick={handleJobSearch}
+                          isLoading={jobsLoading}
+                        />
+                      </InputRightElement>
+                      <Input
+                        placeholder="Search jobs, scholarships, trainings..."
+                        bg={softGreenBg}
+                        borderColor={border}
+                        borderRadius="full"
+                        size="sm"
+                        color={textPrimary}
+                        _focus={{ borderColor: primaryGreen }}
+                        _placeholder={{ color: placeholder }}
+                        value={jobSearchTerm}
+                        onChange={(event) => setJobSearchTerm(event.target.value)}
+                        onKeyDown={handleJobSearchKeyDown}
+                        pr="2.25rem"
+                      />
+                    </InputGroup>
+                  </Box>
+                  <Flex
+                    gap={2}
+                    flexWrap={{ base: 'wrap', md: 'nowrap' }}
+                    overflowX={{ base: 'visible', md: 'auto' }}
+                    pb={1}
+                    maxW={{ base: '100%', md: '520px' }}
+                  >
+                    <Box minW={{ base: '120px', md: '140px' }} flex={{ base: '1 1 140px', md: '0 0 140px' }}>
+                      <Select
+                        placeholder="Location"
+                        size="xs"
+                        bg={softGreenBg}
+                        borderColor={border}
+                        _focus={{ borderColor: primaryGreen }}
+                        _hover={{ borderColor: primaryGreen }}
+                        color={textPrimary}
+                        value={jobFilters.location}
+                        onChange={(event) =>
+                          setJobFilters((prev) => ({ ...prev, location: event.target.value }))
+                        }
+                      >
+                        {locationOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Box>
+                    <Box minW={{ base: '120px', md: '140px' }} flex={{ base: '1 1 140px', md: '0 0 140px' }}>
+                      <Select
+                        placeholder="Category"
+                        size="xs"
+                        bg={softGreenBg}
+                        borderColor={border}
+                        _focus={{ borderColor: primaryGreen }}
+                        _hover={{ borderColor: primaryGreen }}
+                        color={textPrimary}
+                        value={jobFilters.category}
+                        onChange={(event) =>
+                          setJobFilters((prev) => ({ ...prev, category: event.target.value }))
+                        }
+                      >
+                        {categoryOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Box>
+                    <Box minW={{ base: '120px', md: '140px' }} flex={{ base: '1 1 140px', md: '0 0 140px' }}>
+                      <Select
+                        placeholder="Job Type"
+                        size="xs"
+                        bg={softGreenBg}
+                        borderColor={border}
+                        _focus={{ borderColor: primaryGreen }}
+                        _hover={{ borderColor: primaryGreen }}
+                        color={textPrimary}
+                        value={jobFilters.type}
+                        onChange={(event) =>
+                          setJobFilters((prev) => ({ ...prev, type: event.target.value }))
+                        }
+                      >
+                        {typeOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </Select>
+                    </Box>
+                  </Flex>
+                </Stack>
                 <Stack direction={{ base: 'column', sm: 'row' }} spacing={4} align="center">
                   <Button
                     as={RouterLink}
@@ -460,7 +520,7 @@ const WelcomePage = () => {
                     Browse trusted jobs
                   </Button>
                 </Stack>
-                <HStack spacing={3} mt={4}>
+                <HStack spacing={3} mt={4} flexWrap="wrap">
                   <Badge colorScheme="green" borderRadius="full">
                     HR-safe
                   </Badge>
@@ -475,6 +535,7 @@ const WelcomePage = () => {
                 boxShadow="dark-lg"
                 bg="white"
                 position="relative"
+                minH={{ base: '220px', md: '360px' }}
               >
                 <Center
                   position="absolute"
@@ -764,8 +825,8 @@ const WelcomePage = () => {
               <Text mb={4} color={textSecondary}>
                 Scan the QR code or follow the link to join curated alerts for remote jobs, scholarships, and trainings.
               </Text>
-              <Flex gap={6} align="center">
-                <Center w={24} h={24} bg={softBlueBg} borderRadius="md">
+              <Flex gap={4} align={{ base: 'flex-start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }}>
+                <Center w={{ base: 20, md: 24 }} h={{ base: 20, md: 24 }} bg={softBlueBg} borderRadius="md">
                   QR
                 </Center>
                 <Button
@@ -791,7 +852,7 @@ const WelcomePage = () => {
               borderRadius="xl"
               p={6}
               boxShadow="md"
-              maxH="600px"
+              maxH={{ base: 'none', lg: '600px' }}
               borderWidth="1px"
               borderColor={border}
             >
@@ -802,7 +863,7 @@ const WelcomePage = () => {
                 <Text color={textSecondary}>Scrollable list</Text>
               </Flex>
               <Divider borderColor={sectionDivider} mb={4} />
-              <Stack spacing={4} maxH="420px" overflowY="auto" pr={2}>
+              <Stack spacing={4} maxH={{ base: 'none', lg: '420px' }} overflowY={{ base: 'visible', lg: 'auto' }} pr={{ base: 0, lg: 2 }}>
                 {jobsLoading ? (
                   <Flex align="center" gap={2} py={6}>
                     <Spinner size="sm" color={primaryGreen} />
@@ -909,7 +970,7 @@ const WelcomePage = () => {
                   </Flex>
                 ))}
               </Stack>
-              <Flex align="center" gap={6}>
+              <Flex align="center" gap={4} direction={{ base: 'column', sm: 'row' }}>
                 <Button
                   color="white"
                   bg={primaryGreen}
@@ -920,6 +981,7 @@ const WelcomePage = () => {
                 </Button>
                 <Box
                   flex={1}
+                  w={{ base: '100%', sm: 'auto' }}
                   h="120px"
                   bgGradient={`linear(to-br, ${primaryGold}, ${primaryBlue})`}
                   borderRadius="xl"
@@ -939,7 +1001,13 @@ const WelcomePage = () => {
           maxW="7xl"
           my={6}
         >
-          <Flex align="center" justify="space-between" flexWrap="wrap" gap={4}>
+          <Flex
+            align={{ base: 'flex-start', md: 'center' }}
+            justify="space-between"
+            flexWrap="wrap"
+            gap={4}
+            direction={{ base: 'column', md: 'row' }}
+          >
             <HStack spacing={3}>
               <Icon as={FaGraduationCap} boxSize={7} />
               <Box>

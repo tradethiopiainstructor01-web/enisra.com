@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Avatar,
   Badge,
@@ -15,6 +15,7 @@ import {
   Tooltip,
   useBreakpointValue,
   useColorModeValue,
+  useToast,
 } from "@chakra-ui/react";
 import {
   FiBriefcase,
@@ -29,6 +30,7 @@ import {
 } from "react-icons/fi";
 import { Link as RouterLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useUserStore } from "../../store/user";
+import apiClient from "../../utils/apiClient";
 
 const NAV_ITEMS = [
   { label: "Profile", icon: FiUser, to: "/employer/profile" },
@@ -38,11 +40,28 @@ const NAV_ITEMS = [
   { label: "Employee List", icon: FiUsers, to: "/employer/employees" },
 ];
 
+const defaultEmployerDetails = {
+  employerId: "",
+  companyName: "",
+  industry: "",
+  companyLocation: "",
+  contactPerson: "",
+  contactEmail: "",
+  contactPhone: "",
+  packageType: "",
+  jobPostingCredits: "",
+  contractEndDate: "",
+};
+
 const EmployerLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const clearUser = useUserStore((state) => state.clearUser);
+  const currentUser = useUserStore((state) => state.currentUser);
+  const toast = useToast();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [employerDetails, setEmployerDetails] = useState(() => defaultEmployerDetails);
+  const [detailsLoading, setDetailsLoading] = useState(true);
   const isMobile = useBreakpointValue({ base: true, md: false });
   const showSidebarLabels = isMobile || !isSidebarCollapsed;
   const sidebarWidth = isSidebarCollapsed ? "72px" : "240px";
@@ -57,6 +76,71 @@ const EmployerLayout = () => {
   const mutedText = useColorModeValue("gray.500", "gray.300");
   const sidebarAccent = useColorModeValue("green.600", "green.300");
   const sidebarShadow = useColorModeValue("xl", "dark-lg");
+
+  const isEmployerDetailsComplete = useMemo(() => {
+    return Object.values(employerDetails).every((value) =>
+      String(value ?? "").trim()
+    );
+  }, [employerDetails]);
+
+  const fetchEmployerDetails = useCallback(async (signal) => {
+    if (!currentUser?.token) {
+      setDetailsLoading(false);
+      return;
+    }
+    try {
+      setDetailsLoading(true);
+      const response = await apiClient.get("/employer-details/me", {
+        signal,
+      });
+      const payload = response?.data?.data;
+      if (payload) {
+        setEmployerDetails({
+          ...defaultEmployerDetails,
+          ...payload,
+          contractEndDate: payload.contractEndDate
+            ? payload.contractEndDate.toString().split("T")[0]
+            : "",
+        });
+      }
+    } catch (error) {
+      if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+      if (error?.response?.status !== 404) {
+        toast({
+          title: "Failed to load employer details",
+          description: error?.message || "Please try again later.",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } finally {
+      setDetailsLoading(false);
+    }
+  }, [currentUser?.token, toast]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchEmployerDetails(controller.signal);
+    return () => controller.abort();
+  }, [fetchEmployerDetails]);
+
+  useEffect(() => {
+    const handleRefresh = () => fetchEmployerDetails();
+    window.addEventListener("employer-details-updated", handleRefresh);
+    return () => {
+      window.removeEventListener("employer-details-updated", handleRefresh);
+    };
+  }, [fetchEmployerDetails]);
+
+  useEffect(() => {
+    if (detailsLoading) return;
+    if (isEmployerDetailsComplete) return;
+    if (location.pathname !== "/employer/profile") {
+      navigate("/employer/profile", { replace: true });
+    }
+  }, [detailsLoading, isEmployerDetailsComplete, location.pathname, navigate]);
+
 
   const handleLogout = () => {
     if (typeof clearUser === "function") {
@@ -124,6 +208,7 @@ const EmployerLayout = () => {
             <VStack spacing={1} px={3} py={4} align="stretch">
               {NAV_ITEMS.map((item) => {
                 const isActive = location.pathname.startsWith(item.to);
+                const isRestricted = !isEmployerDetailsComplete && item.to !== "/employer/profile";
                 return (
                   <Tooltip
                     key={item.to}
@@ -132,8 +217,8 @@ const EmployerLayout = () => {
                     isDisabled={showSidebarLabels}
                   >
                     <Button
-                      as={RouterLink}
-                      to={item.to}
+                      as={isRestricted ? "button" : RouterLink}
+                      to={isRestricted ? undefined : item.to}
                       variant="ghost"
                       justifyContent={showSidebarLabels ? "flex-start" : "center"}
                       leftIcon={<Icon as={item.icon} boxSize={5} />}
@@ -148,6 +233,21 @@ const EmployerLayout = () => {
                       width="100%"
                       size="sm"
                       fontWeight={isActive ? "semibold" : "medium"}
+                      aria-disabled={isRestricted}
+                      opacity={isRestricted ? 0.6 : 1}
+                      cursor={isRestricted ? "not-allowed" : "pointer"}
+                      onClick={(event) => {
+                        if (isRestricted) {
+                          event.preventDefault();
+                          toast({
+                            title: "Complete employer details",
+                            description: "Fill the employer form in your Profile page to unlock this section.",
+                            status: "info",
+                            duration: 3000,
+                            isClosable: true,
+                          });
+                        }
+                      }}
                     >
                       {showSidebarLabels && item.label}
                     </Button>

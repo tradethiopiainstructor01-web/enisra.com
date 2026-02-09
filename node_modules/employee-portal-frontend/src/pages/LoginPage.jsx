@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Button,
   Container,
@@ -165,6 +165,16 @@ const LoginPage = () => {
             Log In
           </Button>
         </Stack>
+        <Button
+          as={RouterLink}
+          to="/"
+          variant="ghost"
+          size="sm"
+          color="gray.500"
+          mt={4}
+        >
+          Back to home
+        </Button>
       </Flex>
     </Container>
   );
