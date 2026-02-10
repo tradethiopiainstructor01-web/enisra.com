@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import dotenv from 'dotenv'
 import globals from 'globals'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -13,8 +14,7 @@ export default [
     files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
-      process: 'readonly', //added recently by nati
+      globals: { ...globals.browser, process: 'readonly' }, // allow Vite env access patterns
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },

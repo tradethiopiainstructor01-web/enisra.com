@@ -419,6 +419,7 @@ const EmployeeInfoForm = () => {
         duration: 3000,
         isClosable: true,
       });
+      window.dispatchEvent(new Event('employee-profile-updated'));
     } catch (error) {
       toast({
         title: 'Save failed',
@@ -506,6 +507,7 @@ const EmployeeInfoForm = () => {
         duration: 3000,
         isClosable: true,
       });
+      window.dispatchEvent(new Event('employee-profile-updated'));
 
       setUploads({
         photo: null,

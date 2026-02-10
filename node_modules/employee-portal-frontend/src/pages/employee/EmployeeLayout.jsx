@@ -29,8 +29,12 @@ const EmployeeLayout = () => {
     localStorage.setItem('employeeSidebarCollapsed', sidebarCollapsed ? '1' : '0');
   }, [sidebarCollapsed]);
 
-  const bg = useColorModeValue('gray.50', 'gray.900');
+  const bgGradient = useColorModeValue(
+    'linear(to-br, gray.50, teal.50)',
+    'linear(to-br, gray.900, teal.900)'
+  );
   const mutedText = useColorModeValue('gray.600', 'gray.300');
+  const brandText = useColorModeValue('teal.700', 'teal.200');
 
   const pageTitle = useMemo(() => {
     const path = location.pathname.toLowerCase();
@@ -40,7 +44,7 @@ const EmployeeLayout = () => {
   }, [location.pathname]);
 
   return (
-    <Box bg={bg} minH="100vh">
+    <Box bgGradient={bgGradient} minH="100vh">
       <Flex
         maxW="7xl"
         mx="auto"
@@ -73,9 +77,20 @@ const EmployeeLayout = () => {
                 />
               ) : null}
               <Box>
-                <Text fontWeight="bold" fontSize="lg">
-                  Employee Dashboard
-                </Text>
+                <HStack spacing={2}>
+                  <Text
+                    fontWeight="bold"
+                    fontSize="lg"
+                    letterSpacing="0.08em"
+                    textTransform="uppercase"
+                    color={brandText}
+                  >
+                    ENISRA
+                  </Text>
+                  <Text fontWeight="bold" fontSize="lg">
+                    Employee Dashboard
+                  </Text>
+                </HStack>
                 <Text fontSize="sm" color={mutedText}>
                   {pageTitle}
                 </Text>
@@ -98,4 +113,3 @@ const EmployeeLayout = () => {
 };
 
 export default EmployeeLayout;
-
