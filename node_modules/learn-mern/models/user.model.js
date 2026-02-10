@@ -40,11 +40,44 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false, // Optional
     },
+    // Personal information (employee profile)
+    firstName: {
+        type: String,
+        default: '',
+    },
+    middleName: {
+        type: String,
+        default: '',
+    },
+    lastName: {
+        type: String,
+        default: '',
+    },
+    dateOfBirth: {
+        type: Date,
+        required: false,
+    },
+    nationality: {
+        type: String,
+        default: '',
+    },
+    maritalStatus: {
+        type: String,
+        default: '',
+    },
+    nationalIdOrPassportNumber: {
+        type: String,
+        default: '',
+    },
     altEmail: {
         type: String,
         default: '',
     },
     altPhone: {
+        type: String,
+        default: '',
+    },
+    emergencyContactName: {
         type: String,
         default: '',
     },
@@ -63,10 +96,46 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false, // Optional
     },
+    employeeId: {
+        type: String,
+        default: '',
+        index: true,
+    },
+    department: {
+        type: String,
+        default: '',
+        index: true,
+    },
+    position: {
+        type: String,
+        default: '',
+    },
+    workLocation: {
+        type: String,
+        default: '',
+    },
+    reportingManager: {
+        type: String,
+        default: '',
+    },
+    employmentStatus: {
+        type: String,
+        default: '',
+    },
     salary: {
         type: Number,
         required: false,
         default: 0,
+    },
+    salaryDetails: {
+        salaryType: { type: String, default: '' },
+        basicSalary: { type: Number, required: false },
+        allowances: { type: Number, required: false },
+        paymentMethod: { type: String, default: '' },
+        bankName: { type: String, default: '' },
+        bankAccountNumber: { type: String, default: '' },
+        contractStartDate: { type: Date, required: false },
+        contractEndDate: { type: Date, required: false },
     },
 
     education: {
@@ -76,6 +145,18 @@ const userSchema = new mongoose.Schema({
     location: {
         type: String,
         required: false, // Optional
+    },
+    currentAddress: {
+        type: String,
+        default: '',
+    },
+    city: {
+        type: String,
+        default: '',
+    },
+    country: {
+        type: String,
+        default: '',
     },
     phone: {
         type: String,
@@ -88,6 +169,59 @@ const userSchema = new mongoose.Schema({
     notes: {
         type: String,
         default: '',
+    },
+    educationBackground: [
+        {
+            highestEducationLevel: { type: String, default: '' },
+            fieldOfStudy: { type: String, default: '' },
+            institutionName: { type: String, default: '' },
+            graduationYear: { type: Number, required: false },
+            certifications: { type: String, default: '' },
+        },
+    ],
+    workExperience: [
+        {
+            previousCompanyName: { type: String, default: '' },
+            jobTitle: { type: String, default: '' },
+            startDate: { type: Date, required: false },
+            endDate: { type: Date, required: false },
+            keyResponsibilities: { type: String, default: '' },
+        },
+    ],
+    technicalSkills: {
+        type: [String],
+        default: [],
+    },
+    softSkills: {
+        type: [String],
+        default: [],
+    },
+    languagesSpoken: [
+        {
+            language: { type: String, default: '' },
+            proficiencyLevel: { type: String, default: '' },
+        },
+    ],
+    // Employee document uploads (stored as Appwrite file IDs)
+    cvResume: {
+        type: String,
+        default: '',
+    },
+    educationCertificates: {
+        type: [String],
+        default: [],
+    },
+    idPassport: {
+        type: String,
+        default: '',
+    },
+    contractDocument: {
+        type: String,
+        default: '',
+    },
+    otherSupportingFiles: {
+        type: [String],
+        default: [],
     },
     digitalId: {
         type: String, // Assuming this is a string identifier

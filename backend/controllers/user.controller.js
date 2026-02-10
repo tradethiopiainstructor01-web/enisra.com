@@ -66,6 +66,16 @@ const loginUser = async (req, res) => {
 
         // Generate a token
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        const buildAppwriteUrl = (fileId) => {
+            if (!fileId) return null;
+            return `https://cloud.appwrite.io/v1/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${fileId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+        };
+
+        const buildAppwriteUrls = (ids) => {
+            if (!Array.isArray(ids)) return [];
+            return ids.filter(Boolean).map(buildAppwriteUrl);
+        };
         
         // Successful login, return user's details
         res.status(200).json({
@@ -79,29 +89,58 @@ const loginUser = async (req, res) => {
                 role: user.role,
                 status: user.status,
                 fullName: user.fullName,
+                firstName: user.firstName,
+                middleName: user.middleName,
+                lastName: user.lastName,
+                dateOfBirth: user.dateOfBirth,
+                nationality: user.nationality,
+                maritalStatus: user.maritalStatus,
+                nationalIdOrPassportNumber: user.nationalIdOrPassportNumber,
                 altEmail: user.altEmail,
                 altPhone: user.altPhone,
+                emergencyContactName: user.emergencyContactName,
                 gender: user.gender,
             jobTitle: user.jobTitle,
             hireDate: user.hireDate,
             employmentType: user.employmentType,
             education: user.education,
             location: user.location,
+            currentAddress: user.currentAddress,
+            city: user.city,
+            country: user.country,
             phone: user.phone,
             additionalLanguages: user.additionalLanguages,
             salary: user.salary,
+            salaryDetails: user.salaryDetails,
             notes: user.notes,
+            employeeId: user.employeeId,
+            department: user.department,
+            position: user.position,
+            workLocation: user.workLocation,
+            reportingManager: user.reportingManager,
+            employmentStatus: user.employmentStatus,
+            educationBackground: user.educationBackground,
+            workExperience: user.workExperience,
+            technicalSkills: user.technicalSkills,
+            softSkills: user.softSkills,
+            languagesSpoken: user.languagesSpoken,
                 digitalId: user.digitalId,
                 photo: user.photo,
-                photoUrl: user.photo ? 
-                    `https://cloud.appwrite.io/v1/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.photo}/view?project=${process.env.APPWRITE_PROJECT_ID}` : 
-                    null,
+                photoUrl: buildAppwriteUrl(user.photo),
                 infoStatus: user.infoStatus,
                 trainingStatus: user.trainingStatus,
                 guarantorFile: user.guarantorFile,
-                guarantorFileUrl: user.guarantorFile ? 
-                    `https://cloud.appwrite.io/v1/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${user.guarantorFile}/view?project=${process.env.APPWRITE_PROJECT_ID}` : 
-                    null
+                guarantorFileUrl: buildAppwriteUrl(user.guarantorFile),
+                cvResume: user.cvResume,
+                cvResumeUrl: buildAppwriteUrl(user.cvResume),
+                educationCertificates: user.educationCertificates,
+                educationCertificateUrls: buildAppwriteUrls(user.educationCertificates),
+                idPassport: user.idPassport,
+                idPassportUrl: buildAppwriteUrl(user.idPassport),
+                contractDocument: user.contractDocument,
+                contractDocumentUrl: buildAppwriteUrl(user.contractDocument),
+                otherSupportingFiles: user.otherSupportingFiles,
+                otherSupportingFileUrls: buildAppwriteUrls(user.otherSupportingFiles),
             }
         });
     } catch (error) {
