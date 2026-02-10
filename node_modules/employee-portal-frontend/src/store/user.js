@@ -165,14 +165,23 @@ export const useUserStore = create((set) => ({
     },
 
     updateUserInfo: async (updatedInfo) => {
-        const uid = updatedInfo._id; // Get user ID from updatedInfo
+        const uid = updatedInfo?._id; // Get user ID from updatedInfo
+        if (!uid) {
+            return { success: false, message: "Missing user ID." };
+        }
+
+        // Never send _id back in the update payload (immutable field on MongoDB documents)
+        const { _id, ...safeBody } = updatedInfo;
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/info/${uid}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(localStorage.getItem("userToken")
+                        ? { Authorization: `Bearer ${localStorage.getItem("userToken")}` }
+                        : {}),
                 },
-                body: JSON.stringify(updatedInfo),
+                body: JSON.stringify(safeBody),
             });
     
             const data = await res.json();
@@ -180,10 +189,10 @@ export const useUserStore = create((set) => ({
     
             // Update currentUser in the store
             set((state) => ({
-                currentUser: { ...state.currentUser, ...updatedInfo },
-                users: state.users.map((user) => (user._id === uid ? data.data : user)),
+                currentUser: { ...state.currentUser, ...(data.data || safeBody) },
+                users: state.users.map((user) => (user._id === uid ? (data.data || user) : user)),
             }));
-            return { success: true, message: "User information updated successfully!" };
+            return { success: true, message: "User information updated successfully!", data: data.data };
         } catch (error) {
             console.error("Error updating user information:", error);
             return { success: false, message: "Failed to update user information. Please try again later." };

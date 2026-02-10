@@ -153,7 +153,7 @@ const EmployeeFileUploadForm = () => {
                                 case 'customerservice':
                                 case 'customersuccess':
                                 case 'customersuccessmanager':
-                                    navigate('/employee-info');
+                                    navigate('/employee/profile');
                                     break;
                                 case 'employer':
                                     navigate('/employer/profile');
@@ -212,7 +212,7 @@ const EmployeeFileUploadForm = () => {
     };
 
     const handleGoBack = () => {
-        navigate('/employee-info');
+        navigate('/employee/profile');
     };
 
     return (

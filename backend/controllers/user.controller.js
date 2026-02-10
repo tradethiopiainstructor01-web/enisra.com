@@ -343,7 +343,7 @@ const getUserCounts = async (req, res) => {
 // Update user information based on user input
 const updateUserInfo = async (req, res) => {
     const { id } = req.params;
-    const userUpdates = req.body;
+    const userUpdates = { ...(req.body || {}) };
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(404).json({ success: false, message: "Invalid user ID" });
@@ -354,18 +354,33 @@ const updateUserInfo = async (req, res) => {
         if (!mongoose.connection.readyState) {
             return res.status(500).json({ success: false, message: "Database connection error" });
         }
+
+        // Never allow updating immutable/sensitive fields via the profile form payload.
+        delete userUpdates._id;
+        delete userUpdates.password;
+        delete userUpdates.role;
+        delete userUpdates.points;
+        delete userUpdates.rating;
+        delete userUpdates.requiresApproval;
         
         // Update user based on new information
-        const updatedUser = await User.findByIdAndUpdate(id, userUpdates, { new: true });
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            { $set: userUpdates },
+            { new: true, runValidators: true }
+        );
 
         if (!updatedUser) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        res.status(200).json({ success: true, message: "User information updated successfully!", data: updatedUser });
+        const userObj = updatedUser.toObject();
+        delete userObj.password;
+
+        res.status(200).json({ success: true, message: "User information updated successfully!", data: userObj });
     } catch (error) {
         console.error("Error updating user information:", error.message);
-        res.status(500).json({ success: false, message: "Failed to update user information" });
+        res.status(500).json({ success: false, message: "Failed to update user information", error: error.message });
     }
 };
 

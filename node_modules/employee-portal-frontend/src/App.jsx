@@ -13,7 +13,6 @@ import FifthPage from "./pages/FifthPage.jsx";
 import QuizPage from "./pages/quizPage.jsx";
 import PDFList from "./components/PDFList";
 import InfoForm from "./pages/InfoForm";
-import EmployeeInfoPage from "./pages/EmployeeInfoPage";
 import EmployeeFileUploadForm from "./pages/EmployeeFileUploadForm";
 import DocumentUploadForm from "./components/DocumentUploadForm";
 import DocumentList from "./components/DocumentList";
@@ -55,6 +54,10 @@ import EmployerPostJob from "./pages/employer/EmployerPostJob";
 import EmployerEmployees from "./pages/employer/EmployerEmployees";
 import EmployerPromotion from "./pages/employer/EmployerPromotion";
 import EmployerUpgradePackage from "./pages/employer/EmployerUpgradePackage";
+import EmployeeLayout from "./pages/employee/EmployeeLayout";
+import EmployeeProfile from "./pages/employee/EmployeeProfile";
+import EmployeeJobs from "./pages/employee/EmployeeJobs";
+import EmployeeCreateCV from "./pages/employee/EmployeeCreateCV";
 
 function App() {
   const location = useLocation();
@@ -66,6 +69,9 @@ function App() {
     "/secondpage",
     "/employee-info",
     "/employee-file-upload",
+    "/employee-jobs",
+    "/employee-create-cv",
+    "/employee",
     "/thirdpage",
     "/ttv",
     "/fourthpage",
@@ -114,7 +120,22 @@ function App() {
       <Route path="/exam" element={<QuizPage />} />
       <Route path="/WaitingForApproval" element={<WaitingForApproval />} />
       <Route path="/resource" element={<Navigate to="/resources" replace />} />
-      <Route path="/employee-info" element={<EmployeeInfoPage />} />
+      <Route
+        path="/employee"
+        element={
+          <ProtectedRoute>
+            <EmployeeLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Navigate to="profile" replace />} />
+        <Route path="profile" element={<EmployeeProfile />} />
+        <Route path="jobs" element={<EmployeeJobs />} />
+        <Route path="create-cv" element={<EmployeeCreateCV />} />
+      </Route>
+      <Route path="/employee-info" element={<Navigate to="/employee/profile" replace />} />
+      <Route path="/employee-jobs" element={<Navigate to="/employee/jobs" replace />} />
+      <Route path="/employee-create-cv" element={<Navigate to="/employee/create-cv" replace />} />
       <Route path="/employee-file-upload" element={<EmployeeFileUploadForm />} />
       <Route
         path="/users"

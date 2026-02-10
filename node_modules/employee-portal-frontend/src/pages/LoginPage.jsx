@@ -73,11 +73,11 @@ const LoginPage = () => {
 
       const roleRouteMap = {
         admin: '/admin',
-        employee: '/employee-info',
+        employee: '/employee/profile',
         employer: '/employer/profile',
-        customerservice: '/employee-info',
-        customersuccess: '/employee-info',
-        customersuccessmanager: '/employee-info',
+        customerservice: '/employee/profile',
+        customersuccess: '/employee/profile',
+        customersuccessmanager: '/employee/profile',
         hr: '/requests',
         sales: '/requests',
         salesmanager: '/requests',

@@ -1,10 +1,21 @@
-import { Box, Heading, IconButton, useColorMode, Flex } from '@chakra-ui/react';
-import { SunIcon, MoonIcon } from '@chakra-ui/icons';
+import { Box, Flex, Heading, IconButton, useBreakpointValue, useColorMode, useDisclosure } from '@chakra-ui/react';
+import { SunIcon, MoonIcon, HamburgerIcon } from '@chakra-ui/icons';
+import { useEffect, useState } from 'react';
 import EmployeeInfoForm from './EmployeeInfoForm';
-import Esidebar from './Esidebar';
+import EmployeeNavDrawer from '../components/employee/EmployeeNavDrawer';
+import EmployeeSidebar from '../components/employee/EmployeeSidebar';
 
 const EmployeeInfoPage = () => {
     const { colorMode, toggleColorMode } = useColorMode(); // Hook to get and toggle color mode
+    const { isOpen, onOpen, onClose } = useDisclosure();
+    const isDesktop = useBreakpointValue({ base: false, lg: true }) || false;
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(
+        () => localStorage.getItem('employeeSidebarCollapsed') === '1'
+    );
+
+    useEffect(() => {
+        localStorage.setItem('employeeSidebarCollapsed', sidebarCollapsed ? '1' : '0');
+    }, [sidebarCollapsed]);
 
     return (
 <Box
@@ -18,6 +29,22 @@ const EmployeeInfoPage = () => {
 >
 
             
+            {!isDesktop ? (
+                <IconButton
+                    aria-label="Open menu"
+                    icon={<HamburgerIcon />}
+                    position="absolute"
+                    top="4"
+                    left="4"
+                    onClick={onOpen}
+                    borderRadius="full"
+                    boxShadow="lg"
+                    size="lg"
+                    colorScheme="teal"
+                    mb={4}
+                />
+            ) : null}
+
             {/* Floating action button for theme toggle */}
             <IconButton
                 aria-label="Toggle theme"
@@ -36,13 +63,19 @@ const EmployeeInfoPage = () => {
 {/* Main content and sidebar */}
 <Flex
     direction={{ base: 'column', lg: 'row' }}
-    gap={8}
+    gap={6}
     align="flex-start"
     justify={{ base: 'flex-start', lg: 'center' }}  // Centering on larger screens
 >
+    {isDesktop ? (
+        <EmployeeSidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        />
+    ) : null}
     {/* Main content area */}
     <Flex
-        flex="3" // Increased the flex value for more space
+        flex="1"
         direction="column"
         bg={colorMode === 'light' ? 'white' : 'gray.700'}
         p={6}
@@ -55,19 +88,9 @@ const EmployeeInfoPage = () => {
         <EmployeeInfoForm />
     </Flex>
 
-    {/* Sidebar */}
-    <Flex
-        flex="1" // Minimized the flex value for the sidebar
-        justify="center" // Centering horizontally
-        align="center" // Centering vertically
-        bg={colorMode === 'light' ? 'white' : 'gray.700'}
-        p={6}
-        borderRadius="lg"
-        boxShadow="lg"
-    >
-        <Esidebar />
-    </Flex>
 </Flex>
+
+        <EmployeeNavDrawer isOpen={isOpen} onClose={onClose} />
         </Box>
     );
 };

@@ -159,7 +159,7 @@ const QuizPage = () => {
           enisra: '/enisra',
         };
 
-        navigate(roleRouteMap[normalizedRole] || '/employee-info');
+        navigate(roleRouteMap[normalizedRole] || '/employee/profile');
       } else {
         alert('Failed to update status: ' + response.data.message);
       }

@@ -29,7 +29,14 @@ import {
   ModalOverlay,
   Select,
   Stack,
+  Table,
+  TableContainer,
+  Tbody,
+  Td,
+  Th,
+  Thead,
   Text,
+  Tr,
   Tooltip,
   useBreakpointValue,
   useColorModeValue,
@@ -64,6 +71,7 @@ const AdminDashboard = () => {
   const borderColor = useColorModeValue("gray.200", "gray.700");
   const mutedText = useColorModeValue("gray.600", "gray.300");
   const highlightBg = useColorModeValue("green.50", "green.900");
+  const tableHeadBg = useColorModeValue("gray.50", "gray.900");
   const sidebarBg = useColorModeValue("white", "gray.800");
   const sidebarShadow = useColorModeValue("md", "dark-lg");
   const isMobile = useBreakpointValue({ base: true, lg: false });
@@ -227,7 +235,7 @@ const AdminDashboard = () => {
       description: "Browse registered employees and search employee accounts.",
       icon: FiUser,
       tone: "orange",
-      to: "/employee-info",
+      to: "/employee/profile",
       cta: "Open employee info form",
     },
   ];
@@ -730,6 +738,14 @@ const AdminDashboard = () => {
           .toLowerCase();
         return haystack.includes(normalizedQuery);
       });
+      const sortedEmployees = filteredEmployees
+        .slice()
+        .sort((a, b) =>
+          (a?.fullName || a?.username || "")
+            .toString()
+            .toLowerCase()
+            .localeCompare((b?.fullName || b?.username || "").toString().toLowerCase())
+        );
 
       return (
         <Stack spacing={4}>
@@ -784,64 +800,90 @@ const AdminDashboard = () => {
 
           {employeesLoading ? (
             <Text color={mutedText}>Loading employees...</Text>
-          ) : filteredEmployees.length ? (
+          ) : sortedEmployees.length ? (
             <Stack spacing={3}>
               <Text color={mutedText} fontSize="sm">
-                Showing {filteredEmployees.length} employee{filteredEmployees.length === 1 ? "" : "s"}.
+                Showing {sortedEmployees.length} employee{sortedEmployees.length === 1 ? "" : "s"}.
               </Text>
-              {filteredEmployees.map((user) => (
-                <Box
-                  key={user._id}
-                  p={4}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="md"
-                >
-                  <Flex justify="space-between" align="center" mb={1} gap={3} wrap="wrap">
-                    <Heading size="sm">
-                      {user.fullName || user.username || "Employee"}
-                    </Heading>
-                    <Badge colorScheme={user.status === "active" ? "green" : "red"}>
-                      {user.status || "unknown"}
-                    </Badge>
-                  </Flex>
-                  <Text fontSize="sm" color={mutedText}>
-                    {(user.email || "No email")}
-                    {getEmployeePhone(user) ? ` - ${getEmployeePhone(user)}` : ""}
-                    {user.role ? ` - ${user.role}` : ""}
-                    {user.jobTitle ? ` - ${user.jobTitle}` : ""}
-                  </Text>
-                  <Flex gap={2} mt={3} wrap="wrap">
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      leftIcon={<Icon as={FiEdit} />}
-                      onClick={() => openEditEmployeeModal(user)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      colorScheme="orange"
-                      leftIcon={<Icon as={FiPauseCircle} />}
-                      onClick={() => openHoldEmployeeModal(user)}
-                      isDisabled={user.status === "inactive"}
-                    >
-                      Hold
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      colorScheme="red"
-                      leftIcon={<Icon as={FiTrash2} />}
-                      onClick={() => openDeleteEmployeeModal(user)}
-                    >
-                      Delete
-                    </Button>
-                  </Flex>
-                </Box>
-              ))}
+              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md">
+                <Table size="sm" variant="simple">
+                  <Thead bg={tableHeadBg}>
+                    <Tr>
+                      <Th>Name</Th>
+                      <Th>Email</Th>
+                      <Th>Phone</Th>
+                      <Th>Job Title</Th>
+                      <Th>Status</Th>
+                      <Th textAlign="right">Actions</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {sortedEmployees.map((user) => (
+                      <Tr key={user._id}>
+                        <Td>
+                          <Text fontWeight="semibold">
+                            {user.fullName || user.username || "Employee"}
+                          </Text>
+                        </Td>
+                        <Td>
+                          <Text fontSize="sm" color={mutedText}>
+                            {user.email || "No email"}
+                          </Text>
+                        </Td>
+                        <Td>
+                          <Text fontSize="sm" color={mutedText}>
+                            {getEmployeePhone(user) || "N/A"}
+                          </Text>
+                        </Td>
+                        <Td>
+                          <Text fontSize="sm" color={mutedText}>
+                            {user.jobTitle || "-"}
+                          </Text>
+                        </Td>
+                        <Td>
+                          <Badge colorScheme={user.status === "active" ? "green" : "red"}>
+                            {user.status || "unknown"}
+                          </Badge>
+                        </Td>
+                        <Td>
+                          <Flex justify="flex-end" gap={1} wrap="wrap">
+                            <Tooltip label="Edit">
+                              <IconButton
+                                aria-label="Edit employee"
+                                size="xs"
+                                variant="ghost"
+                                icon={<Icon as={FiEdit} />}
+                                onClick={() => openEditEmployeeModal(user)}
+                              />
+                            </Tooltip>
+                            <Tooltip label="Hold (set inactive)">
+                              <IconButton
+                                aria-label="Hold employee"
+                                size="xs"
+                                variant="ghost"
+                                colorScheme="orange"
+                                icon={<Icon as={FiPauseCircle} />}
+                                onClick={() => openHoldEmployeeModal(user)}
+                                isDisabled={user.status === "inactive"}
+                              />
+                            </Tooltip>
+                            <Tooltip label="Delete">
+                              <IconButton
+                                aria-label="Delete employee"
+                                size="xs"
+                                variant="ghost"
+                                colorScheme="red"
+                                icon={<Icon as={FiTrash2} />}
+                                onClick={() => openDeleteEmployeeModal(user)}
+                              />
+                            </Tooltip>
+                          </Flex>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </TableContainer>
             </Stack>
           ) : (
             <Text color={mutedText}>No employees found.</Text>
