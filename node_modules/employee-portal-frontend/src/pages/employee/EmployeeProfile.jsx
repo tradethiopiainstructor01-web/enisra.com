@@ -42,6 +42,7 @@ import { useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { useUserStore } from '../../store/user';
 import EmployeeInfoForm from '../EmployeeInfoForm';
+import { MIN_CV_PROFILE_COMPLETION, getEmployeeProfileCompletion } from '../../utils/employeeProfileCompletion';
 
 const safeFormatDate = (value) => {
   if (!value) return '';
@@ -160,6 +161,9 @@ const EmployeeProfile = () => {
   }, [profile]);
 
   const isInfoComplete = (profile?.infoStatus || '').toString().toLowerCase() === 'completed';
+  const profileCompletion = useMemo(() => getEmployeeProfileCompletion(profile), [profile]);
+  const canCreateCv = Boolean(profile) && !loading && profileCompletion.meetsCvRequirement;
+  const cvRequirementMessage = `Complete at least ${MIN_CV_PROFILE_COMPLETION}% of your profile to create a CV. Current completion: ${profileCompletion.percentage}%.`;
 
   return (
     <Tabs index={activeTab} onChange={setActiveTab} variant="enclosed" colorScheme="teal">
@@ -212,48 +216,59 @@ const EmployeeProfile = () => {
                         {profile?.status || currentUser?.status || 'active'}
                       </Badge>
                       <Badge bg="whiteAlpha.200" borderWidth="1px" borderColor="whiteAlpha.300" borderRadius="full">
+                        {loading ? 'Profile --' : `Profile ${profileCompletion.percentage}%`}
+                      </Badge>
+                      <Badge bg="whiteAlpha.200" borderWidth="1px" borderColor="whiteAlpha.300" borderRadius="full">
                         {isInfoComplete ? 'Profile completed' : 'Profile pending'}
                       </Badge>
                     </HStack>
                   </Box>
                 </HStack>
 
-                <HStack spacing={2} flexWrap="wrap">
-                  <Button
-                    leftIcon={<Icon as={FiRefreshCw} />}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchProfile()}
-                    isLoading={loading}
-                  >
-                    Refresh
-                  </Button>
-                  <Button
-                    leftIcon={<Icon as={FiEdit} />}
-                    variant="solid"
-                    colorScheme="blackAlpha"
-                    size="sm"
-                    onClick={() => setActiveTab(1)}
-                  >
-                    Edit profile
-                  </Button>
-                  <Button
-                    leftIcon={<Icon as={FiBriefcase} />}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/employee/jobs')}
-                  >
-                    Jobs
-                  </Button>
-                  <Button
-                    leftIcon={<Icon as={FiFileText} />}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/employee/create-cv')}
-                  >
-                    Create CV
-                  </Button>
-                </HStack>
+                <Stack spacing={2} align={{ base: 'stretch', md: 'flex-end' }}>
+                  <HStack spacing={2} flexWrap="wrap">
+                    <Button
+                      leftIcon={<Icon as={FiRefreshCw} />}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchProfile()}
+                      isLoading={loading}
+                    >
+                      Refresh
+                    </Button>
+                    <Button
+                      leftIcon={<Icon as={FiEdit} />}
+                      variant="solid"
+                      colorScheme="blackAlpha"
+                      size="sm"
+                      onClick={() => setActiveTab(1)}
+                    >
+                      Edit profile
+                    </Button>
+                    <Button
+                      leftIcon={<Icon as={FiBriefcase} />}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/employee/jobs')}
+                    >
+                      Jobs
+                    </Button>
+                    <Button
+                      leftIcon={<Icon as={FiFileText} />}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/employee/create-cv')}
+                      isDisabled={!canCreateCv}
+                    >
+                      Create CV
+                    </Button>
+                  </HStack>
+                  {!loading && profile && !canCreateCv ? (
+                    <Text fontSize="xs" color="orange.100" maxW="340px">
+                      {cvRequirementMessage}
+                    </Text>
+                  ) : null}
+                </Stack>
               </Flex>
             </Box>
 
@@ -386,9 +401,15 @@ const EmployeeProfile = () => {
                         mt={4}
                         variant="outline"
                         onClick={() => navigate('/employee/create-cv')}
+                        isDisabled={!canCreateCv}
                       >
                         Download CV PDF
                       </Button>
+                      {!loading && profile && !canCreateCv ? (
+                        <Text fontSize="xs" color={mutedText} mt={2}>
+                          {cvRequirementMessage}
+                        </Text>
+                      ) : null}
                     </CardBody>
                   </Card>
                 </SimpleGrid>
@@ -412,6 +433,7 @@ const EmployeeProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => navigate('/employee/create-cv')}
+                  isDisabled={!canCreateCv}
                 >
                   Create CV
                 </Button>

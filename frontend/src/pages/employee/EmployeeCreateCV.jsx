@@ -20,6 +20,7 @@ import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserStore } from '../../store/user';
+import { MIN_CV_PROFILE_COMPLETION, getEmployeeProfileCompletion } from '../../utils/employeeProfileCompletion';
 
 const formatMonthYear = (value) => {
   if (!value) return '';
@@ -145,9 +146,12 @@ const EmployeeCreateCV = () => {
     .join(', ');
 
   const joinedLabel = safeFormatDate(profile?.hireDate);
+  const profileCompletion = useMemo(() => getEmployeeProfileCompletion(profile), [profile]);
+  const canCreateCv = profileCompletion.meetsCvRequirement;
+  const missingForCv = profileCompletion.missing.slice(0, 6);
 
   const handleDownloadPdf = async () => {
-    if (!cvRef.current) return;
+    if (!cvRef.current || !canCreateCv) return;
 
     setIsExporting(true);
     try {
@@ -211,13 +215,30 @@ const EmployeeCreateCV = () => {
             <Text fontSize="sm" color={mutedText} mt={1}>
               Export a clean CV built from your saved profile.
             </Text>
+            {!isLoading && profile ? (
+              <HStack spacing={2} mt={2} flexWrap="wrap">
+                <Badge colorScheme={canCreateCv ? 'green' : 'orange'}>
+                  Profile {profileCompletion.percentage}%
+                </Badge>
+                {!canCreateCv ? (
+                  <Badge colorScheme="red">
+                    Minimum {MIN_CV_PROFILE_COMPLETION}% required
+                  </Badge>
+                ) : null}
+              </HStack>
+            ) : null}
           </Box>
 
           <HStack spacing={2} flexWrap="wrap">
-            <Button colorScheme="teal" onClick={handleDownloadPdf} isLoading={isExporting} isDisabled={!profile || isLoading}>
+            <Button
+              colorScheme="teal"
+              onClick={handleDownloadPdf}
+              isLoading={isExporting}
+              isDisabled={!profile || isLoading || !canCreateCv}
+            >
               Download PDF
             </Button>
-            <Button variant="outline" onClick={() => window.print()} isDisabled={!profile || isLoading}>
+            <Button variant="outline" onClick={() => window.print()} isDisabled={!profile || isLoading || !canCreateCv}>
               Print
             </Button>
           </HStack>
@@ -229,6 +250,34 @@ const EmployeeCreateCV = () => {
           </Flex>
         ) : !profile ? (
           <Text color={mutedText}>Please login and complete your profile first.</Text>
+        ) : !canCreateCv ? (
+          <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={5}>
+            <Text fontWeight="semibold" color="orange.500">
+              Complete at least {MIN_CV_PROFILE_COMPLETION}% of your profile to build a CV.
+            </Text>
+            <Text color={mutedText} mt={2}>
+              Current completion: {profileCompletion.percentage}%.
+            </Text>
+            {missingForCv.length ? (
+              <Box mt={4}>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Missing profile sections:
+                </Text>
+                <VStack align="start" spacing={1} mt={2}>
+                  {missingForCv.map((item) => (
+                    <Text key={item.key} fontSize="sm" color={mutedText}>
+                      - {item.label}
+                    </Text>
+                  ))}
+                </VStack>
+                {profileCompletion.missing.length > missingForCv.length ? (
+                  <Text fontSize="sm" color={mutedText} mt={2}>
+                    ...and {profileCompletion.missing.length - missingForCv.length} more
+                  </Text>
+                ) : null}
+              </Box>
+            ) : null}
+          </Box>
         ) : (
           <Box ref={cvRef} bg="white" color="gray.900" borderRadius="lg" overflow="hidden" borderWidth="1px">
             <Box
