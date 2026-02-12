@@ -390,9 +390,6 @@ const WelcomePage = () => {
                 <Heading size="2xl" color={textPrimary}>
                   Enisra connects you to trusted jobs + scholarships.
                 </Heading>
-                <Text color={textSecondary} fontSize="lg">
-                  Scan curated listings, join Telegram alerts, and secure verified international placements with ease.
-                </Text>
                 <Stack spacing={3} w="100%">
                   <Box maxW={{ base: '100%', md: '460px' }} w="100%">
                     <InputGroup size="sm">
