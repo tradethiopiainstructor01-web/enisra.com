@@ -25,6 +25,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserStore } from '../store/user';
 import EmployeeNavDrawer from '../components/employee/EmployeeNavDrawer';
 import EmployeeSidebar from '../components/employee/EmployeeSidebar';
+import {
+  downloadBlob,
+  isLikelyMobileBrowser,
+  tryShareBlobAsFile,
+} from '../utils/fileDownload';
 
 const formatMonthYear = (value) => {
   if (!value) return '';
@@ -135,13 +140,16 @@ const EmployeeCreateCVPage = () => {
   const handleDownloadPdf = async () => {
     if (!cvRef.current) return;
 
+    const filename = `CV_${fullName.replace(/\s+/g, '_')}.pdf`;
+    const isMobile = isLikelyMobileBrowser();
+
     setIsExporting(true);
     try {
       // Allow the UI to hide any external images before capture.
       await new Promise((r) => setTimeout(r, 50));
 
       const canvas = await html2canvas(cvRef.current, {
-        scale: 2,
+        scale: isMobile ? 1.5 : 2,
         useCORS: true,
         backgroundColor: '#ffffff',
       });
@@ -168,8 +176,21 @@ const EmployeeCreateCVPage = () => {
         heightLeft -= pdfHeight;
       }
 
-      const filename = `CV_${fullName.replace(/\s+/g, '_')}.pdf`;
-      pdf.save(filename);
+      const blob = pdf.output('blob');
+
+      if (isMobile) {
+        const shared = await tryShareBlobAsFile(blob, filename, { title: filename });
+        if (shared) return;
+
+        // Mobile browsers often block programmatic "downloads". Navigating to the PDF is more reliable.
+        const url = URL.createObjectURL(blob);
+        setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000);
+        const opened = window.open(url, '_blank');
+        if (!opened) window.location.assign(url);
+        return;
+      }
+
+      downloadBlob(blob, filename);
     } catch (error) {
       toast({
         title: 'Export failed',

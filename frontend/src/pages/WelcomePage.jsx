@@ -42,7 +42,7 @@ import {
   FaTelegramPlane,
   FaUserCircle,
 } from 'react-icons/fa';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
 
 const heroCards = [
@@ -148,7 +148,10 @@ const WelcomePage = () => {
   const [partners, setPartners] = useState([]);
   const [partnersLoading, setPartnersLoading] = useState(true);
   const [partnersError, setPartnersError] = useState(null);
+  const [partnersRepeatCount, setPartnersRepeatCount] = useState(2);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const partnersCarouselRef = useRef(null);
+  const partnersCarouselPausedRef = useRef(false);
 
   const locationOptions = useMemo(() => {
     const values = jobs.map((job) => job.location).filter(Boolean);
@@ -209,6 +212,15 @@ const WelcomePage = () => {
 
   const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 3);
   const partnerList = partners.length ? partners : partnerCompanies;
+  const partnersCarouselItems = useMemo(() => {
+    if (!partnerList.length) return [];
+    const repeats = Math.max(1, partnersRepeatCount);
+    const items = [];
+    for (let i = 0; i < repeats; i += 1) {
+      items.push(...partnerList);
+    }
+    return items;
+  }, [partnerList, partnersRepeatCount]);
 
 
   useEffect(() => {
@@ -266,6 +278,91 @@ const WelcomePage = () => {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const el = partnersCarouselRef.current;
+    if (!el) return;
+    if (partnersLoading || partnersError) return;
+    if (partnerList.length < 2) return;
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) return;
+
+    // Ensure we have enough repeated content so the loop point is reachable even on wide screens.
+    const cycleStart = el.children?.[partnerList.length];
+    const cycleLength = cycleStart ? cycleStart.offsetLeft : 0;
+    const clientWidth = el.clientWidth || 0;
+    const halfCycles =
+      cycleLength > 0 && clientWidth > 0 ? Math.max(1, Math.ceil(clientWidth / cycleLength)) : 1;
+    const desiredRepeatCount = halfCycles * 2;
+
+    if (desiredRepeatCount !== partnersRepeatCount) {
+      setPartnersRepeatCount(desiredRepeatCount);
+      return;
+    }
+
+    // Reset so the loop always starts clean when partners data changes.
+    el.scrollLeft = 0;
+
+    let loopPoint = 0;
+    const updateLoopPoint = () => {
+      const loopIndex = partnerList.length * halfCycles;
+      const loopChild = el.children?.[loopIndex];
+      loopPoint = loopChild ? loopChild.offsetLeft : el.scrollWidth / 2;
+    };
+
+    const handleResize = () => {
+      // Re-evaluate repeats if the container width changes (responsive / orientation changes).
+      const nextCycleStart = el.children?.[partnerList.length];
+      const nextCycleLength = nextCycleStart ? nextCycleStart.offsetLeft : 0;
+      const nextClientWidth = el.clientWidth || 0;
+      const nextHalfCycles =
+        nextCycleLength > 0 && nextClientWidth > 0
+          ? Math.max(1, Math.ceil(nextClientWidth / nextCycleLength))
+          : 1;
+      const nextRepeatCount = nextHalfCycles * 2;
+
+      if (nextRepeatCount !== partnersRepeatCount) {
+        setPartnersRepeatCount(nextRepeatCount);
+        return;
+      }
+
+      updateLoopPoint();
+    };
+
+    updateLoopPoint();
+    window.addEventListener('resize', handleResize);
+
+    // Pixels per second. Keep it gentle so logos remain readable.
+    const speed = 28;
+    let rafId = 0;
+    let lastTs = performance.now();
+
+    const tick = (ts) => {
+      const delta = ts - lastTs;
+      lastTs = ts;
+
+      if (!partnersCarouselPausedRef.current) {
+        el.scrollLeft += (speed * delta) / 1000;
+
+        if (loopPoint > 0 && el.scrollLeft >= loopPoint) {
+          el.scrollLeft -= loopPoint;
+        }
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [partnersLoading, partnersError, partnerList, partnersRepeatCount]);
 
   return (
     <Box minH="100vh" bg={bgMain} color={textPrimary}>
@@ -721,11 +818,37 @@ const WelcomePage = () => {
               </Badge>
             </Flex>
             <Flex
+              ref={partnersCarouselRef}
               gap={4}
               flexWrap="nowrap"
               overflowX="auto"
               pb={2}
-              sx={{ scrollSnapType: 'x mandatory' }}
+              onMouseEnter={() => {
+                partnersCarouselPausedRef.current = true;
+              }}
+              onMouseLeave={() => {
+                partnersCarouselPausedRef.current = false;
+              }}
+              onPointerDown={() => {
+                partnersCarouselPausedRef.current = true;
+              }}
+              onPointerUp={() => {
+                partnersCarouselPausedRef.current = false;
+              }}
+              onTouchStart={() => {
+                partnersCarouselPausedRef.current = true;
+              }}
+              onTouchEnd={() => {
+                partnersCarouselPausedRef.current = false;
+              }}
+              onTouchCancel={() => {
+                partnersCarouselPausedRef.current = false;
+              }}
+              sx={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+              }}
             >
               {partnersLoading ? (
                 <Flex align="center" gap={2} py={4}>
@@ -735,16 +858,16 @@ const WelcomePage = () => {
               ) : partnersError ? (
                 <Text color={warning}>{partnersError}</Text>
               ) : (
-                partnerList.map((company) => (
+                partnersCarouselItems.map((company, idx) => (
                   <Box
-                    key={company._id || company.name}
+                    // Duplicate items for looping, so index is part of the key.
+                    key={`${company._id || company.name}-${idx}`}
                     minW={{ base: '160px', md: '200px' }}
                     bg={softGreenBg}
                     borderRadius="xl"
                     border="1px solid"
                     borderColor={border}
                     p={4}
-                    sx={{ scrollSnapAlign: 'start' }}
                   >
                     <Center
                       boxSize={16}
