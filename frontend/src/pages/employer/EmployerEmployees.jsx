@@ -102,7 +102,7 @@ const EmployerEmployees = () => {
         </CardHeader>
         <CardBody>
           <Stack spacing={6}>
-            <SimpleGrid columns={{ base: 2, md: 3, lg: 6 }} spacing={4}>
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 6 }} spacing={4}>
               {STATUS_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
@@ -157,8 +157,8 @@ const EmployerEmployees = () => {
               </FormControl>
             </SimpleGrid>
 
-            <TableContainer>
-              <Table size="sm">
+            <TableContainer overflowX="auto" sx={{ WebkitOverflowScrolling: "touch" }}>
+              <Table size="sm" minW={{ base: "760px", md: "full" }}>
                 <Thead>
                   <Tr>
                     <Th>Applicant</Th>

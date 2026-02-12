@@ -53,6 +53,7 @@ exports.listJobs = async (req, res) => {
         { department: qRegex },
         { category: qRegex },
         { location: qRegex },
+        { address: qRegex },
         { type: qRegex },
       ];
     }
@@ -106,6 +107,7 @@ exports.createJob = async (req, res) => {
       department: toTrimmedString(req.body.department),
       category: toTrimmedString(req.body.category),
       location: toTrimmedString(req.body.location),
+      address: toTrimmedString(req.body.address),
       type: toTrimmedString(req.body.type),
       salary: toTrimmedString(req.body.salary),
       description: toTrimmedString(req.body.description),

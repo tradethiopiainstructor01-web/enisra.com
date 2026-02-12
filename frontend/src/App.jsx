@@ -66,6 +66,7 @@ function App() {
   const noNavSidebarRoutes = [
     "/",
     "/login",
+    "/register",
     "/secondpage",
     "/employee-info",
     "/employee-file-upload",
@@ -88,6 +89,7 @@ function App() {
     "/supervisor",
     "/supervisor/account",
     "/employer",
+    "/InfoForm",
   ].map((path) => path.toLowerCase());
 
   // Hide the navbar and sidebar for legacy/fullscreen pages; root should only match exactly

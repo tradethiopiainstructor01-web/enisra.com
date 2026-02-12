@@ -42,6 +42,7 @@ const EmployerPostJob = () => {
     department: "",
     category: "",
     location: "",
+    address: "",
     type: "",
     salary: "",
     deadline: "",
@@ -108,6 +109,7 @@ const EmployerPostJob = () => {
       department: jobForm.department.trim(),
       category: jobForm.category.trim(),
       location: jobForm.location.trim(),
+      address: jobForm.address.trim(),
       type: jobForm.type.trim(),
       salary: jobForm.salary.trim(),
       deadline: jobForm.deadline || undefined,
@@ -132,6 +134,7 @@ const EmployerPostJob = () => {
         department: "",
         category: "",
         location: "",
+        address: "",
         type: "",
         salary: "",
         deadline: "",
@@ -224,7 +227,7 @@ const EmployerPostJob = () => {
                   onChange={handleFormChange("title")}
                 />
               </FormControl>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl>
                   <FormLabel>Department</FormLabel>
                   <Input
@@ -241,12 +244,22 @@ const EmployerPostJob = () => {
                     onChange={handleFormChange("category")}
                   />
                 </FormControl>
+              </SimpleGrid>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl isRequired>
                   <FormLabel>Location</FormLabel>
                   <Input
                     placeholder="Addis Ababa"
                     value={jobForm.location}
                     onChange={handleFormChange("location")}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Address</FormLabel>
+                  <Input
+                    placeholder="Street / office address"
+                    value={jobForm.address}
+                    onChange={handleFormChange("address")}
                   />
                 </FormControl>
               </SimpleGrid>
@@ -360,7 +373,9 @@ const EmployerPostJob = () => {
                               <Badge colorScheme="green">{applicantCount} applicants</Badge>
                             </Flex>
                             <Text fontSize="sm" color={mutedText}>
-                              {job.category || job.department || "General"} - {job.location} - {job.type}
+                              {job.category || job.department || "General"} -{' '}
+                              {job.location}
+                              {job.address ? `, ${job.address}` : ''} - {job.type}
                             </Text>
                             <Text fontSize="xs" color={mutedText}>
                               Posted {formatDate(job.postedAt)}

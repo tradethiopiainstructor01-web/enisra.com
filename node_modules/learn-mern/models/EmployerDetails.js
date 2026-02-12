@@ -12,6 +12,7 @@ const employerDetailsSchema = new mongoose.Schema(
     employerId: { type: String, required: true, trim: true },
     companyName: { type: String, required: true, trim: true },
     industry: { type: String, required: true, trim: true },
+    category: { type: String, required: true, trim: true },
     companyLocation: { type: String, required: true, trim: true },
     contactPerson: { type: String, required: true, trim: true },
     contactEmail: { type: String, required: true, trim: true },

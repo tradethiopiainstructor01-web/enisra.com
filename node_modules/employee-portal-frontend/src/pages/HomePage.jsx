@@ -68,14 +68,15 @@ const HomePage = () => {
     };
 
     return (
-        <Container maxW='container.xl' py={12} px={4} mt={-16}>
+        <Container maxW='container.xl' py={{ base: 6, sm: 8, md: 12 }} px={{ base: 2, sm: 3, md: 4 }} mt={{ base: -8, sm: -12, md: -16 }}>
             <VStack spacing={8}>
                 <Text
-                    fontSize="30"
+                    fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
                     fontWeight="bold"
                     bgGradient="linear(to-r, cyan.400, blue.500)"
                     bgClip="text"
                     textAlign="center"
+                    lineHeight="1.2"
                 >
                     List of User Accounts 📜
                 </Text>
@@ -84,40 +85,50 @@ const HomePage = () => {
                     width="full" 
                     maxW="800px" 
                     bg={useColorModeValue("gray.50", "gray.800")} 
-                    p={5} 
-                    borderRadius="md" 
+                    p={{ base: 3, sm: 4, md: 5 }} 
+                    borderRadius="lg" 
                     boxShadow="md"
                 >
-                    <HStack 
-                        spacing={4} 
-                        alignItems="flex-start" 
-                        justifyContent={{ base: "flex-start", md: "space-between" }} 
-                        wrap="wrap"
+                    <VStack 
+                        spacing={{ base: 3, sm: 4 }} 
+                        align="stretch"
+                        width="full"
                     >
-                        <InputGroup flex={1} maxW={{ base: "100%", md: "260px" }}>
-                            <InputLeftElement pointerEvents="none">
-                                <SearchIcon color={useColorModeValue("gray.500", "gray.300")} />
-                            </InputLeftElement>
-                            <Input
-                                type="text"
-                                placeholder="Search by username or email..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                size="lg"
-                                borderRadius="md"
-                                focusBorderColor={useColorModeValue("blue.400", "blue.300")}
+                        <HStack 
+                            spacing={{ base: 2, sm: 3, md: 4 }} 
+                            alignItems="center" 
+                            justifyContent={{ base: "stretch", sm: "stretch", md: "space-between" }} 
+                            wrap={{ base: "wrap", sm: "wrap", md: "nowrap" }}
+                            width="full"
+                        >
+                            <InputGroup flex={{ base: "1", sm: "1", md: "1" }} maxW={{ base: "100%", sm: "100%", md: "260px" }}>
+                                <InputLeftElement pointerEvents="none">
+                                    <SearchIcon color={useColorModeValue("gray.500", "gray.300")} boxSize={4} />
+                                </InputLeftElement>
+                                <Input
+                                    type="text"
+                                    placeholder="Search by username or email..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    size={{ base: "md", sm: "lg", md: "lg" }}
+                                    borderRadius="md"
+                                    focusBorderColor={useColorModeValue("blue.400", "blue.300")}
+                                    bg={useColorModeValue("white", "gray.700")}
+                                    color={useColorModeValue("black", "white")}
+                                    minH="44px"
+                                    pr={10}
+                                />
+                            </InputGroup>
+                            <Select 
+                                placeholder="Select role" 
+                                onChange={(e) => setSelectedRole(e.target.value)} 
+                                maxW={{ base: "100%", sm: "100%", md: "200px" }}
                                 bg={useColorModeValue("white", "gray.700")}
                                 color={useColorModeValue("black", "white")}
-                            />
-                        </InputGroup>
-                        <Select 
-                            placeholder="Select role" 
-                            onChange={(e) => setSelectedRole(e.target.value)} 
-                            maxW={{ base: "100%", md: "200px" }} // Adjust max width for responsiveness
-                            bg={useColorModeValue("white", "gray.700")}
-                            color={useColorModeValue("black", "white")}
-                            borderColor={useColorModeValue("gray.300", "gray.600")}
-                        >
+                                borderColor={useColorModeValue("gray.300", "gray.600")}
+                                size={{ base: "md", sm: "lg", md: "lg" }}
+                                minH="44px"
+                            >
                             <option value="admin">Admin</option>
                             <option value="employee">Employee</option>
                             <option value="supervisor">Supervisor</option>
@@ -133,33 +144,43 @@ const HomePage = () => {
                             <option value="eventmanager">Event Manager</option>          
                                           </Select>
 
-                        <HStack spacing={2}>
-                            <IconButton 
-                                aria-label="Add User" 
-                                icon={<AddIcon />} 
-                                colorScheme="teal" 
-                                onClick={onOpen}
-                                size="lg"
-                                variant="outline"
-                            />
-                            <IconButton 
-                                aria-label="Refresh Users" 
-                                icon={<RepeatIcon />} 
-                                colorScheme="blue" 
-                                onClick={handleRefresh}
-                                size="lg"
-                                variant="outline"
-                            />
-                            <IconButton 
-                                aria-label="Sort Users" 
-                                icon={<ArrowUpDownIcon />} 
-                                colorScheme="purple" 
-                                onClick={toggleSortOrder}
-                                size="lg"
-                                variant="outline"
-                            />
+                            <HStack spacing={{ base: 1, sm: 2 }} wrap="wrap" justifyContent="flex-end">
+                                <IconButton 
+                                    aria-label="Add User" 
+                                    icon={<AddIcon />} 
+                                    colorScheme="teal" 
+                                    onClick={onOpen}
+                                    size={{ base: "sm", sm: "md", md: "lg" }}
+                                    variant="outline"
+                                    minW="44px"
+                                    minH="44px"
+                                    borderRadius="full"
+                                />
+                                <IconButton 
+                                    aria-label="Refresh Users" 
+                                    icon={<RepeatIcon />} 
+                                    colorScheme="blue" 
+                                    onClick={handleRefresh}
+                                    size={{ base: "sm", sm: "md", md: "lg" }}
+                                    variant="outline"
+                                    minW="44px"
+                                    minH="44px"
+                                    borderRadius="full"
+                                />
+                                <IconButton 
+                                    aria-label="Sort Users" 
+                                    icon={<ArrowUpDownIcon />} 
+                                    colorScheme="purple" 
+                                    onClick={toggleSortOrder}
+                                    size={{ base: "sm", sm: "md", md: "lg" }}
+                                    variant="outline"
+                                    minW="44px"
+                                    minH="44px"
+                                    borderRadius="full"
+                                />
+                            </HStack>
                         </HStack>
-                    </HStack>
+                    </VStack>
                 </Box>
 
                 <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
@@ -174,24 +195,46 @@ const HomePage = () => {
                 </Drawer>
 
                 {loading ? (
-                    <Spinner size="xl" color="blue.500" />
+                    <Flex justify="center" align="center" height="200px">
+                        <Spinner 
+                            size={{ base: "lg", sm: "xl", md: "xl" }} 
+                            color="blue.500" 
+                            thickness="4px"
+                        />
+                    </Flex>
                 ) : error ? (
-                    <Alert status="error" variant="left-accent">
-                        <AlertIcon />
-                        {error}
+                    <Alert 
+                        status="error" 
+                        variant="left-accent"
+                        borderRadius="lg"
+                        boxShadow="md"
+                    >
+                        <AlertIcon boxSize={5} />
+                        <Text fontSize={{ base: "sm", sm: "md" }}>{error}</Text>
                     </Alert>
                 ) : sortedUsers.length === 0 ? (
-                    <Text fontSize="xl" textAlign="center" fontWeight='bold' color="gray.500">
-                        No User found! 😢{" "}
-                    </Text>
+                    <Box textAlign="center" py={10}>
+                        <Text 
+                            fontSize={{ base: "lg", sm: "xl", md: "2xl" }} 
+                            fontWeight="bold" 
+                            color="gray.500"
+                            mb={2}
+                        >
+                            No Users Found 😢
+                        </Text>
+                        <Text color="gray.400" fontSize={{ base: "sm", sm: "md" }}>
+                            Try adjusting your search criteria
+                        </Text>
+                    </Box>
                 ) : (
                     <SimpleGrid
                         columns={{
                             base: 1,
+                            sm: 1,
                             md: 2,
                             lg: 3
                         }}
-                        spacing={10}
+                        spacing={{ base: 4, sm: 6, md: 8 }}
                         w="full"
                     >
                         {sortedUsers.map((user) => (

@@ -48,6 +48,7 @@ const registrationAnalyticsRoutes = require('./routes/registrationAnalyticsRoute
 const jobRoutes = require('./routes/jobRoutes.js');
 const partnerCompanyRoutes = require('./routes/partnerCompanyRoutes.js');
 const adminRoutes = require('./routes/adminRoutes.js');
+const employerCategoryRoutes = require('./routes/employerCategoryRoutes.js');
 // Load environment variables
 
 // Initialize Express app
@@ -284,6 +285,7 @@ app.use('/api/awards', awardRoutes);
 
 app.use('/api/employer-profile', employerProfileRoutes);
 app.use('/api/employer-details', employerDetailsRoutes);
+app.use('/api/employer-categories', employerCategoryRoutes);
 app.use('/api/analytics/registrations', registrationAnalyticsRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/partners', partnerCompanyRoutes);

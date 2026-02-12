@@ -178,6 +178,7 @@ const EmployerDashboard = () => {
     employerId: "",
     companyName: "",
     industry: "",
+    category: "",
     companyLocation: "",
     contactPerson: "",
     contactEmail: "",
@@ -186,6 +187,9 @@ const EmployerDashboard = () => {
     jobPostingCredits: "",
     contractEndDate: "",
   });
+  const [employerCategories, setEmployerCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState("");
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [detailsSaving, setDetailsSaving] = useState(false);
   const [jobForm, setJobForm] = useState({
@@ -193,6 +197,7 @@ const EmployerDashboard = () => {
     department: "",
     category: "",
     location: "",
+    address: "",
     type: "",
     salary: "",
     deadline: "",
@@ -243,6 +248,7 @@ const EmployerDashboard = () => {
             employerId: payload.employerId || "",
             companyName: payload.companyName || "",
             industry: payload.industry || "",
+            category: payload.category || "",
             companyLocation: payload.companyLocation || "",
             contactPerson: payload.contactPerson || "",
             contactEmail: payload.contactEmail || "",
@@ -276,6 +282,41 @@ const EmployerDashboard = () => {
       isMounted = false;
     };
   }, [currentUser?.token, toast]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      setCategoriesLoading(true);
+      setCategoriesError("");
+      try {
+        const response = await apiClient.get("/employer-categories");
+        const payload = response?.data?.data ?? response?.data ?? [];
+        if (!isMounted) return;
+        setEmployerCategories(Array.isArray(payload) ? payload : []);
+      } catch (error) {
+        if (!isMounted) return;
+        setEmployerCategories([]);
+        const message = error?.message || "Failed to load categories.";
+        setCategoriesError(message);
+        toast({
+          title: "Failed to load categories",
+          description: message,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      } finally {
+        if (isMounted) setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast]);
 
   const applicantsForJob = useMemo(() => {
     if (!selectedJobId) return applicants;
@@ -391,6 +432,7 @@ const EmployerDashboard = () => {
       department: jobForm.department.trim(),
       category: jobForm.category.trim(),
       location: jobForm.location.trim(),
+      address: jobForm.address.trim(),
       type: jobForm.type.trim(),
       salary: jobForm.salary.trim(),
       deadline: jobForm.deadline || undefined,
@@ -415,6 +457,7 @@ const EmployerDashboard = () => {
         department: "",
         category: "",
         location: "",
+        address: "",
         type: "",
         salary: "",
         deadline: "",
@@ -635,6 +678,46 @@ const EmployerDashboard = () => {
                             isDisabled={detailsLoading}
                           />
                         </FormControl>
+                        <FormControl isRequired>
+                          <FormLabel>Category</FormLabel>
+                          <Select
+                            placeholder={
+                              categoriesLoading
+                                ? "Loading categories..."
+                                : employerCategories.length
+                                ? "Select category"
+                                : "No categories available"
+                            }
+                            value={employerDetails.category}
+                            onChange={handleEmployerFormChange("category")}
+                            isDisabled={detailsLoading || categoriesLoading}
+                          >
+                            {employerDetails.category &&
+                            !employerCategories.some(
+                              (item) =>
+                                (item?.name || "").toString().toLowerCase() ===
+                                employerDetails.category.toString().toLowerCase()
+                            ) ? (
+                              <option value={employerDetails.category}>
+                                {employerDetails.category} (inactive)
+                              </option>
+                            ) : null}
+                            {employerCategories.map((item) => (
+                              <option key={item._id || item.name} value={item.name}>
+                                {item.name}
+                              </option>
+                            ))}
+                          </Select>
+                          {categoriesError ? (
+                            <Text fontSize="xs" color="red.500" mt={2}>
+                              {categoriesError}
+                            </Text>
+                          ) : !categoriesLoading && employerCategories.length === 0 ? (
+                            <Text fontSize="xs" color={mutedText} mt={2}>
+                              No categories configured yet. Ask an admin to add categories in the Admin Dashboard.
+                            </Text>
+                          ) : null}
+                        </FormControl>
                         <FormControl>
                           <FormLabel>Company Location</FormLabel>
                           <Input
@@ -797,7 +880,7 @@ const EmployerDashboard = () => {
                       onChange={handleFormChange("title")}
                     />
                   </FormControl>
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <FormControl>
                       <FormLabel>Department</FormLabel>
                       <Input
@@ -814,12 +897,22 @@ const EmployerDashboard = () => {
                         onChange={handleFormChange("category")}
                       />
                     </FormControl>
+                  </SimpleGrid>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <FormControl isRequired>
                       <FormLabel>Location</FormLabel>
                       <Input
                         placeholder="Addis Ababa"
                         value={jobForm.location}
                         onChange={handleFormChange("location")}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Address</FormLabel>
+                      <Input
+                        placeholder="Street / office address"
+                        value={jobForm.address}
+                        onChange={handleFormChange("address")}
                       />
                     </FormControl>
                   </SimpleGrid>
@@ -933,7 +1026,9 @@ const EmployerDashboard = () => {
                                 <Badge colorScheme="green">{applicantCount} applicants</Badge>
                               </Flex>
                               <Text fontSize="sm" color={mutedText}>
-                                {job.category || job.department || "General"} - {job.location} - {job.type}
+                                {job.category || job.department || "General"} -{' '}
+                                {job.location}
+                                {job.address ? `, ${job.address}` : ''} - {job.type}
                               </Text>
                               <Text fontSize="xs" color={mutedText}>
                                 Posted {formatDate(job.postedAt)}

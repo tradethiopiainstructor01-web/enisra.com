@@ -26,7 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/user";
 import { useEffect, useState } from "react";
 
-const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false }) => {
+const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, navbarHeight = "52px" }) => {
     const { colorMode, toggleColorMode } = useColorMode();
     const gradient = useColorModeValue(
         "linear(to-r,rgb(11, 11, 25),rgb(47, 24, 174))",
@@ -61,59 +61,93 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false }) =
     return (
         <Container
             maxW="100%"
-            px={{ base: 3, md: 4 }}
-            py={{ base: 2, md: 2 }}
+            px={{ base: 2, sm: 3, md: 4 }}
+            py={{ base: 1, sm: 2, md: 2 }}
             bgGradient={gradient}
             color={textColor}
-            zIndex="20"
+            zIndex="1000"
             position="fixed"
             top="0"
             left={isMobile ? 0 : sidebarWidth}
             width={isMobile ? "100%" : `calc(100% - ${sidebarWidth})`}
-            boxShadow="lg"
-            transition="background 0.3s ease"
+            boxShadow="0 2px 10px rgba(0,0,0,0.1)"
+            transition="all 0.3s ease"
             borderBottomWidth="1px"
             borderBottomColor={borderColor}
+            height={navbarHeight}
         >
             <Flex
-                minH="52px"
+                minH={{ base: "44px", sm: "48px", md: "52px" }}
                 alignItems="center"
                 justifyContent="space-between"
-                px={3}
-                flexDir={{ base: "column", sm: "row" }}
-                gap={{ base: 2, sm: 0 }}
+                px={{ base: 2, sm: 3 }}
+                flexDir={{ base: "row", sm: "row" }}
+                gap={{ base: 1, sm: 2 }}
+                width="100%"
             >
                 {/* Dashboard Title */}
-                <HStack spacing={3} w={{ base: "100%", sm: "auto" }} justifyContent={{ base: "space-between", sm: "flex-start" }}>
+                <HStack spacing={{ base: 2, sm: 3 }} w={{ base: "auto", sm: "auto" }} justifyContent="flex-start">
                     <IconButton
-                        display={{ base: "inline-flex", md: "none" }}
+                        display={{ base: "inline-flex", md: "inline-flex" }}
                         icon={<FiMenu />}
                         onClick={onOpenSidebar}
                         variant="ghost"
                         color="white"
                         aria-label="Open navigation"
-                        size="sm"
+                        size={{ base: "sm", sm: "md" }}
+                        minW="44px"
+                        minH="44px"
+                        borderRadius="full"
+                        _hover={{ bg: "whiteAlpha.200" }}
                     />
                     <Text
-                        fontSize="24px"
+                        fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
                         fontWeight="bold"
                         textTransform="uppercase"
                         letterSpacing="wide"
                         color="white"
-                        textShadow="0 2px 8px rgba(241, 233, 233, 0.35)"
+                        textShadow="0 1px 4px rgba(0,0,0,0.3)"
+                        whiteSpace="nowrap"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        maxW={{ base: "120px", sm: "180px", md: "none" }}
                     >
                         Dashboard
                     </Text>
                 </HStack>
 {/* Navigation Icons */}
-                <HStack spacing={{ base: 2, md: 4 }} alignItems="center" w={{ base: "100%", sm: "auto" }} justifyContent={{ base: "space-between", sm: "flex-end" }} flexWrap="wrap">
+                <HStack 
+                    spacing={{ base: 1, sm: 2, md: 4 }} 
+                    alignItems="center" 
+                    w={{ base: "auto", sm: "auto" }} 
+                    justifyContent="flex-end"
+                    flexWrap="nowrap"
+                >
                     {/* Notifications Dropdown */}
                     <Menu>
-                        <MenuButton as={Button} variant="ghost">
-                            <BsBell color="inherit" />
+                        <MenuButton 
+                            as={Button} 
+                            variant="ghost"
+                            minW="44px"
+                            minH="44px"
+                            p={2}
+                            borderRadius="full"
+                            _hover={{ bg: "whiteAlpha.200" }}
+                        >
+                            <BsBell size={20} color="inherit" />
                             {notifications.length > 0 && (
-                                <Badge ml={1} colorScheme="red">
-                                    {notifications.length}
+                                <Badge 
+                                    ml={1} 
+                                    colorScheme="red"
+                                    fontSize="xs"
+                                    borderRadius="full"
+                                    minW="18px"
+                                    h="18px"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                >
+                                    {notifications.length > 9 ? '9+' : notifications.length}
                                 </Badge>
                             )}
                         </MenuButton>
@@ -152,8 +186,16 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false }) =
 
                     {/* Messages Dropdown */}
                     <Menu>
-                        <MenuButton as={Button} variant="ghost">
-                            <BsChat color="inherit" />
+                        <MenuButton 
+                            as={Button} 
+                            variant="ghost"
+                            minW="44px"
+                            minH="44px"
+                            p={2}
+                            borderRadius="full"
+                            _hover={{ bg: "whiteAlpha.200" }}
+                        >
+                            <BsChat size={20} color="inherit" />
                         </MenuButton>
                         <MenuList>
                             <MenuItem>No new messages</MenuItem>
@@ -162,29 +204,64 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false }) =
 
                     {/* User Profile Dropdown */}
                     <Menu>
-                        <MenuButton as={Avatar} size="sm" name={currentUser?.username} src={currentUser?.photoURL} />
-                        <MenuList>
-                            <Box p={3} textAlign="center">
-                                <Avatar size="lg" name={currentUser?.username} src={currentUser?.photoURL} mb={2} />
-                                <Text fontSize="lg" fontWeight="bold">{currentUser?.username}</Text>
-                                <Text fontSize="md">Role: {currentUser?.role}</Text>
+                        <MenuButton 
+                            as={Avatar} 
+                            size={{ base: "sm", sm: "md" }} 
+                            name={currentUser?.username} 
+                            src={currentUser?.photoURL}
+                            cursor="pointer"
+                            border="2px solid white"
+                            _hover={{ transform: "scale(1.05)" }}
+                            transition="transform 0.2s"
+                        />
+                        <MenuList 
+                            minW="200px" 
+                            boxShadow="xl"
+                            border="none"
+                            py={2}
+                        >
+                            <Box p={4} textAlign="center" bg="gray.50" borderRadius="md" mx={2} mb={2}>
+                                <Avatar 
+                                    size="xl" 
+                                    name={currentUser?.username} 
+                                    src={currentUser?.photoURL} 
+                                    mb={3}
+                                    border="3px solid"
+                                    borderColor="blue.500"
+                                />
+                                <Text fontSize="lg" fontWeight="bold" mb={1}>{currentUser?.username}</Text>
+                                <Text fontSize="sm" color="gray.600">Role: {currentUser?.role}</Text>
                             </Box>
-                            <Divider />
-                            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                            <Divider my={2} />
+                            <MenuItem 
+                                onClick={handleLogout}
+                                py={3}
+                                px={4}
+                                fontSize="sm"
+                                _hover={{ bg: "red.50" }}
+                                color="red.600"
+                                fontWeight="medium"
+                            >
+                                Logout
+                            </MenuItem>
                         </MenuList>
                     </Menu>
 
 
 {/* Dark Mode Toggle */}
                     <IconButton
-                        icon={colorMode === "light" ? <IoMoon /> : <SunIcon />}
+                        icon={colorMode === "light" ? <IoMoon size={20} /> : <SunIcon boxSize={5} />}
                         onClick={toggleColorMode}
                         variant="solid"
                         colorScheme={colorMode === "light" ? "purple" : "yellow"}
                         aria-label={toggleLabel}
                         rounded="full"
                         boxShadow="md"
-                        size="md"
+                        size={{ base: "sm", sm: "md" }}
+                        minW="44px"
+                        minH="44px"
+                        _hover={{ transform: "scale(1.1)", boxShadow: "lg" }}
+                        transition="all 0.2s"
                     />
                 </HStack>
             </Flex>

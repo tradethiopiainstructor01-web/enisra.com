@@ -97,47 +97,71 @@ const UserCard = ({ user }) => {
     return (
         <Box
             shadow="md"
-            rounded="lg"
+            rounded="xl"
             overflow="hidden"
             w="100%"
             maxW="sm"
             transition="all 0.3s"
             _hover={{ transform: "translateY(-5px)", shadow: "lg" }}
             bg={bg}
-            p={3}
+                    p={{ base: 3, sm: 4 }}
             onClick={() => setDrawerOpen(true)}
+            cursor="pointer"
+            borderWidth="1px"
+            borderColor={useColorModeValue("gray.200", "gray.700")}
         >
-            <VStack spacing={2} align="start">
-                <Box borderBottom="2px" borderColor={useColorModeValue("gray.300", "gray.600")} mb={2} width="full">
-                    <Heading as="h3" size="md" mb={1}>
+            <VStack spacing={{ base: 2, sm: 3 }} align="stretch">
+                <Box borderBottom="2px" borderColor={useColorModeValue("gray.300", "gray.600")} pb={2} width="full">
+                    <Heading 
+                        as="h3" 
+                        size={{ base: "sm", sm: "md" }} 
+                        mb={1}
+                        lineHeight="1.3"
+                        noOfLines={1}
+                    >
                         {user.username || "No Username Available"}
                     </Heading>
                 </Box>
-                <Text fontWeight="bold" fontSize="lg" color={textColor}>
+                <Text 
+                    fontWeight="semibold" 
+                    fontSize={{ base: "sm", sm: "md" }} 
+                    color={textColor}
+                    noOfLines={1}
+                    wordBreak="break-all"
+                >
                     {user.email || "No Email Available"}
                 </Text>
-                <Text fontSize="md" color={textColor}>
+                <Text 
+                    fontSize={{ base: "sm", sm: "md" }} 
+                    color={textColor}
+                    fontWeight="medium"
+                >
                     Role: {user.role || "No Role Assigned"}
                 </Text>
-                <Text fontSize="md" color={textColor}>
+                <Text 
+                    fontSize={{ base: "sm", sm: "md" }} 
+                    color={textColor}
+                    fontWeight="medium"
+                >
                     Salary: {salaryLabel}
                 </Text>
 
                 <HStack
-                    spacing={3}
+                    spacing={{ base: 2, sm: 3 }}
                     alignItems="center"
                     width="full"
-                    py={2}
-                    px={3}
+                    py={{ base: 2, sm: 2 }}
+                    px={{ base: 2, sm: 3 }}
                     bg={useColorModeValue("gray.50", "gray.700")}
-                    rounded="md"
+                    rounded="lg"
                     boxShadow="sm"
                 >
                     <Text
-                        fontSize="sm"
+                        fontSize={{ base: "xs", sm: "sm" }}
                         fontWeight="medium"
                         color={textColor}
-                        minWidth="80px"
+                        minWidth={{ base: "70px", sm: "80px" }}
+                        flexShrink={0}
                     >
                         Hire Date:
                     </Text>
@@ -145,7 +169,7 @@ const UserCard = ({ user }) => {
                         type="date"
                         value={hireDate}
                         onChange={(e) => setHireDate(e.target.value)}
-                        size="sm"
+                        size={{ base: "sm", sm: "sm" }}
                         variant="flushed"
                         placeholder="Select a date"
                         borderColor="blue.300"
@@ -154,18 +178,21 @@ const UserCard = ({ user }) => {
                             borderColor: "blue.500",
                             boxShadow: "0 0 0 1px rgba(66, 153, 225, 0.6)",
                         }}
-                        fontSize="sm"
+                        fontSize={{ base: "sm", sm: "sm" }}
                         color={textColor}
-                        width="60%"
+                        width={{ base: "50%", sm: "60%" }}
+                        minH="36px"
                     />
                     <Button
                         onClick={handleUpdateUser}
-                        size="sm"
+                        size={{ base: "sm", sm: "sm" }}
                         colorScheme="blue"
-                        px={4}
+                        px={{ base: 3, sm: 4 }}
                         boxShadow="sm"
                         _hover={{ bg: "blue.600" }}
-                        fontSize="sm"
+                        fontSize={{ base: "sm", sm: "sm" }}
+                        minH="36px"
+                        minW="70px"
                     >
                         Save
                     </Button>
@@ -173,31 +200,60 @@ const UserCard = ({ user }) => {
 
                 <Divider borderColor="gray.300" />
 
-                <HStack spacing={2} alignItems="center" justifyContent="space-between" width="full">
+                <HStack spacing={{ base: 2, sm: 2 }} alignItems="center" justifyContent="space-between" width="full" py={1}>
                     <Switch
                         isChecked={user.status === 'active'}
                         onChange={toggleUserStatus}
-                        size="sm"
+                        size={{ base: "sm", sm: "sm" }}
                         colorScheme="teal"
+                        sx={{
+                            '& .chakra-switch__track': {
+                                minWidth: '40px'
+                            }
+                        }}
                     />
-                    <Text fontSize="md" color={textColor} display="flex" alignItems="center">
+                    <Text 
+                        fontSize={{ base: "sm", sm: "md" }} 
+                        color={textColor} 
+                        display="flex" 
+                        alignItems="center"
+                        fontWeight="medium"
+                    >
                         {user.status === 'active' ? (
                             <>
-                                <CheckCircleIcon color="green.500" boxSize={4} mr={1} />
+                                <CheckCircleIcon color="green.500" boxSize={{ base: 3, sm: 4 }} mr={1} />
                                 Active
                             </>
                         ) : (
                             <>
-                                <WarningIcon color="red.500" boxSize={4} mr={1} />
+                                <WarningIcon color="red.500" boxSize={{ base: 3, sm: 4 }} mr={1} />
                                 Inactive
                             </>
                         )}
                     </Text>
                 </HStack>
 
-                <HStack spacing={2}>
-                    <IconButton icon={<EditIcon />} onClick={onEditOpen} colorScheme="blue" aria-label="Edit user" size="sm" />
-                    <IconButton icon={<DeleteIcon />} onClick={onDeleteOpen} colorScheme="red" aria-label="Delete user" size="sm" />
+                <HStack spacing={{ base: 1, sm: 2 }} pt={2}>
+                    <IconButton 
+                        icon={<EditIcon />} 
+                        onClick={onEditOpen} 
+                        colorScheme="blue" 
+                        aria-label="Edit user" 
+                        size={{ base: "sm", sm: "sm" }}
+                        minW="40px"
+                        minH="40px"
+                        borderRadius="full"
+                    />
+                    <IconButton 
+                        icon={<DeleteIcon />} 
+                        onClick={onDeleteOpen} 
+                        colorScheme="red" 
+                        aria-label="Delete user" 
+                        size={{ base: "sm", sm: "sm" }}
+                        minW="40px"
+                        minH="40px"
+                        borderRadius="full"
+                    />
                 </HStack>
             </VStack>
 

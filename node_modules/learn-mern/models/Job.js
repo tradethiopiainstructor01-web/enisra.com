@@ -21,6 +21,10 @@ const JobSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    address: {
+      type: String,
+      trim: true,
+    },
     type: {
       type: String,
       required: true,
@@ -79,6 +83,7 @@ JobSchema.index({
   department: 'text',
   category: 'text',
   location: 'text',
+  address: 'text',
   type: 'text',
 });
 

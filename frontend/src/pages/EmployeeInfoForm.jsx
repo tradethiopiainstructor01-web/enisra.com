@@ -19,6 +19,7 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useUserStore } from '../store/user';
+import { resolveApiBase } from '../utils/apiBase';
 
 const blankEducation = () => ({
   highestEducationLevel: '',
@@ -263,7 +264,8 @@ const EmployeeInfoForm = () => {
     const loadProfile = async () => {
       setIsLoadingProfile(true);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${userId}`);
+        const apiBase = resolveApiBase();
+        const res = await fetch(`${apiBase}/user/${userId}`);
         const data = await res.json();
         if (!res.ok || !data?.success || !data?.user) {
           throw new Error(data?.message || 'Unable to load profile.');
@@ -477,7 +479,8 @@ const EmployeeInfoForm = () => {
       (uploads.educationCertificates || []).forEach((file) => formData.append('educationCertificates', file));
       (uploads.otherSupportingFiles || []).forEach((file) => formData.append('otherSupportingFiles', file));
 
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/upload-info`, {
+      const apiBase = resolveApiBase();
+      const res = await fetch(`${apiBase}/upload-info`, {
         method: 'POST',
         body: formData,
       });

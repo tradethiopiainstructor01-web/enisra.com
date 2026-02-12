@@ -115,7 +115,12 @@ const LoginPage = () => {
   };
 
   return (
-    <Container maxW="lg" minH="100vh" py={20}>
+    <Container 
+      maxW="lg" 
+      minH="100vh" 
+      py={{ base: 10, sm: 16, md: 20 }}
+      px={{ base: 2, sm: 4 }}
+    >
       <Flex
         direction="column"
         align="center"
@@ -123,19 +128,32 @@ const LoginPage = () => {
         borderRadius="2xl"
         borderWidth="1px"
         borderColor={borderColor}
-        p={10}
+        p={{ base: 6, sm: 8, md: 10 }}
         boxShadow="lg"
+        width="100%"
+        maxWidth={{ base: '95%', sm: 'lg' }}
       >
-        <Heading mb={6} size="xl">
+        <Heading 
+          mb={{ base: 4, sm: 6 }} 
+          size={{ base: 'lg', sm: 'xl', md: '2xl' }}
+          textAlign="center"
+          lineHeight="1.2"
+        >
           Welcome back
         </Heading>
-        <Text mb={8} textAlign="center" color="gray.500">
+        <Text 
+          mb={{ base: 6, sm: 8 }} 
+          textAlign="center" 
+          color="gray.500"
+          fontSize={{ base: 'sm', sm: 'md' }}
+          lineHeight="1.4"
+        >
           Log in to access personalized job matches, saved opportunities, and scholarship alerts.
         </Text>
-        <Stack as="form" spacing={4} w="100%" onSubmit={handleSubmit}>
+        <Stack as="form" spacing={{ base: 3, sm: 4 }} w="100%" onSubmit={handleSubmit}>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
-              <Icon as={FaUser} color="gray.400" />
+              <Icon as={FaUser} color="gray.400" boxSize={{ base: 4, sm: 5 }} />
             </InputLeftElement>
             <Input
               placeholder="Email"
@@ -144,11 +162,15 @@ const LoginPage = () => {
               value={formData.email}
               onChange={handleFieldChange('email')}
               autoComplete="username"
+              size={{ base: 'md', sm: 'lg' }}
+              minH="48px"
+              pr={12}
+              fontSize={{ base: 'sm', sm: 'md' }}
             />
           </InputGroup>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
-              <Icon as={FaLock} color="gray.400" />
+              <Icon as={FaLock} color="gray.400" boxSize={{ base: 4, sm: 5 }} />
             </InputLeftElement>
             <Input
               placeholder="Password"
@@ -157,14 +179,36 @@ const LoginPage = () => {
               value={formData.password}
               onChange={handleFieldChange('password')}
               autoComplete="current-password"
+              size={{ base: 'md', sm: 'lg' }}
+              minH="48px"
+              pr={12}
+              fontSize={{ base: 'sm', sm: 'md' }}
             />
           </InputGroup>
           {errorMessage && (
-            <Text color="red.500" fontSize="sm" textAlign="center">
+            <Text 
+              color="red.500" 
+              fontSize={{ base: 'xs', sm: 'sm' }} 
+              textAlign="center"
+              p={2}
+              bg="red.50"
+              borderRadius="md"
+            >
               {errorMessage}
             </Text>
           )}
-          <Button colorScheme="green" size="lg" type="submit" isLoading={isLoading}>
+          <Button 
+            colorScheme="green" 
+            size={{ base: 'md', sm: 'lg' }} 
+            type="submit" 
+            isLoading={isLoading}
+            minH="48px"
+            fontSize={{ base: 'sm', sm: 'md' }}
+            fontWeight="medium"
+            borderRadius="lg"
+            _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
+            transition="all 0.2s"
+          >
             Log In
           </Button>
         </Stack>
@@ -172,9 +216,11 @@ const LoginPage = () => {
           as={RouterLink}
           to="/"
           variant="ghost"
-          size="sm"
+          size={{ base: 'sm', sm: 'sm' }}
           color="gray.500"
-          mt={4}
+          mt={{ base: 3, sm: 4 }}
+          fontSize={{ base: 'sm', sm: 'md' }}
+          _hover={{ bg: 'gray.100' }}
         >
           Back to home
         </Button>

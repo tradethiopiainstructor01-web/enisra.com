@@ -118,23 +118,41 @@ const RegisterPage = () => {
   };
 
   return (
-    <Container maxW="md" minH="100vh" py={16}>
+    <Container 
+      maxW="md" 
+      minH="100vh" 
+      py={{ base: 12, sm: 16 }}
+      px={{ base: 2, sm: 4 }}
+    >
       <Flex
         direction="column"
         bg={bg}
         borderRadius="2xl"
         borderWidth="1px"
         borderColor={borderColor}
-        p={10}
+        p={{ base: 6, sm: 8, md: 10 }}
         boxShadow="xl"
+        width="100%"
+        maxWidth={{ base: '95%', sm: 'md' }}
       >
-        <Heading size="xl" mb={4}>
+        <Heading 
+          size={{ base: 'lg', sm: 'xl', md: '2xl' }} 
+          mb={{ base: 3, sm: 4 }}
+          textAlign="center"
+          lineHeight="1.2"
+        >
           Create an account
         </Heading>
-        <Text color="gray.500" mb={8}>
+        <Text 
+          color="gray.500" 
+          mb={{ base: 6, sm: 8 }}
+          fontSize={{ base: 'sm', sm: 'md' }}
+          textAlign="center"
+          lineHeight="1.4"
+        >
           Join Enisra to post jobs, track applicants, and grow your team with trusted talent.
         </Text>
-        <Stack spacing={2} mb={6}>
+        <Stack spacing={{ base: 2, sm: 2 }} mb={{ base: 5, sm: 6 }}>
           <Text fontSize="sm" color="gray.500">
             Select the experience that matches your role
           </Text>

@@ -17,6 +17,7 @@ import {
   Icon,
   Input,
   Progress,
+  Select,
   SimpleGrid,
   Stack,
   Stat,
@@ -38,6 +39,7 @@ const EmployerProfile = () => {
     employerId: "",
     companyName: "",
     industry: "",
+    category: "",
     companyLocation: "",
     contactPerson: "",
     contactEmail: "",
@@ -46,6 +48,9 @@ const EmployerProfile = () => {
     jobPostingCredits: "",
     contractEndDate: "",
   });
+  const [employerCategories, setEmployerCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState("");
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [detailsSaving, setDetailsSaving] = useState(false);
   const pageBg = useColorModeValue("gray.50", "gray.950");
@@ -89,6 +94,7 @@ const EmployerProfile = () => {
             employerId: payload.employerId || "",
             companyName: payload.companyName || "",
             industry: payload.industry || "",
+            category: payload.category || "",
             companyLocation: payload.companyLocation || "",
             contactPerson: payload.contactPerson || "",
             contactEmail: payload.contactEmail || "",
@@ -122,6 +128,41 @@ const EmployerProfile = () => {
       isMounted = false;
     };
   }, [currentUser?.token, toast]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      setCategoriesLoading(true);
+      setCategoriesError("");
+      try {
+        const response = await apiClient.get("/employer-categories");
+        const payload = response?.data?.data ?? response?.data ?? [];
+        if (!isMounted) return;
+        setEmployerCategories(Array.isArray(payload) ? payload : []);
+      } catch (error) {
+        if (!isMounted) return;
+        setEmployerCategories([]);
+        const message = error?.message || "Failed to load categories.";
+        setCategoriesError(message);
+        toast({
+          title: "Failed to load categories",
+          description: message,
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
+      } finally {
+        if (isMounted) setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast]);
 
   const handleEmployerDetailsChange = (field) => (event) => {
     setEmployerDetails((prev) => ({ ...prev, [field]: event.target.value }));
@@ -181,10 +222,9 @@ const EmployerProfile = () => {
             boxShadow="lg"
             px={{ base: 4, md: 6 }}
             py={{ base: 4, md: 5 }}
-            position="relative"
+            position={{ base: "relative", lg: "sticky" }}
+            top={{ lg: 6 }}
             overflow="hidden"
-            position="sticky"
-            top={{ base: 3, md: 6 }}
             zIndex="1"
             sx={{
               backgroundImage:
@@ -210,12 +250,17 @@ const EmployerProfile = () => {
                 <Text color={mutedText} fontSize="sm">
                   Manage your company profile, keep listings up to date, and stay aligned with your team.
                 </Text>
-                <HStack spacing={2} flexWrap="wrap">
+                <Stack
+                  direction={{ base: "column", sm: "row" }}
+                  spacing={2}
+                  align={{ base: "stretch", sm: "center" }}
+                >
                   <Button
                     as={RouterLink}
                     to="/employer/post"
                     colorScheme="green"
                     size="sm"
+                    width={{ base: "100%", sm: "auto" }}
                   >
                     Post a job
                   </Button>
@@ -225,10 +270,11 @@ const EmployerProfile = () => {
                     variant="outline"
                     borderColor={borderColor}
                     size="sm"
+                    width={{ base: "100%", sm: "auto" }}
                   >
                     View employees
                   </Button>
-                </HStack>
+                </Stack>
               </Stack>
 
               <Card
@@ -305,6 +351,46 @@ const EmployerProfile = () => {
                       isDisabled={detailsLoading}
                     />
                   </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      placeholder={
+                        categoriesLoading
+                          ? "Loading categories..."
+                          : employerCategories.length
+                          ? "Select category"
+                          : "No categories available"
+                      }
+                      value={employerDetails.category}
+                      onChange={handleEmployerDetailsChange("category")}
+                      isDisabled={detailsLoading || categoriesLoading}
+                    >
+                      {employerDetails.category &&
+                      !employerCategories.some(
+                        (item) =>
+                          (item?.name || "").toString().toLowerCase() ===
+                          employerDetails.category.toString().toLowerCase()
+                      ) ? (
+                        <option value={employerDetails.category}>
+                          {employerDetails.category} (inactive)
+                        </option>
+                      ) : null}
+                      {employerCategories.map((item) => (
+                        <option key={item._id || item.name} value={item.name}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </Select>
+                    {categoriesError ? (
+                      <Text fontSize="xs" color="red.500" mt={2}>
+                        {categoriesError}
+                      </Text>
+                    ) : !categoriesLoading && employerCategories.length === 0 ? (
+                      <Text fontSize="xs" color={mutedText} mt={2}>
+                        No categories configured yet. Ask an admin to add categories in the Admin Dashboard.
+                      </Text>
+                    ) : null}
+                  </FormControl>
                   <FormControl>
                     <FormLabel>Company Location</FormLabel>
                     <Input
@@ -377,7 +463,8 @@ const EmployerProfile = () => {
                   onClick={handleEmployerDetailsSave}
                   isLoading={detailsSaving}
                   isDisabled={detailsLoading}
-                  alignSelf="flex-start"
+                  width={{ base: "100%", sm: "auto" }}
+                  alignSelf={{ base: "stretch", sm: "flex-start" }}
                 >
                   Save Employer Details
                 </Button>

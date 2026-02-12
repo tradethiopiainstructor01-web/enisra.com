@@ -23,11 +23,13 @@ import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserStore } from '../store/user';
+import { resolveApiBase } from '../utils/apiBase';
 import EmployeeNavDrawer from '../components/employee/EmployeeNavDrawer';
 import EmployeeSidebar from '../components/employee/EmployeeSidebar';
 import {
   downloadBlob,
   isLikelyMobileBrowser,
+  openPreparingWindow,
   tryShareBlobAsFile,
 } from '../utils/fileDownload';
 
@@ -85,7 +87,8 @@ const EmployeeCreateCVPage = () => {
           setProfile(null);
           return;
         }
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/user/${userId}`);
+        const apiBase = resolveApiBase();
+        const res = await fetch(`${apiBase}/user/${userId}`);
         const data = await res.json();
         if (!res.ok || !data?.success || !data?.user) {
           throw new Error(data?.message || 'Unable to load profile.');
@@ -142,6 +145,9 @@ const EmployeeCreateCVPage = () => {
 
     const filename = `CV_${fullName.replace(/\s+/g, '_')}.pdf`;
     const isMobile = isLikelyMobileBrowser();
+    const preparingWindow = isMobile
+      ? openPreparingWindow(filename, 'Preparing your CV PDF...')
+      : null;
 
     setIsExporting(true);
     try {
@@ -180,11 +186,24 @@ const EmployeeCreateCVPage = () => {
 
       if (isMobile) {
         const shared = await tryShareBlobAsFile(blob, filename, { title: filename });
-        if (shared) return;
+        if (shared) {
+          if (preparingWindow && !preparingWindow.closed) preparingWindow.close();
+          return;
+        }
 
         // Mobile browsers often block programmatic "downloads". Navigating to the PDF is more reliable.
         const url = URL.createObjectURL(blob);
         setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000);
+        if (preparingWindow && !preparingWindow.closed) {
+          try {
+            preparingWindow.location.href = url;
+            if (typeof preparingWindow.focus === 'function') preparingWindow.focus();
+            return;
+          } catch (error) {
+            // Fall through to regular window.open / navigation fallback.
+          }
+        }
+
         const opened = window.open(url, '_blank');
         if (!opened) window.location.assign(url);
         return;
@@ -192,6 +211,13 @@ const EmployeeCreateCVPage = () => {
 
       downloadBlob(blob, filename);
     } catch (error) {
+      if (preparingWindow && !preparingWindow.closed) {
+        try {
+          preparingWindow.close();
+        } catch (closeError) {
+          // ignore
+        }
+      }
       toast({
         title: 'Export failed',
         description: error?.message || 'Unable to export CV PDF.',

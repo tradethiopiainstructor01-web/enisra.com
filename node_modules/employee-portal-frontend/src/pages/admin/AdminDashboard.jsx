@@ -56,6 +56,7 @@ import {
   FiPackage,
   FiPlus,
   FiSearch,
+  FiTag,
   FiTrendingUp,
   FiTrash2,
   FiUser,
@@ -124,6 +125,11 @@ const AdminDashboard = () => {
     jobTitle: "",
     status: "active",
   });
+  const [employerCategories, setEmployerCategories] = useState([]);
+  const [employerCategoriesLoading, setEmployerCategoriesLoading] = useState(false);
+  const [employerCategoryName, setEmployerCategoryName] = useState("");
+  const [employerCategorySubmitting, setEmployerCategorySubmitting] = useState(false);
+  const [employerCategoryActionId, setEmployerCategoryActionId] = useState(null);
 
   const normalizeRoleValue = (value = "") =>
     value?.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -238,6 +244,15 @@ const AdminDashboard = () => {
       to: "/employee/profile",
       cta: "Open employee info form",
     },
+    {
+      id: "employer-categories",
+      title: "Employer Categories",
+      description: "Manage the category dropdown used in the employer details form.",
+      icon: FiTag,
+      tone: "green",
+      to: "/admin#employer-categories",
+      cta: "Manage employer categories",
+    },
   ];
   const [activeSectionId, setActiveSectionId] = useState(adminSections[0]?.id || "job-post");
 
@@ -309,6 +324,115 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadEmployerCategories = async () => {
+    setEmployerCategoriesLoading(true);
+    try {
+      const response = await apiClient.get("/employer-categories", {
+        params: { active: "false" },
+      });
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setEmployerCategories(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load employer categories",
+        description: error?.message || "Unable to load categories.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setEmployerCategoriesLoading(false);
+    }
+  };
+
+  const handleAddEmployerCategory = async () => {
+    const name = employerCategoryName.trim();
+    if (!name) {
+      toast({
+        title: "Missing category",
+        description: "Please enter a category name.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setEmployerCategorySubmitting(true);
+    try {
+      await apiClient.post("/employer-categories", { name });
+      setEmployerCategoryName("");
+      await loadEmployerCategories();
+      toast({
+        title: "Category added",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to add category",
+        description: error?.response?.data?.message || error?.message || "Unable to add category.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setEmployerCategorySubmitting(false);
+    }
+  };
+
+  const handleToggleEmployerCategory = async (category) => {
+    if (!category?._id) return;
+    setEmployerCategoryActionId(category._id);
+    try {
+      const response = await apiClient.patch(`/employer-categories/${category._id}`, {
+        active: !category.active,
+      });
+      const updated = response?.data?.data;
+      if (updated) {
+        setEmployerCategories((prev) =>
+          prev.map((item) => (item._id === updated._id ? updated : item))
+        );
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to update category",
+        description: error?.response?.data?.message || error?.message || "Unable to update category.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setEmployerCategoryActionId(null);
+    }
+  };
+
+  const handleDeleteEmployerCategory = async (category) => {
+    if (!category?._id) return;
+    setEmployerCategoryActionId(category._id);
+    try {
+      await apiClient.delete(`/employer-categories/${category._id}`);
+      setEmployerCategories((prev) => prev.filter((item) => item._id !== category._id));
+      toast({
+        title: "Category deleted",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete category",
+        description: error?.response?.data?.message || error?.message || "Unable to delete category.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setEmployerCategoryActionId(null);
+    }
+  };
+
   useEffect(() => {
     loadPendingJobs();
     loadEmployers();
@@ -317,6 +441,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (activeSectionId === "employee" && employees.length === 0 && !employeesLoading) {
       loadEmployees();
+    }
+    if (activeSectionId === "employer-categories" && employerCategories.length === 0 && !employerCategoriesLoading) {
+      loadEmployerCategories();
     }
   }, [activeSectionId]);
 
@@ -899,6 +1026,103 @@ const AdminDashboard = () => {
           >
             {section.cta}
           </Button>
+        </Stack>
+      );
+    }
+
+    if (section.id === "employer-categories") {
+      return (
+        <Stack spacing={4}>
+          <Flex
+            gap={3}
+            direction={{ base: "column", md: "row" }}
+            align={{ md: "flex-end" }}
+            justify="space-between"
+          >
+            <FormControl isRequired>
+              <FormLabel fontSize="sm">New category</FormLabel>
+              <Input
+                placeholder="Private"
+                value={employerCategoryName}
+                onChange={(event) => setEmployerCategoryName(event.target.value)}
+              />
+            </FormControl>
+
+            <Flex gap={2} wrap="wrap">
+              <Button
+                size="sm"
+                colorScheme="green"
+                leftIcon={<Icon as={FiPlus} />}
+                onClick={handleAddEmployerCategory}
+                isLoading={employerCategorySubmitting}
+              >
+                Add
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={loadEmployerCategories}
+                isLoading={employerCategoriesLoading}
+              >
+                Refresh
+              </Button>
+            </Flex>
+          </Flex>
+
+          {employerCategoriesLoading ? (
+            <Text color={mutedText}>Loading categories...</Text>
+          ) : employerCategories.length ? (
+            <Stack spacing={3}>
+              {employerCategories.map((category) => {
+                const isActing = employerCategoryActionId === category._id;
+                return (
+                  <Flex
+                    key={category._id}
+                    align="center"
+                    justify="space-between"
+                    gap={3}
+                    p={3}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="md"
+                  >
+                    <Box minW={0}>
+                      <Text fontWeight="semibold" noOfLines={1}>
+                        {category.name}
+                      </Text>
+                      <Badge colorScheme={category.active ? "green" : "gray"} variant="subtle" mt={1}>
+                        {category.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </Box>
+
+                    <Flex gap={2} wrap="wrap" justify="flex-end">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => handleToggleEmployerCategory(category)}
+                        isLoading={isActing}
+                      >
+                        {category.active ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Tooltip label="Delete">
+                        <IconButton
+                          aria-label="Delete category"
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="red"
+                          icon={<Icon as={FiTrash2} />}
+                          onClick={() => handleDeleteEmployerCategory(category)}
+                          isLoading={isActing}
+                        />
+                      </Tooltip>
+                    </Flex>
+                  </Flex>
+                );
+              })}
+            </Stack>
+          ) : (
+            <Text color={mutedText}>No categories yet. Add one above.</Text>
+          )}
         </Stack>
       );
     }
