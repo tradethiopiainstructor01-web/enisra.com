@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Badge,
   Box,
@@ -6,7 +6,6 @@ import {
   Card,
   CardBody,
   CardHeader,
-  Divider,
   Flex,
   FormControl,
   FormLabel,
@@ -15,28 +14,26 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Text,
   Textarea,
   useColorModeValue,
   useToast,
 } from "@chakra-ui/react";
 import { FiPlus } from "react-icons/fi";
-import { formatDate, useEmployerData } from "./employerData";
+import { formatDate } from "./employerData";
 import apiClient from "../../utils/apiClient";
 
 const EmployerPostJob = () => {
   const toast = useToast();
-  const { jobs, setJobs, applicants } = useEmployerData();
-  const [selectedJobId, setSelectedJobId] = useState("");
+  const [jobs, setJobs] = useState([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
-  const [partnersLoading, setPartnersLoading] = useState(false);
-  const [isSubmittingPartner, setIsSubmittingPartner] = useState(false);
-  const [partnerSubmissions, setPartnerSubmissions] = useState([]);
-  const [partnerForm, setPartnerForm] = useState({
-    name: "",
-    logoUrl: "",
-    website: "",
-  });
+  const [showJobForm, setShowJobForm] = useState(true);
   const [jobForm, setJobForm] = useState({
     title: "",
     department: "",
@@ -55,35 +52,47 @@ const EmployerPostJob = () => {
   const mutedText = useColorModeValue("gray.600", "gray.300");
   const activeJobBg = useColorModeValue("green.50", "green.900");
 
-  const loadPartnerSubmissions = async () => {
-    setPartnersLoading(true);
+  const loadMyJobs = useCallback(async () => {
+    setJobsLoading(true);
     try {
-      const response = await apiClient.get("/partners/mine");
+      const response = await apiClient.get("/jobs/mine");
       const payload = response?.data?.data ?? response?.data ?? [];
-      setPartnerSubmissions(Array.isArray(payload) ? payload : []);
+      setJobs(Array.isArray(payload) ? payload : []);
     } catch (error) {
       toast({
-        title: "Failed to load company submissions",
-        description: error?.message || "Unable to load your company submissions.",
+        title: "Failed to load jobs",
+        description: error?.message || "Unable to load your jobs.",
         status: "error",
         duration: 3000,
         isClosable: true,
       });
+      setJobs([]);
     } finally {
-      setPartnersLoading(false);
+      setJobsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    loadPartnerSubmissions();
-  }, []);
+    loadMyJobs();
+  }, [loadMyJobs]);
+
+  const pendingJobs = useMemo(
+    () => jobs.filter((job) => job?.active !== false && job?.approved !== true),
+    [jobs]
+  );
+
+  const postedJobs = useMemo(
+    () => jobs.filter((job) => job?.active !== false && job?.approved === true),
+    [jobs]
+  );
+
+  const rejectedJobs = useMemo(
+    () => jobs.filter((job) => job?.active === false && job?.approved !== true),
+    [jobs]
+  );
 
   const handleFormChange = (field) => (event) => {
     setJobForm((prev) => ({ ...prev, [field]: event.target.value }));
-  };
-
-  const handlePartnerChange = (field) => (event) => {
-    setPartnerForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
   const handleAddJob = async (event) => {
@@ -119,16 +128,7 @@ const EmployerPostJob = () => {
 
     try {
       setIsPosting(true);
-      const response = await apiClient.post('/jobs', payload);
-      const savedJob = response?.data?.data ?? response?.data ?? payload;
-      const normalizedJob = {
-        ...payload,
-        ...savedJob,
-        id: savedJob.id || savedJob._id || `job-${Date.now()}`,
-        postedAt: savedJob.postedAt || savedJob.createdAt || new Date().toISOString(),
-      };
-      setJobs((prev) => [normalizedJob, ...prev]);
-      setSelectedJobId(normalizedJob.id);
+      await apiClient.post("/jobs", payload);
       setJobForm({
         title: "",
         department: "",
@@ -143,12 +143,14 @@ const EmployerPostJob = () => {
       });
 
       toast({
-        title: "Job posted",
-        description: "Your job posting is now visible in the pipeline.",
+        title: "Job submitted",
+        description: "Your job is pending admin approval. Once approved, it will move to Posted.",
         status: "success",
         duration: 3000,
         isClosable: true,
       });
+      setShowJobForm(false);
+      await loadMyJobs();
     } catch (error) {
       toast({
         title: "Failed to post job",
@@ -162,48 +164,6 @@ const EmployerPostJob = () => {
     }
   };
 
-  const handleSubmitPartner = async (event) => {
-    event.preventDefault();
-    if (!partnerForm.name.trim() || !partnerForm.logoUrl.trim()) {
-      toast({
-        title: "Missing details",
-        description: "Please add a company name and logo URL.",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    try {
-      setIsSubmittingPartner(true);
-      await apiClient.post("/partners", {
-        name: partnerForm.name.trim(),
-        logoUrl: partnerForm.logoUrl.trim(),
-        website: partnerForm.website.trim(),
-      });
-      setPartnerForm({ name: "", logoUrl: "", website: "" });
-      await loadPartnerSubmissions();
-      toast({
-        title: "Company submitted",
-        description: "Your company is now waiting for admin approval.",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to submit company",
-        description: error?.message || "Unable to send company for approval.",
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-      });
-    } finally {
-      setIsSubmittingPartner(false);
-    }
-  };
-
   return (
     <Box maxW="7xl" mx="auto">
       <Heading size="lg" mb={6}>
@@ -212,12 +172,22 @@ const EmployerPostJob = () => {
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8}>
         <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
           <CardHeader>
-            <Heading size="md">Job posting</Heading>
-            <Text color={mutedText} mt={1}>
-              Share a new opening to start receiving applicants.
-            </Text>
+            <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+              <Box>
+                <Heading size="md">Job posting</Heading>
+                <Text color={mutedText} mt={1}>
+                  Share a new opening to start receiving applicants.
+                </Text>
+              </Box>
+              {!showJobForm ? (
+                <Button size="sm" colorScheme="green" onClick={() => setShowJobForm(true)}>
+                  Post a job
+                </Button>
+              ) : null}
+            </Flex>
           </CardHeader>
           <CardBody>
+            {showJobForm ? (
             <Stack spacing={4} as="form" onSubmit={handleAddJob}>
               <FormControl isRequired>
                 <FormLabel>Job title</FormLabel>
@@ -322,155 +292,128 @@ const EmployerPostJob = () => {
                 Post job
               </Button>
             </Stack>
+            ) : (
+              <Text color={mutedText}>Job form hidden after submit. Click “Post a job” to open it again.</Text>
+            )}
           </CardBody>
         </Card>
 
         <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
           <CardHeader>
-            <Heading size="md">Open roles</Heading>
+            <Heading size="md">Your job posts</Heading>
             <Text color={mutedText} mt={1}>
-              Select a job to see the applicants in its pipeline.
+              Jobs start in Pending. After admin approval, they appear in Posted.
             </Text>
           </CardHeader>
           <CardBody>
-            <Stack spacing={4}>
-              <FormControl>
-                <FormLabel>Filter by job</FormLabel>
-                <Select
-                  placeholder="All jobs"
-                  value={selectedJobId}
-                  onChange={(event) => setSelectedJobId(event.target.value)}
-                >
-                  {jobs.map((job) => (
-                    <option key={job.id} value={job.id}>
-                      {job.title}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
+            <Tabs variant="enclosed" colorScheme="green" isFitted>
+              <TabList>
+                <Tab>Pending ({pendingJobs.length})</Tab>
+                <Tab>Posted ({postedJobs.length})</Tab>
+                <Tab>Rejected ({rejectedJobs.length})</Tab>
+              </TabList>
 
-              <Divider />
+              <TabPanels>
+                <TabPanel px={0} pt={4}>
+                  {jobsLoading ? (
+                    <Text color={mutedText}>Loading jobs...</Text>
+                  ) : pendingJobs.length ? (
+                    <Stack spacing={3}>
+                      {pendingJobs.map((job) => (
+                        <Card
+                          key={job._id}
+                          variant="outline"
+                          borderColor={borderColor}
+                          bg={activeJobBg}
+                        >
+                          <CardBody>
+                            <Stack spacing={2}>
+                              <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+                                <Heading size="sm">{job.title}</Heading>
+                                <Badge colorScheme="orange">Pending</Badge>
+                              </Flex>
+                              <Text fontSize="sm" color={mutedText}>
+                                {job.category || job.department || "General"} - {job.location}
+                                {job.address ? `, ${job.address}` : ""} - {job.type}
+                              </Text>
+                              <Text fontSize="xs" color={mutedText}>
+                                Submitted {formatDate(job.postedAt || job.createdAt)}
+                              </Text>
+                            </Stack>
+                          </CardBody>
+                        </Card>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Text color={mutedText}>No pending jobs.</Text>
+                  )}
+                </TabPanel>
 
-              <Stack spacing={3}>
-                {jobs.map((job) => {
-                  const applicantCount = applicants.filter(
-                    (applicant) => applicant.jobId === job.id
-                  ).length;
-                  const isActive = selectedJobId === job.id;
-                  return (
-                    <Card
-                      key={job.id}
-                      variant="outline"
-                      borderColor={isActive ? "green.400" : borderColor}
-                      bg={isActive ? activeJobBg : "transparent"}
-                      cursor="pointer"
-                      onClick={() => setSelectedJobId(job.id)}
-                    >
-                        <CardBody>
-                          <Stack spacing={2}>
-                            <Flex justify="space-between" align="center">
-                              <Heading size="sm">{job.title}</Heading>
-                              <Badge colorScheme="green">{applicantCount} applicants</Badge>
-                            </Flex>
-                            <Text fontSize="sm" color={mutedText}>
-                              {job.category || job.department || "General"} -{' '}
-                              {job.location}
-                              {job.address ? `, ${job.address}` : ''} - {job.type}
-                            </Text>
-                            <Text fontSize="xs" color={mutedText}>
-                              Posted {formatDate(job.postedAt)}
-                            </Text>
-                          </Stack>
-                      </CardBody>
-                    </Card>
-                  );
-                })}
-              </Stack>
-            </Stack>
+                <TabPanel px={0} pt={4}>
+                  {jobsLoading ? (
+                    <Text color={mutedText}>Loading jobs...</Text>
+                  ) : postedJobs.length ? (
+                    <Stack spacing={3}>
+                      {postedJobs.map((job) => (
+                        <Card key={job._id} variant="outline" borderColor={borderColor}>
+                          <CardBody>
+                            <Stack spacing={2}>
+                              <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+                                <Heading size="sm">{job.title}</Heading>
+                                <Badge colorScheme="green">Posted</Badge>
+                              </Flex>
+                              <Text fontSize="sm" color={mutedText}>
+                                {job.category || job.department || "General"} - {job.location}
+                                {job.address ? `, ${job.address}` : ""} - {job.type}
+                              </Text>
+                              <Text fontSize="xs" color={mutedText}>
+                                Approved {formatDate(job.approvedAt || job.updatedAt || job.postedAt)}
+                              </Text>
+                            </Stack>
+                          </CardBody>
+                        </Card>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Text color={mutedText}>No posted jobs yet.</Text>
+                  )}
+                </TabPanel>
+
+                <TabPanel px={0} pt={4}>
+                  {jobsLoading ? (
+                    <Text color={mutedText}>Loading jobs...</Text>
+                  ) : rejectedJobs.length ? (
+                    <Stack spacing={3}>
+                      {rejectedJobs.map((job) => (
+                        <Card key={job._id} variant="outline" borderColor={borderColor}>
+                          <CardBody>
+                            <Stack spacing={2}>
+                              <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+                                <Heading size="sm">{job.title}</Heading>
+                                <Badge colorScheme="red">Rejected</Badge>
+                              </Flex>
+                              <Text fontSize="sm" color={mutedText}>
+                                {job.category || job.department || "General"} - {job.location}
+                                {job.address ? `, ${job.address}` : ""} - {job.type}
+                              </Text>
+                              <Text fontSize="xs" color={mutedText}>
+                                Rejected {formatDate(job.updatedAt || job.postedAt || job.createdAt)}
+                              </Text>
+                            </Stack>
+                          </CardBody>
+                        </Card>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Text color={mutedText}>No rejected jobs.</Text>
+                  )}
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </CardBody>
         </Card>
       </SimpleGrid>
 
-      <Card bg={cardBg} borderColor={borderColor} borderWidth="1px" mt={8}>
-        <CardHeader>
-          <Heading size="md">Companies worked with us</Heading>
-          <Text color={mutedText} mt={1}>
-            Submit a partner company for approval. Approved companies appear on the home page.
-          </Text>
-        </CardHeader>
-        <CardBody>
-          <Stack spacing={6}>
-            <Stack spacing={4} as="form" onSubmit={handleSubmitPartner}>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                <FormControl isRequired>
-                  <FormLabel>Company name</FormLabel>
-                  <Input
-                    placeholder="Company name"
-                    value={partnerForm.name}
-                    onChange={handlePartnerChange("name")}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Logo URL</FormLabel>
-                  <Input
-                    placeholder="https://..."
-                    value={partnerForm.logoUrl}
-                    onChange={handlePartnerChange("logoUrl")}
-                  />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Website</FormLabel>
-                  <Input
-                    placeholder="https://..."
-                    value={partnerForm.website}
-                    onChange={handlePartnerChange("website")}
-                  />
-                </FormControl>
-              </SimpleGrid>
-              <Button colorScheme="green" type="submit" isLoading={isSubmittingPartner}>
-                Submit company
-              </Button>
-            </Stack>
-
-            <Divider />
-
-            <Box>
-              <Heading size="sm" mb={3}>
-                Your submissions
-              </Heading>
-              <Stack spacing={3}>
-                {partnersLoading ? (
-                  <Text color={mutedText}>Loading submissions...</Text>
-                ) : partnerSubmissions.length ? (
-                  partnerSubmissions.map((company) => (
-                    <Flex
-                      key={company._id}
-                      align="center"
-                      justify="space-between"
-                      p={3}
-                      border="1px solid"
-                      borderColor={borderColor}
-                      borderRadius="md"
-                    >
-                      <Box>
-                        <Text fontWeight="semibold">{company.name}</Text>
-                        <Text fontSize="sm" color={mutedText}>
-                          {company.website || "Website not provided"}
-                        </Text>
-                      </Box>
-                      <Badge colorScheme={company.approved ? "green" : "orange"}>
-                        {company.approved ? "Approved" : "Pending"}
-                      </Badge>
-                    </Flex>
-                  ))
-                ) : (
-                  <Text color={mutedText}>No company submissions yet.</Text>
-                )}
-              </Stack>
-            </Box>
-          </Stack>
-        </CardBody>
-      </Card>
     </Box>
   );
 };

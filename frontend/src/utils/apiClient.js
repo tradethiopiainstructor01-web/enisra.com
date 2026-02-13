@@ -25,6 +25,11 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Ignore request cancellations (AbortController/navigation) to avoid noisy logs/toasts.
+    if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
+      return Promise.reject(error);
+    }
+
     // Handle different types of errors
     if (error.response) {
       // Server responded with error status

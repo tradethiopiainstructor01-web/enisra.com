@@ -28,9 +28,17 @@ import {
   Stack,
   Text,
   useDisclosure,
+  useToast,
   VStack,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
 } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   FaBars,
   FaBell,
@@ -44,6 +52,7 @@ import {
 } from 'react-icons/fa';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
+import { useUserStore } from '../store/user';
 
 const heroCards = [
   {
@@ -150,6 +159,12 @@ const WelcomePage = () => {
   const [partnersError, setPartnersError] = useState(null);
   const [partnersRepeatCount, setPartnersRepeatCount] = useState(2);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const currentUser = useUserStore((s) => s.currentUser);
+  const [applyingId, setApplyingId] = useState('');
+  const [appliedIds, setAppliedIds] = useState(() => new Set());
+  const [applyModal, setApplyModal] = useState({ open: false, title: '', message: '', status: 'success' });
   const partnersCarouselRef = useRef(null);
   const partnersCarouselPausedRef = useRef(false);
 
@@ -200,6 +215,44 @@ const WelcomePage = () => {
     if (event.key === 'Enter') {
       event.preventDefault();
       fetchJobs();
+    }
+  };
+
+  const handleApply = async (job) => {
+    const jobId = job?._id || job?.id;
+    if (!jobId) return;
+
+    // 1) Check login
+    if (!currentUser?.token) {
+      toast({ title: 'Please log in', description: 'You need to log in to apply.', status: 'info', duration: 3000, isClosable: true });
+      navigate('/login');
+      return;
+    }
+
+    // 2) Check profile completion status
+    const infoStatus = (currentUser.infoStatus || '').toString().toLowerCase();
+    if (infoStatus !== 'completed') {
+      toast({ title: 'Complete your profile', description: 'Finish your profile before applying.', status: 'warning', duration: 3500, isClosable: true });
+      navigate('/employee/profile');
+      return;
+    }
+
+    // 3) Prevent duplicate apply on client
+    if (appliedIds.has(jobId)) {
+      setApplyModal({ open: true, title: 'Already applied', message: 'You have already applied to this job.', status: 'info' });
+      return;
+    }
+
+    try {
+      setApplyingId(jobId);
+      await apiClient.post(`jobs/${jobId}/apply`);
+      setAppliedIds((prev) => new Set([...prev, jobId]));
+      setApplyModal({ open: true, title: 'Application sent', message: 'Your application was submitted and the employer has been notified.', status: 'success' });
+    } catch (error) {
+      const message = error?.message || 'Could not submit application.';
+      setApplyModal({ open: true, title: 'Application failed', message, status: 'error' });
+    } finally {
+      setApplyingId('');
     }
   };
 
@@ -1034,8 +1087,11 @@ const WelcomePage = () => {
                           bg={primaryGreen}
                           color="white"
                           _hover={{ bg: primaryGreenHover }}
+                          onClick={() => handleApply(job)}
+                          isLoading={applyingId === (job._id || job.id)}
+                          isDisabled={appliedIds.has(job._id || job.id)}
                         >
-                          Apply Now
+                          {appliedIds.has(job._id || job.id) ? 'Applied' : 'Apply Now'}
                         </Button>
                       </Box>
                     );
@@ -1140,6 +1196,7 @@ const WelcomePage = () => {
               color="white"
               borderRadius="full"
               _hover={{ bg: primaryGreenHover }}
+              onClick={() => navigate('/login')}
             >
               Apply Now
             </Button>
@@ -1179,6 +1236,22 @@ const WelcomePage = () => {
           </SimpleGrid>
         </Container>
       </Box>
+
+      <Modal isOpen={applyModal.open} onClose={() => setApplyModal({ open: false, title: '', message: '', status: 'success' })} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{applyModal.title || 'Application'}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>{applyModal.message}</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={() => setApplyModal({ open: false, title: '', message: '', status: 'success' })} colorScheme={applyModal.status === 'success' ? 'green' : 'red'}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

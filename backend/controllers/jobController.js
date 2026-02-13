@@ -1,4 +1,6 @@
 const Job = require('../models/Job');
+const Application = require('../models/Application');
+const Notification = require('../models/Notification');
 
 const toTrimmedString = (value) => (value || '').toString().trim();
 
@@ -100,6 +102,35 @@ exports.listPendingJobs = async (_req, res) => {
   }
 };
 
+exports.listMyJobs = async (req, res) => {
+  try {
+    if (!req.user?._id) {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    const { approved, active } = req.query;
+    const filter = { postedBy: req.user._id };
+
+    if (approved === 'true') filter.approved = true;
+    if (approved === 'false') filter.approved = false;
+
+    if (active === 'true') filter.active = true;
+    if (active === 'false') filter.active = false;
+
+    const jobs = await Job.find(filter)
+      .sort({ postedAt: -1, createdAt: -1 })
+      .lean();
+
+    res.json({ success: true, data: jobs });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch employer jobs',
+      error: error.message,
+    });
+  }
+};
+
 exports.createJob = async (req, res) => {
   try {
     const payload = {
@@ -187,5 +218,54 @@ exports.rejectJob = async (req, res) => {
       message: 'Failed to reject job',
       error: error.message,
     });
+  }
+};
+
+exports.applyToJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user?._id) {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    // Require employee profile to be completed
+    const infoStatus = (req.user.infoStatus || '').toString().toLowerCase();
+    if (infoStatus !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Please complete your profile before applying.' });
+    }
+
+    const job = await Job.findById(id).lean();
+    if (!job || !job.active || !job.approved) {
+      return res.status(404).json({ success: false, message: 'Job not available' });
+    }
+
+    const existing = await Application.findOne({ job: id, applicant: req.user._id });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'You already applied to this job.' });
+    }
+
+    const created = await Application.create({
+      job: id,
+      applicant: req.user._id,
+      employer: job.postedBy,
+      status: 'applied',
+    });
+
+    // Notify employer if present
+    if (job.postedBy) {
+      await Notification.create({
+        user: job.postedBy,
+        text: `New application for ${job.title || 'a job posting'}`,
+      });
+    }
+
+    res.status(201).json({ success: true, data: created });
+  } catch (error) {
+    // Handle duplicate key error from unique index
+    if (error?.code === 11000) {
+      return res.status(409).json({ success: false, message: 'You already applied to this job.' });
+    }
+    res.status(500).json({ success: false, message: 'Failed to apply to job', error: error.message });
   }
 };

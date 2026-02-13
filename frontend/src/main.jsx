@@ -22,11 +22,11 @@ const theme = extendTheme({
         MozOsxFontSmoothing: 'grayscale',
       },
       '*': {
-        '-webkit-tap-highlight-color': 'transparent',
+        WebkitTapHighlightColor: 'transparent',
       },
       'button, a, input, select, textarea': {
-        '-webkit-appearance': 'none',
-        '-moz-appearance': 'none',
+        WebkitAppearance: 'none',
+        MozAppearance: 'none',
         appearance: 'none',
       },
     },

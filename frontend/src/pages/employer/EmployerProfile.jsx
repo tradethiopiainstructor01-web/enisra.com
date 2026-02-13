@@ -16,13 +16,9 @@ import {
   HStack,
   Icon,
   Input,
-  Progress,
   Select,
   SimpleGrid,
   Stack,
-  Stat,
-  StatLabel,
-  StatNumber,
   Text,
   useColorModeValue,
   useToast,
@@ -31,6 +27,9 @@ import { FiBriefcase, FiMail, FiShield } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { useUserStore } from "../../store/user";
 import apiClient from "../../utils/apiClient";
+
+const isDetailsComplete = (details) =>
+  Object.values(details || {}).every((value) => String(value ?? "").trim().length > 0);
 
 const EmployerProfile = () => {
   const currentUser = useUserStore((state) => state.currentUser);
@@ -53,6 +52,7 @@ const EmployerProfile = () => {
   const [categoriesError, setCategoriesError] = useState("");
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [detailsSaving, setDetailsSaving] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const pageBg = useColorModeValue("gray.50", "gray.950");
   const panelBg = useColorModeValue("white", "gray.900");
   const heroBg = useColorModeValue("white", "gray.800");
@@ -72,10 +72,6 @@ const EmployerProfile = () => {
     : normalizedStatus.includes("inactive")
     ? "red"
     : "green";
-
-  const profileFields = [displayName, displayEmail, displayRole, displayDepartment];
-  const completedFields = profileFields.filter(Boolean).length;
-  const profileCompletion = Math.round((completedFields / profileFields.length) * 100);
 
   useEffect(() => {
     let isMounted = true;
@@ -105,6 +101,9 @@ const EmployerProfile = () => {
               ? payload.contractEndDate.toString().split("T")[0]
               : "",
           });
+          if (isDetailsComplete(payload)) {
+            setShowForm(false);
+          }
         }
       } catch (error) {
         if (!isMounted) return;
@@ -316,12 +315,22 @@ const EmployerProfile = () => {
 
           <Card bg={panelBg} borderWidth="1px" borderColor={borderColor} boxShadow="md">
             <CardHeader>
-              <Heading size="sm">Employer Form</Heading>
-              <Text color={subtleText} fontSize="sm" mt={1}>
-                Provide your company details to continue.
-              </Text>
+              <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+                <Box>
+                  <Heading size="sm">Employer Form</Heading>
+                  <Text color={subtleText} fontSize="sm" mt={1}>
+                    Provide your company details to continue.
+                  </Text>
+                </Box>
+                {!showForm ? (
+                  <Button size="sm" onClick={() => setShowForm(true)}>
+                    Edit details
+                  </Button>
+                ) : null}
+              </Flex>
             </CardHeader>
             <CardBody>
+              {showForm ? (
               <Stack spacing={4}>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <FormControl>
@@ -469,6 +478,11 @@ const EmployerProfile = () => {
                   Save Employer Details
                 </Button>
               </Stack>
+              ) : (
+                <Text color={mutedText}>
+                  Profile saved. Click “Edit details” to make changes.
+                </Text>
+              )}
             </CardBody>
           </Card>
 

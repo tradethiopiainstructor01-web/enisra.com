@@ -36,6 +36,7 @@ import {
   Th,
   Thead,
   Text,
+  Textarea,
   Tr,
   Tooltip,
   useBreakpointValue,
@@ -97,6 +98,11 @@ const AdminDashboard = () => {
     onOpen: onHoldEmployeeOpen,
     onClose: onHoldEmployeeClose,
   } = useDisclosure();
+  const {
+    isOpen: isCreatePackageOpen,
+    onOpen: onCreatePackageOpen,
+    onClose: onCreatePackageClose,
+  } = useDisclosure();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const toast = useToast();
   const navigate = useNavigate();
@@ -130,6 +136,22 @@ const AdminDashboard = () => {
   const [employerCategoryName, setEmployerCategoryName] = useState("");
   const [employerCategorySubmitting, setEmployerCategorySubmitting] = useState(false);
   const [employerCategoryActionId, setEmployerCategoryActionId] = useState(null);
+  const [documentCategories, setDocumentCategories] = useState([]);
+  const [documentCategoriesLoading, setDocumentCategoriesLoading] = useState(false);
+  const [documentCategoryName, setDocumentCategoryName] = useState("");
+  const [documentCategorySection, setDocumentCategorySection] = useState("companys");
+  const [documentCategorySubmitting, setDocumentCategorySubmitting] = useState(false);
+  const [documentCategoryActionId, setDocumentCategoryActionId] = useState(null);
+  const [packages, setPackages] = useState([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
+  const [packageSubmitting, setPackageSubmitting] = useState(false);
+  const [packageForm, setPackageForm] = useState({
+    market: "Local",
+    packageNumber: "",
+    price: "",
+    description: "",
+    servicesText: "",
+  });
 
   const normalizeRoleValue = (value = "") =>
     value?.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -198,6 +220,31 @@ const AdminDashboard = () => {
     onHoldEmployeeOpen();
   };
 
+  const resetPackageForm = () => {
+    setPackageForm({
+      market: "Local",
+      packageNumber: "",
+      price: "",
+      description: "",
+      servicesText: "",
+    });
+  };
+
+  const closeCreatePackageModal = () => {
+    onCreatePackageClose();
+    resetPackageForm();
+  };
+
+  const handlePackageFormChange = (field) => (event) => {
+    setPackageForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const parseServicesText = (value = "") =>
+    value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
   const adminSections = [
     {
       id: "job-post",
@@ -252,6 +299,15 @@ const AdminDashboard = () => {
       tone: "green",
       to: "/admin#employer-categories",
       cta: "Manage employer categories",
+    },
+    {
+      id: "categories",
+      title: "Document Categories",
+      description: "Manage categories used for uploading company and employee documents.",
+      icon: FiTag,
+      tone: "teal",
+      to: "",
+      cta: "Manage categories",
     },
   ];
   const [activeSectionId, setActiveSectionId] = useState(adminSections[0]?.id || "job-post");
@@ -321,6 +377,188 @@ const AdminDashboard = () => {
       });
     } finally {
       setEmployeesLoading(false);
+    }
+  };
+
+  const loadPackages = async () => {
+    setPackagesLoading(true);
+    try {
+      const response = await apiClient.get("/packages");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setPackages(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load packages",
+        description: error?.message || "Unable to load packages.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setPackagesLoading(false);
+    }
+  };
+
+  const loadDocumentCategories = async () => {
+    setDocumentCategoriesLoading(true);
+    try {
+      const response = await apiClient.get("/categories");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setDocumentCategories(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load categories",
+        description: error?.message || "Unable to load categories.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setDocumentCategoriesLoading(false);
+    }
+  };
+
+  const handleAddDocumentCategory = async () => {
+    const name = documentCategoryName.trim();
+    const section = (documentCategorySection || "").toString().trim();
+
+    if (!name) {
+      toast({
+        title: "Missing category",
+        description: "Please enter a category name.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (!section) {
+      toast({
+        title: "Missing section",
+        description: "Please select a section.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setDocumentCategorySubmitting(true);
+    try {
+      await apiClient.post("/categories", { name, section });
+      setDocumentCategoryName("");
+      await loadDocumentCategories();
+      toast({
+        title: "Category added",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to add category",
+        description: error?.response?.data?.message || error?.message || "Unable to add category.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setDocumentCategorySubmitting(false);
+    }
+  };
+
+  const handleDeleteDocumentCategory = async (category) => {
+    if (!category?._id) return;
+    setDocumentCategoryActionId(category._id);
+    try {
+      await apiClient.delete(`/categories/${category._id}`);
+      setDocumentCategories((prev) => prev.filter((item) => item._id !== category._id));
+      toast({
+        title: "Category deleted",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete category",
+        description: error?.response?.data?.message || error?.message || "Unable to delete category.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setDocumentCategoryActionId(null);
+    }
+  };
+
+  const handleCreatePackage = async () => {
+    const packageNumber = Number(packageForm.packageNumber);
+    const price = packageForm.price === "" ? 0 : Number(packageForm.price);
+    const services = parseServicesText(packageForm.servicesText);
+    const market = (packageForm.market || "Local").toString().trim();
+
+    if (!Number.isFinite(packageNumber) || packageNumber <= 0) {
+      toast({
+        title: "Invalid package number",
+        description: "Package number must be a positive number.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (!services.length) {
+      toast({
+        title: "Missing services",
+        description: "Add at least one service (one per line).",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (!Number.isFinite(price) || price < 0) {
+      toast({
+        title: "Invalid price",
+        description: "Price must be 0 or more.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setPackageSubmitting(true);
+    try {
+      await apiClient.post("/packages", {
+        packageNumber,
+        services,
+        price,
+        description: packageForm.description?.toString?.().trim?.() || "",
+        market,
+      });
+      toast({
+        title: "Package created",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      closeCreatePackageModal();
+      await loadPackages();
+    } catch (error) {
+      toast({
+        title: "Failed to create package",
+        description: error?.response?.data?.message || error?.message || "Unable to create package.",
+        status: "error",
+        duration: 3500,
+        isClosable: true,
+      });
+    } finally {
+      setPackageSubmitting(false);
     }
   };
 
@@ -441,6 +679,12 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (activeSectionId === "employee" && employees.length === 0 && !employeesLoading) {
       loadEmployees();
+    }
+    if (activeSectionId === "package" && packages.length === 0 && !packagesLoading) {
+      loadPackages();
+    }
+    if (activeSectionId === "categories" && documentCategories.length === 0 && !documentCategoriesLoading) {
+      loadDocumentCategories();
     }
     if (activeSectionId === "employer-categories" && employerCategories.length === 0 && !employerCategoriesLoading) {
       loadEmployerCategories();
@@ -836,14 +1080,227 @@ const AdminDashboard = () => {
     }
 
     if (section.id === "package") {
+      const sortedPackages = packages
+        .slice()
+        .sort((a, b) => {
+          const marketA = (a?.market || "").toString();
+          const marketB = (b?.market || "").toString();
+          const marketSort = marketA.localeCompare(marketB);
+          if (marketSort !== 0) return marketSort;
+          return Number(a?.packageNumber || 0) - Number(b?.packageNumber || 0);
+        });
+
       return (
-        <Stack spacing={3}>
+        <Stack spacing={4}>
           <Text color={mutedText}>
-            Package management is handled by admin. Define offerings, benefits, and pricing tiers here.
+            Create and maintain packages available for customers.
           </Text>
-          <Button size="sm" variant="outline" isDisabled>
-            Package editor coming soon
-          </Button>
+
+          <Flex gap={2} wrap="wrap">
+            <Button
+              size="sm"
+              colorScheme="teal"
+              leftIcon={<Icon as={FiPlus} />}
+              onClick={onCreatePackageOpen}
+            >
+              Create package
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={loadPackages}
+              isLoading={packagesLoading}
+            >
+              Refresh
+            </Button>
+          </Flex>
+
+          {packagesLoading ? (
+            <Text color={mutedText}>Loading packages...</Text>
+          ) : sortedPackages.length ? (
+            <Stack spacing={3}>
+              <Text color={mutedText} fontSize="sm">
+                Showing {sortedPackages.length} package{sortedPackages.length === 1 ? "" : "s"}.
+              </Text>
+              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md">
+                <Table size="sm" variant="simple">
+                  <Thead bg={tableHeadBg}>
+                    <Tr>
+                      <Th>Market</Th>
+                      <Th>Package #</Th>
+                      <Th isNumeric>Price</Th>
+                      <Th>Services</Th>
+                      <Th>Description</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {sortedPackages.map((pkg) => {
+                      const services = Array.isArray(pkg?.services) ? pkg.services : [];
+                      const servicesPreview = services.slice(0, 3).join(", ");
+                      const servicesSuffix = services.length > 3 ? ` (+${services.length - 3})` : "";
+                      return (
+                        <Tr key={pkg?._id || `${pkg?.market}-${pkg?.packageNumber}`}>
+                          <Td>
+                            <Badge colorScheme={pkg?.market === "International" ? "purple" : "green"}>
+                              {pkg?.market || "Local"}
+                            </Badge>
+                          </Td>
+                          <Td>
+                            <Text fontWeight="semibold">Package {pkg?.packageNumber ?? "-"}</Text>
+                          </Td>
+                          <Td isNumeric>
+                            <Text fontSize="sm" color={mutedText}>
+                              {pkg?.price ?? 0}
+                            </Text>
+                          </Td>
+                          <Td>
+                            <Text fontSize="sm" fontWeight="semibold">
+                              {services.length} service{services.length === 1 ? "" : "s"}
+                            </Text>
+                            {servicesPreview ? (
+                              <Text fontSize="xs" color={mutedText} noOfLines={2}>
+                                {servicesPreview}
+                                {servicesSuffix}
+                              </Text>
+                            ) : null}
+                          </Td>
+                          <Td>
+                            <Text fontSize="sm" color={mutedText} noOfLines={2}>
+                              {pkg?.description || "-"}
+                            </Text>
+                          </Td>
+                        </Tr>
+                      );
+                    })}
+                  </Tbody>
+                </Table>
+              </TableContainer>
+            </Stack>
+          ) : (
+            <Text color={mutedText}>No packages found yet. Create one to get started.</Text>
+          )}
+        </Stack>
+      );
+    }
+
+    if (section.id === "categories") {
+      const sortedCategories = documentCategories
+        .slice()
+        .sort((a, b) => {
+          const sectionA = (a?.section || "").toString();
+          const sectionB = (b?.section || "").toString();
+          const sectionSort = sectionA.localeCompare(sectionB);
+          if (sectionSort !== 0) return sectionSort;
+          return (a?.name || "").toString().localeCompare((b?.name || "").toString());
+        });
+
+      return (
+        <Stack spacing={4}>
+          <Text color={mutedText}>
+            These categories are used in document upload pages. Choose the section that matches where the category should appear.
+          </Text>
+
+          <Flex
+            gap={3}
+            direction={{ base: "column", md: "row" }}
+            align={{ md: "flex-end" }}
+            justify="space-between"
+          >
+            <FormControl isRequired>
+              <FormLabel fontSize="sm">Category name</FormLabel>
+              <Input
+                placeholder="e.g. Policies"
+                value={documentCategoryName}
+                onChange={(event) => setDocumentCategoryName(event.target.value)}
+              />
+            </FormControl>
+
+            <FormControl isRequired>
+              <FormLabel fontSize="sm">Section</FormLabel>
+              <Select
+                value={documentCategorySection}
+                onChange={(event) => setDocumentCategorySection(event.target.value)}
+              >
+                <option value="companys">Company documents</option>
+                <option value="employees">Employee documents</option>
+              </Select>
+            </FormControl>
+
+            <Flex gap={2} wrap="wrap">
+              <Button
+                size="sm"
+                colorScheme="teal"
+                leftIcon={<Icon as={FiPlus} />}
+                onClick={handleAddDocumentCategory}
+                isLoading={documentCategorySubmitting}
+              >
+                Add
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={loadDocumentCategories}
+                isLoading={documentCategoriesLoading}
+              >
+                Refresh
+              </Button>
+            </Flex>
+          </Flex>
+
+          {documentCategoriesLoading ? (
+            <Text color={mutedText}>Loading categories...</Text>
+          ) : sortedCategories.length ? (
+            <Stack spacing={3}>
+              <Text color={mutedText} fontSize="sm">
+                Showing {sortedCategories.length} category{sortedCategories.length === 1 ? "" : "ies"}.
+              </Text>
+              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md">
+                <Table size="sm" variant="simple">
+                  <Thead bg={tableHeadBg}>
+                    <Tr>
+                      <Th>Section</Th>
+                      <Th>Name</Th>
+                      <Th textAlign="right">Actions</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {sortedCategories.map((category) => {
+                      const isActing = documentCategoryActionId === category._id;
+                      return (
+                        <Tr key={category._id}>
+                          <Td>
+                            <Badge colorScheme={category.section === "employees" ? "purple" : "green"}>
+                              {category.section || "-"}
+                            </Badge>
+                          </Td>
+                          <Td>
+                            <Text fontWeight="semibold">{category.name || "-"}</Text>
+                          </Td>
+                          <Td>
+                            <Flex justify="flex-end" gap={1}>
+                              <Tooltip label="Delete">
+                                <IconButton
+                                  aria-label="Delete category"
+                                  size="xs"
+                                  variant="ghost"
+                                  colorScheme="red"
+                                  icon={<Icon as={FiTrash2} />}
+                                  onClick={() => handleDeleteDocumentCategory(category)}
+                                  isLoading={isActing}
+                                />
+                              </Tooltip>
+                            </Flex>
+                          </Td>
+                        </Tr>
+                      );
+                    })}
+                  </Tbody>
+                </Table>
+              </TableContainer>
+            </Stack>
+          ) : (
+            <Text color={mutedText}>No categories found yet. Add one above.</Text>
+          )}
         </Stack>
       );
     }
@@ -1481,6 +1938,84 @@ const AdminDashboard = () => {
               isLoading={employeeActionLoading}
             >
               Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isCreatePackageOpen} onClose={closeCreatePackageModal} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Create package</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={3}>
+              <Flex gap={3} direction={{ base: "column", md: "row" }}>
+                <FormControl isRequired>
+                  <FormLabel>Market</FormLabel>
+                  <Select value={packageForm.market} onChange={handlePackageFormChange("market")}>
+                    <option value="Local">Local</option>
+                    <option value="International">International</option>
+                  </Select>
+                </FormControl>
+
+                <FormControl isRequired>
+                  <FormLabel>Package number</FormLabel>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="1"
+                    value={packageForm.packageNumber}
+                    onChange={handlePackageFormChange("packageNumber")}
+                  />
+                </FormControl>
+              </Flex>
+
+              <FormControl>
+                <FormLabel>Price</FormLabel>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="0"
+                  value={packageForm.price}
+                  onChange={handlePackageFormChange("price")}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Description</FormLabel>
+                <Textarea
+                  placeholder="Short description"
+                  value={packageForm.description}
+                  onChange={handlePackageFormChange("description")}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Services</FormLabel>
+                <Textarea
+                  placeholder={"One service per line\\nExample:\\n- Candidate screening\\n- Interview scheduling"}
+                  value={packageForm.servicesText}
+                  onChange={handlePackageFormChange("servicesText")}
+                  rows={6}
+                />
+                <Text fontSize="xs" color={mutedText} mt={2}>
+                  Tip: You can enter one service per line (or comma-separated).
+                </Text>
+              </FormControl>
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={closeCreatePackageModal}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="teal"
+              onClick={handleCreatePackage}
+              isLoading={packageSubmitting}
+            >
+              Create package
             </Button>
           </ModalFooter>
         </ModalContent>
