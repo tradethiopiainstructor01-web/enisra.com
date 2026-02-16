@@ -232,6 +232,12 @@ exports.applyToJob = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 
+    // Check if user has employee role
+    const userRole = (req.user.role || '').toString().toLowerCase();
+    if (userRole !== 'employee') {
+      return res.status(403).json({ success: false, message: 'Only employees can apply to jobs' });
+    }
+
     // Require employee profile to be completed
     const infoStatus = (req.user.infoStatus || '').toString().toLowerCase();
     if (infoStatus !== 'completed') {
