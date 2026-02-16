@@ -12,6 +12,7 @@ import {
   HStack,
   Icon,
   Link,
+  Progress,
   SimpleGrid,
   Skeleton,
   SkeletonCircle,
@@ -222,6 +223,43 @@ const EmployeeProfile = () => {
                         {isInfoComplete ? 'Profile completed' : 'Profile pending'}
                       </Badge>
                     </HStack>
+
+                    {!loading ? (
+                      <Box mt={4} maxW={{ base: '100%', md: '420px' }}>
+                        <HStack justify="space-between" mb={2}>
+                          <Text fontSize="sm" fontWeight="semibold" opacity={0.95}>
+                            Completion
+                          </Text>
+                          <Badge colorScheme={canCreateCv ? 'green' : 'orange'}>
+                            {canCreateCv ? 'CV unlocked' : `CV locked (${MIN_CV_PROFILE_COMPLETION}% required)`}
+                          </Badge>
+                        </HStack>
+                        <Box position="relative">
+                          <Progress
+                            value={profileCompletion.percentage}
+                            colorScheme={canCreateCv ? 'green' : 'orange'}
+                            size="lg"
+                            borderRadius="md"
+                            bg="whiteAlpha.200"
+                          />
+                          <Box
+                            position="absolute"
+                            left={`${MIN_CV_PROFILE_COMPLETION}%`}
+                            top={0}
+                            height="100%"
+                            width="2px"
+                            bg="red.300"
+                            transform="translateX(-1px)"
+                            borderRadius="full"
+                          />
+                        </Box>
+                        {!canCreateCv ? (
+                          <Text mt={2} fontSize="sm" opacity={0.92}>
+                            {cvRequirementMessage}
+                          </Text>
+                        ) : null}
+                      </Box>
+                    ) : null}
                   </Box>
                 </HStack>
 

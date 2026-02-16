@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Badge,
   Box,
   Button,
+  Card,
+  CardBody,
   Divider,
+  Flex,
   FormControl,
   FormLabel,
   Heading,
   HStack,
   Input,
   Link,
+  Progress,
   Select,
   SimpleGrid,
   Stack,
@@ -20,6 +25,7 @@ import {
 import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useUserStore } from '../store/user';
 import { resolveApiBase } from '../utils/apiBase';
+import { MIN_CV_PROFILE_COMPLETION, getEmployeeProfileCompletion } from '../utils/employeeProfileCompletion';
 
 const blankEducation = () => ({
   highestEducationLevel: '',
@@ -71,6 +77,7 @@ const EmployeeInfoForm = () => {
   const toast = useToast();
   const cardBg = useColorModeValue('gray.50', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const progressTrackBg = useColorModeValue('gray.100', 'gray.700');
 
   const currentUser = useUserStore((state) => state.currentUser);
   const updateUserInfo = useUserStore((state) => state.updateUserInfo);
@@ -155,6 +162,25 @@ const EmployeeInfoForm = () => {
     contractDocument: null,
     otherSupportingFiles: [],
   });
+
+  const completionSource = useMemo(
+    () => ({
+      ...profile,
+      // Map form fields into the completion helper's expected keys
+      email: profile.personalEmail,
+      phone: profile.phoneNumber,
+      altPhone: profile.emergencyContactPhone,
+      hireDate: profile.dateOfJoining,
+      photoUrl: existingFiles.photoUrl,
+    }),
+    [profile, existingFiles.photoUrl]
+  );
+
+  const profileCompletion = useMemo(
+    () => getEmployeeProfileCompletion(completionSource),
+    [completionSource]
+  );
+  const canCreateCv = profileCompletion.meetsCvRequirement;
 
   useEffect(() => {
     const userId = currentUser?._id;
@@ -548,6 +574,54 @@ const EmployeeInfoForm = () => {
         <Text color="gray.500" fontSize="sm">
           {isLoadingProfile ? 'Loading your profile...' : 'Fill your employee profile and upload required documents.'}
         </Text>
+
+        <Card bg={useColorModeValue('white', 'gray.900')} borderWidth="1px" borderColor={borderColor} borderRadius="lg">
+          <CardBody>
+            <Stack spacing={3}>
+              <Flex justify="space-between" align={{ base: 'flex-start', md: 'center' }} gap={3} flexWrap="wrap">
+                <HStack spacing={2} flexWrap="wrap">
+                  <Heading size="sm">Profile completion</Heading>
+                  <Badge colorScheme={canCreateCv ? 'green' : 'orange'}>{profileCompletion.percentage}%</Badge>
+                  {!canCreateCv ? (
+                    <Badge colorScheme="red">CV locked (needs {MIN_CV_PROFILE_COMPLETION}%)</Badge>
+                  ) : (
+                    <Badge colorScheme="green">CV unlocked</Badge>
+                  )}
+                </HStack>
+                <Text fontSize="xs" color="gray.500">
+                  CV generation requires at least {MIN_CV_PROFILE_COMPLETION}% completion
+                </Text>
+              </Flex>
+
+              <Box position="relative">
+                <Progress
+                  value={profileCompletion.percentage}
+                  colorScheme={canCreateCv ? 'green' : 'orange'}
+                  size="lg"
+                  borderRadius="md"
+                  bg={progressTrackBg}
+                />
+                <Box
+                  position="absolute"
+                  left={`${MIN_CV_PROFILE_COMPLETION}%`}
+                  top={0}
+                  height="100%"
+                  width="2px"
+                  bg={useColorModeValue('red.400', 'red.300')}
+                  transform="translateX(-1px)"
+                  borderRadius="full"
+                />
+              </Box>
+
+              {!canCreateCv && profileCompletion.missing.length ? (
+                <Text fontSize="sm" color="gray.600">
+                  Missing sections: {profileCompletion.missing.slice(0, 5).map((m) => m.label).join(', ')}
+                  {profileCompletion.missing.length > 5 ? `, +${profileCompletion.missing.length - 5} more` : ''}
+                </Text>
+              ) : null}
+            </Stack>
+          </CardBody>
+        </Card>
 
         <Stack spacing={4}>
           <Heading size="md">1. Personal Information</Heading>
