@@ -27,8 +27,14 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Progress,
   Select,
+  SimpleGrid,
   Stack,
+  Stat,
+  StatHelpText,
+  StatLabel,
+  StatNumber,
   Table,
   TableContainer,
   Tbody,
@@ -62,6 +68,9 @@ import {
   FiTrash2,
   FiUser,
   FiUsers,
+  FiCheckCircle,
+  FiClock,
+  FiBarChart2,
 } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import apiClient from "../../utils/apiClient";
@@ -112,6 +121,8 @@ const AdminDashboard = () => {
   const [jobsLoading, setJobsLoading] = useState(false);
   const [pendingEmployers, setPendingEmployers] = useState([]);
   const [employersLoading, setEmployersLoading] = useState(false);
+  const [allEmployers, setAllEmployers] = useState([]);
+  const [employersStatsLoading, setEmployersStatsLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [employeesLoading, setEmployeesLoading] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -159,6 +170,26 @@ const AdminDashboard = () => {
   // "Employee" accounts are users whose role is explicitly `employee`.
   const EMPLOYEE_ROLE_SET = new Set(["employee"]);
   const getEmployeePhone = (user) => user?.phone || user?.username || "";
+
+  // Calculate statistics
+  const employerStats = {
+    total: allEmployers.length,
+    pending: pendingEmployers.length,
+    approved: allEmployers.filter((e) => e.status === "approved" || e.status === "active").length,
+    rejected: allEmployers.filter((e) => e.status === "rejected" || e.status === "inactive").length,
+    approvalRate: allEmployers.length > 0 
+      ? ((allEmployers.filter((e) => e.status === "approved" || e.status === "active").length / allEmployers.length) * 100).toFixed(1)
+      : 0,
+  };
+
+  const employeeStats = {
+    total: employees.length,
+    active: employees.filter((e) => e.status === "active").length,
+    inactive: employees.filter((e) => e.status === "inactive").length,
+    activeRate: employees.length > 0 
+      ? ((employees.filter((e) => e.status === "active").length / employees.length) * 100).toFixed(1)
+      : 0,
+  };
 
   const resetEmployeeForm = () => {
     setEmployeeForm({
@@ -247,6 +278,13 @@ const AdminDashboard = () => {
 
   const adminSections = [
     {
+      id: "overview",
+      title: "Overview",
+      description: "Dashboard overview with statistics and progress metrics.",
+      icon: FiBarChart2,
+      tone: "blue",
+    },
+    {
       id: "job-post",
       title: "Job Post",
       description: "Review employer job submissions and publishing readiness.",
@@ -310,7 +348,7 @@ const AdminDashboard = () => {
       cta: "Manage categories",
     },
   ];
-  const [activeSectionId, setActiveSectionId] = useState(adminSections[0]?.id || "job-post");
+  const [activeSectionId, setActiveSectionId] = useState(adminSections[0]?.id || "overview");
 
   const loadPendingJobs = async () => {
     setJobsLoading(true);
@@ -347,6 +385,24 @@ const AdminDashboard = () => {
       });
     } finally {
       setEmployersLoading(false);
+    }
+  };
+
+  const loadAllEmployers = async () => {
+    setEmployersStatsLoading(true);
+    try {
+      const response = await apiClient.get("/users");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      const users = Array.isArray(payload) ? payload : [];
+      const employerUsers = users.filter((user) => {
+        const normalizedRole = normalizeRoleValue(user?.role);
+        return normalizedRole === "employer" || normalizedRole === "employers";
+      });
+      setAllEmployers(employerUsers);
+    } catch (error) {
+      console.error("Failed to load all employers:", error);
+    } finally {
+      setEmployersStatsLoading(false);
     }
   };
 
@@ -674,6 +730,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadPendingJobs();
     loadEmployers();
+    loadAllEmployers();
+    loadEmployees();
   }, []);
 
   useEffect(() => {
@@ -688,6 +746,10 @@ const AdminDashboard = () => {
     }
     if (activeSectionId === "employer-categories" && employerCategories.length === 0 && !employerCategoriesLoading) {
       loadEmployerCategories();
+    }
+    if (activeSectionId === "overview") {
+      loadAllEmployers();
+      loadEmployees();
     }
   }, [activeSectionId]);
 
@@ -749,6 +811,7 @@ const AdminDashboard = () => {
     try {
       await apiClient.patch(`/admin/employers/${employerId}/approve`);
       setPendingEmployers((prev) => prev.filter((emp) => emp._id !== employerId));
+      await loadAllEmployers();
       toast({
         title: "Employer approved",
         status: "success",
@@ -770,6 +833,7 @@ const AdminDashboard = () => {
     try {
       await apiClient.patch(`/admin/employers/${employerId}/reject`);
       setPendingEmployers((prev) => prev.filter((emp) => emp._id !== employerId));
+      await loadAllEmployers();
       toast({
         title: "Employer rejected",
         status: "info",
@@ -991,6 +1055,284 @@ const AdminDashboard = () => {
   };
 
   const renderSectionBody = (section) => {
+    if (section.id === "overview") {
+      return (
+        <Stack spacing={6}>
+          <Text color={mutedText} fontSize="sm">
+            Overview of system statistics and progress metrics for employers and employees.
+          </Text>
+
+          {/* Employer Progress Section */}
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Flex align="center" gap={2}>
+                <Icon as={FiUsers} color="blue.500" boxSize={5} />
+                <Heading size="md">Employer Progress</Heading>
+              </Flex>
+            </CardHeader>
+            <CardBody>
+              <Stack spacing={4}>
+                <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={4}>
+                  <Stat>
+                    <StatLabel>Total Employers</StatLabel>
+                    <StatNumber>{employerStats.total}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiUsers} mr={1} />
+                      All registered
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Pending Approval</StatLabel>
+                    <StatNumber color="orange.500">{employerStats.pending}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiClock} mr={1} />
+                      Awaiting review
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Approved</StatLabel>
+                    <StatNumber color="green.500">{employerStats.approved}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiCheckCircle} mr={1} />
+                      Active accounts
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Rejected</StatLabel>
+                    <StatNumber color="red.500">{employerStats.rejected}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiTrash2} mr={1} />
+                      Inactive accounts
+                    </StatHelpText>
+                  </Stat>
+                </SimpleGrid>
+
+                <Box>
+                  <Flex justify="space-between" mb={2}>
+                    <Text fontSize="sm" fontWeight="semibold">
+                      Approval Rate
+                    </Text>
+                    <Text fontSize="sm" color={mutedText}>
+                      {employerStats.approvalRate}%
+                    </Text>
+                  </Flex>
+                  <Progress
+                    value={employerStats.approvalRate}
+                    colorScheme="green"
+                    size="lg"
+                    borderRadius="md"
+                  />
+                </Box>
+
+                {employerStats.total > 0 && (
+                  <Box>
+                    <Flex justify="space-between" mb={2}>
+                      <Text fontSize="sm" fontWeight="semibold">
+                        Status Distribution
+                      </Text>
+                    </Flex>
+                    <Stack spacing={2}>
+                      <Flex align="center" justify="space-between">
+                        <Text fontSize="xs" color={mutedText}>
+                          Approved
+                        </Text>
+                        <Text fontSize="xs" fontWeight="semibold">
+                          {employerStats.approved} ({employerStats.total > 0 ? ((employerStats.approved / employerStats.total) * 100).toFixed(1) : 0}%)
+                        </Text>
+                      </Flex>
+                      <Progress
+                        value={employerStats.total > 0 ? (employerStats.approved / employerStats.total) * 100 : 0}
+                        colorScheme="green"
+                        size="sm"
+                        borderRadius="md"
+                      />
+                      <Flex align="center" justify="space-between">
+                        <Text fontSize="xs" color={mutedText}>
+                          Pending
+                        </Text>
+                        <Text fontSize="xs" fontWeight="semibold">
+                          {employerStats.pending} ({employerStats.total > 0 ? ((employerStats.pending / employerStats.total) * 100).toFixed(1) : 0}%)
+                        </Text>
+                      </Flex>
+                      <Progress
+                        value={employerStats.total > 0 ? (employerStats.pending / employerStats.total) * 100 : 0}
+                        colorScheme="orange"
+                        size="sm"
+                        borderRadius="md"
+                      />
+                      <Flex align="center" justify="space-between">
+                        <Text fontSize="xs" color={mutedText}>
+                          Rejected
+                        </Text>
+                        <Text fontSize="xs" fontWeight="semibold">
+                          {employerStats.rejected} ({employerStats.total > 0 ? ((employerStats.rejected / employerStats.total) * 100).toFixed(1) : 0}%)
+                        </Text>
+                      </Flex>
+                      <Progress
+                        value={employerStats.total > 0 ? (employerStats.rejected / employerStats.total) * 100 : 0}
+                        colorScheme="red"
+                        size="sm"
+                        borderRadius="md"
+                      />
+                    </Stack>
+                  </Box>
+                )}
+              </Stack>
+            </CardBody>
+          </Card>
+
+          {/* Employee Progress Section */}
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Flex align="center" gap={2}>
+                <Icon as={FiUser} color="orange.500" boxSize={5} />
+                <Heading size="md">Employee Progress</Heading>
+              </Flex>
+            </CardHeader>
+            <CardBody>
+              <Stack spacing={4}>
+                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
+                  <Stat>
+                    <StatLabel>Total Employees</StatLabel>
+                    <StatNumber>{employeeStats.total}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiUser} mr={1} />
+                      All registered
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Active</StatLabel>
+                    <StatNumber color="green.500">{employeeStats.active}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiCheckCircle} mr={1} />
+                      Currently active
+                    </StatHelpText>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Inactive</StatLabel>
+                    <StatNumber color="red.500">{employeeStats.inactive}</StatNumber>
+                    <StatHelpText>
+                      <Icon as={FiPauseCircle} mr={1} />
+                      On hold
+                    </StatHelpText>
+                  </Stat>
+                </SimpleGrid>
+
+                <Box>
+                  <Flex justify="space-between" mb={2}>
+                    <Text fontSize="sm" fontWeight="semibold">
+                      Active Rate
+                    </Text>
+                    <Text fontSize="sm" color={mutedText}>
+                      {employeeStats.activeRate}%
+                    </Text>
+                  </Flex>
+                  <Progress
+                    value={employeeStats.activeRate}
+                    colorScheme="green"
+                    size="lg"
+                    borderRadius="md"
+                  />
+                </Box>
+
+                {employeeStats.total > 0 && (
+                  <Box>
+                    <Flex justify="space-between" mb={2}>
+                      <Text fontSize="sm" fontWeight="semibold">
+                        Status Distribution
+                      </Text>
+                    </Flex>
+                    <Stack spacing={2}>
+                      <Flex align="center" justify="space-between">
+                        <Text fontSize="xs" color={mutedText}>
+                          Active
+                        </Text>
+                        <Text fontSize="xs" fontWeight="semibold">
+                          {employeeStats.active} ({employeeStats.total > 0 ? ((employeeStats.active / employeeStats.total) * 100).toFixed(1) : 0}%)
+                        </Text>
+                      </Flex>
+                      <Progress
+                        value={employeeStats.total > 0 ? (employeeStats.active / employeeStats.total) * 100 : 0}
+                        colorScheme="green"
+                        size="sm"
+                        borderRadius="md"
+                      />
+                      <Flex align="center" justify="space-between">
+                        <Text fontSize="xs" color={mutedText}>
+                          Inactive
+                        </Text>
+                        <Text fontSize="xs" fontWeight="semibold">
+                          {employeeStats.inactive} ({employeeStats.total > 0 ? ((employeeStats.inactive / employeeStats.total) * 100).toFixed(1) : 0}%)
+                        </Text>
+                      </Flex>
+                      <Progress
+                        value={employeeStats.total > 0 ? (employeeStats.inactive / employeeStats.total) * 100 : 0}
+                        colorScheme="red"
+                        size="sm"
+                        borderRadius="md"
+                      />
+                    </Stack>
+                  </Box>
+                )}
+              </Stack>
+            </CardBody>
+          </Card>
+
+          {/* Quick Stats */}
+          <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4}>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardBody>
+                <Stat>
+                  <StatLabel>Pending Jobs</StatLabel>
+                  <StatNumber>{pendingJobs.length}</StatNumber>
+                  <StatHelpText>
+                    <Icon as={FiBriefcase} mr={1} />
+                    Awaiting approval
+                  </StatHelpText>
+                </Stat>
+              </CardBody>
+            </Card>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardBody>
+                <Stat>
+                  <StatLabel>Total Packages</StatLabel>
+                  <StatNumber>{packages.length}</StatNumber>
+                  <StatHelpText>
+                    <Icon as={FiPackage} mr={1} />
+                    Available packages
+                  </StatHelpText>
+                </Stat>
+              </CardBody>
+            </Card>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardBody>
+                <Stat>
+                  <StatLabel>Document Categories</StatLabel>
+                  <StatNumber>{documentCategories.length}</StatNumber>
+                  <StatHelpText>
+                    <Icon as={FiTag} mr={1} />
+                    Total categories
+                  </StatHelpText>
+                </Stat>
+              </CardBody>
+            </Card>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardBody>
+                <Stat>
+                  <StatLabel>Employer Categories</StatLabel>
+                  <StatNumber>{employerCategories.length}</StatNumber>
+                  <StatHelpText>
+                    <Icon as={FiTag} mr={1} />
+                    Total categories
+                  </StatHelpText>
+                </Stat>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+        </Stack>
+      );
+    }
+
     if (section.id === "job-post") {
       return (
         <Stack spacing={4}>
@@ -1012,7 +1354,7 @@ const AdminDashboard = () => {
                 <Text fontSize="sm" color={mutedText}>
                   {job.category} · {job.location} · {job.type}
                 </Text>
-                <Flex gap={2} mt={3}>
+                <Flex gap={2} mt={3} wrap="wrap">
                   <Button size="sm" colorScheme="green" onClick={() => handleApproveJob(job._id)}>
                     Approve
                   </Button>
@@ -1043,7 +1385,7 @@ const AdminDashboard = () => {
                 borderColor={borderColor}
                 borderRadius="md"
               >
-                <Flex justify="space-between" align="center">
+                <Flex justify="space-between" align="center" direction={{ base: "column", sm: "row" }} gap={3}>
                   <Box>
                     <Text fontWeight="semibold">
                       {employer.fullName || employer.username || "Employer"}
@@ -1054,7 +1396,7 @@ const AdminDashboard = () => {
                   </Box>
                   <Badge colorScheme="orange">Pending</Badge>
                 </Flex>
-                <Flex gap={2} mt={3}>
+                <Flex gap={2} mt={3} wrap="wrap">
                   <Button
                     size="sm"
                     colorScheme="green"
@@ -1122,7 +1464,7 @@ const AdminDashboard = () => {
               <Text color={mutedText} fontSize="sm">
                 Showing {sortedPackages.length} package{sortedPackages.length === 1 ? "" : "s"}.
               </Text>
-              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md">
+              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md" overflowX="auto">
                 <Table size="sm" variant="simple">
                   <Thead bg={tableHeadBg}>
                     <Tr>
@@ -1254,7 +1596,7 @@ const AdminDashboard = () => {
               <Text color={mutedText} fontSize="sm">
                 Showing {sortedCategories.length} category{sortedCategories.length === 1 ? "" : "ies"}.
               </Text>
-              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md">
+              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md" overflowX="auto">
                 <Table size="sm" variant="simple">
                   <Thead bg={tableHeadBg}>
                     <Tr>
@@ -1339,7 +1681,7 @@ const AdminDashboard = () => {
             align={{ md: "flex-end" }}
             justify="space-between"
           >
-            <FormControl>
+            <FormControl flex="1">
               <FormLabel fontSize="sm">Search employees</FormLabel>
               <InputGroup>
                 <InputLeftElement pointerEvents="none">
@@ -1389,7 +1731,7 @@ const AdminDashboard = () => {
               <Text color={mutedText} fontSize="sm">
                 Showing {sortedEmployees.length} employee{sortedEmployees.length === 1 ? "" : "s"}.
               </Text>
-              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md">
+              <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md" overflowX="auto">
                 <Table size="sm" variant="simple">
                   <Thead bg={tableHeadBg}>
                     <Tr>
@@ -1496,7 +1838,7 @@ const AdminDashboard = () => {
             align={{ md: "flex-end" }}
             justify="space-between"
           >
-            <FormControl isRequired>
+            <FormControl isRequired flex="1">
               <FormLabel fontSize="sm">New category</FormLabel>
               <Input
                 placeholder="Private"
@@ -1542,6 +1884,7 @@ const AdminDashboard = () => {
                     border="1px solid"
                     borderColor={borderColor}
                     borderRadius="md"
+                    direction={{ base: "column", sm: "row" }}
                   >
                     <Box minW={0}>
                       <Text fontWeight="semibold" noOfLines={1}>
@@ -1598,7 +1941,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Box maxW="7xl" mx="auto">
+    <Box maxW="7xl" mx="auto" px={{ base: 4, md: 6 }} py={{ base: 4, md: 6 }}>
       <Flex direction={{ base: "column", lg: "row" }} gap={6}>
         {isMobile && (
           <Flex justify="flex-end">
@@ -1619,8 +1962,8 @@ const AdminDashboard = () => {
           borderColor={borderColor}
           borderRadius="xl"
           p={isCollapsed ? 3 : 4}
-          width={{ base: "100%", lg: isCollapsed ? "76px" : "240px" }}
-          minW={{ base: "100%", lg: isCollapsed ? "76px" : "240px" }}
+          width={{ base: "100%", lg: isCollapsed ? "76px" : "280px" }}
+          minW={{ base: "100%", lg: isCollapsed ? "76px" : "280px" }}
           position={{ base: "static", lg: "sticky" }}
           top={{ lg: 0 }}
           minH={{ lg: "100vh" }}
@@ -1643,26 +1986,27 @@ const AdminDashboard = () => {
             {adminSections.map((section) => {
               const isActive = section.id === activeSectionId;
               return (
-              <Tooltip
-                key={section.id}
-                label={section.title}
-                placement="right"
-                isDisabled={!isCollapsed}
-              >
-                <Button
-                  justifyContent={isCollapsed ? "center" : "flex-start"}
-                  leftIcon={<Icon as={section.icon} />}
-                  variant="ghost"
-                  size="sm"
-                  iconSpacing={isCollapsed ? 0 : 2}
-                  onClick={() => setActiveSectionId(section.id)}
-                  bg={isActive ? highlightBg : "transparent"}
-                  _hover={{ bg: isActive ? highlightBg : "gray.50" }}
-                  _dark={{ _hover: { bg: isActive ? highlightBg : "gray.700" } }}
+                <Tooltip
+                  key={section.id}
+                  label={section.title}
+                  placement="right"
+                  isDisabled={!isCollapsed}
                 >
-                  {!isCollapsed && section.title}
-                </Button>
-              </Tooltip>
+                  <Button
+                    justifyContent={isCollapsed ? "center" : "flex-start"}
+                    leftIcon={<Icon as={section.icon} />}
+                    variant="ghost"
+                    size="sm"
+                    iconSpacing={isCollapsed ? 0 : 2}
+                    onClick={() => setActiveSectionId(section.id)}
+                    bg={isActive ? highlightBg : "transparent"}
+                    _hover={{ bg: isActive ? highlightBg : "gray.50" }}
+                    _dark={{ _hover: { bg: isActive ? highlightBg : "gray.700" } }}
+                    width="100%"
+                  >
+                    {!isCollapsed && section.title}
+                  </Button>
+                </Tooltip>
               );
             })}
             <Divider borderColor={borderColor} />
@@ -1675,13 +2019,14 @@ const AdminDashboard = () => {
               onClick={handleLogout}
               _hover={{ bg: "red.50", color: "red.600" }}
               _dark={{ _hover: { bg: "red.900", color: "red.200" } }}
+              width="100%"
             >
               {!isCollapsed && "Log out"}
             </Button>
           </Stack>
         </Box>
 
-        <Stack spacing={6} flex="1">
+        <Stack spacing={6} flex="1" minW={0}>
           {(() => {
             const section = adminSections.find((item) => item.id === activeSectionId);
             if (!section) {
@@ -1697,15 +2042,17 @@ const AdminDashboard = () => {
             return (
               <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
                 <CardHeader>
-                  <Flex justify="space-between" align="center">
-                    <Heading size="md">{section.title}</Heading>
-                    <Badge colorScheme={section.tone} variant="subtle">
+                  <Flex justify="space-between" align="center" direction={{ base: "column", sm: "row" }} gap={2}>
+                    <Box>
+                      <Heading size="md">{section.title}</Heading>
+                      <Text color={mutedText} fontSize="sm" mt={2}>
+                        {section.description}
+                      </Text>
+                    </Box>
+                    <Badge colorScheme={section.tone} variant="subtle" fontSize="sm">
                       Admin
                     </Badge>
                   </Flex>
-                  <Text color={mutedText} fontSize="sm" mt={2}>
-                    {section.description}
-                  </Text>
                 </CardHeader>
                 <CardBody>{renderSectionBody(section)}</CardBody>
               </Card>
@@ -1807,7 +2154,7 @@ const AdminDashboard = () => {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={closeAddEmployeeModal}>
+            <Button variant="ghost" onClick={closeAddEmployeeModal} mr={3}>
               Cancel
             </Button>
             <Button
@@ -1875,7 +2222,7 @@ const AdminDashboard = () => {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={closeEditEmployeeModal}>
+            <Button variant="ghost" onClick={closeEditEmployeeModal} mr={3}>
               Cancel
             </Button>
             <Button
@@ -1902,7 +2249,7 @@ const AdminDashboard = () => {
             </Text>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={closeHoldEmployeeModal}>
+            <Button variant="ghost" onClick={closeHoldEmployeeModal} mr={3}>
               Cancel
             </Button>
             <Button
@@ -1929,7 +2276,7 @@ const AdminDashboard = () => {
             </Text>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={closeDeleteEmployeeModal}>
+            <Button variant="ghost" onClick={closeDeleteEmployeeModal} mr={3}>
               Cancel
             </Button>
             <Button
@@ -2007,7 +2354,7 @@ const AdminDashboard = () => {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={closeCreatePackageModal}>
+            <Button variant="ghost" onClick={closeCreatePackageModal} mr={3}>
               Cancel
             </Button>
             <Button

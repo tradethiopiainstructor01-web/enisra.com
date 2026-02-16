@@ -38,6 +38,7 @@ const EmployeeLayout = () => {
 
   const pageTitle = useMemo(() => {
     const path = location.pathname.toLowerCase();
+    if (path.includes('/employee/dashboard')) return 'Dashboard';
     if (path.includes('/employee/jobs')) return 'Jobs';
     if (path.includes('/employee/create-cv')) return 'Create CV';
     return 'Profile';

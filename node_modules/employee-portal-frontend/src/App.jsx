@@ -58,6 +58,7 @@ import EmployeeLayout from "./pages/employee/EmployeeLayout";
 import EmployeeProfile from "./pages/employee/EmployeeProfile";
 import EmployeeJobs from "./pages/employee/EmployeeJobs";
 import EmployeeCreateCV from "./pages/employee/EmployeeCreateCV";
+import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 
 function App() {
   const location = useLocation();
@@ -134,6 +135,7 @@ function App() {
         <Route path="profile" element={<EmployeeProfile />} />
         <Route path="jobs" element={<EmployeeJobs />} />
         <Route path="create-cv" element={<EmployeeCreateCV />} />
+        <Route path="dashboard" element={<EmployeeDashboard />} />
       </Route>
       <Route path="/employee-info" element={<Navigate to="/employee/profile" replace />} />
       <Route path="/employee-jobs" element={<Navigate to="/employee/jobs" replace />} />
