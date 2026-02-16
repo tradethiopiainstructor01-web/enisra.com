@@ -1,0 +1,42 @@
+/* Dashboard Layout Fixes */
+.admin-dashboard-container,
+.employer-dashboard-container,
+.employee-dashboard-container {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  max-width: 100% !important;
+}
+
+.admin-sidebar,
+.employer-sidebar,
+.employee-sidebar {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  left: 0 !important;
+  position: sticky !important;
+}
+
+/* Ensure the sidebar sticks to the left edge */
+.admin-dashboard-container > div:first-child,
+.employer-dashboard-container > div:first-child,
+.employee-dashboard-container > div:first-child {
+  margin-left: 0 !important;
+  left: 0 !important;
+}
+
+/* Override any flex gap */
+.admin-dashboard-container,
+.employer-dashboard-container,
+.employee-dashboard-container {
+  gap: 0 !important;
+}
+
+/* Force full width layout */
+.dashboard-full-width {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

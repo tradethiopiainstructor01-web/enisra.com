@@ -148,6 +148,9 @@ exports.createJob = async (req, res) => {
 
     const deadline = parseDate(req.body.deadline);
     if (deadline) payload.deadline = deadline;
+    
+    const expirationDate = parseDate(req.body.expirationDate);
+    if (expirationDate) payload.expirationDate = expirationDate;
 
     if (!payload.title || !payload.category || !payload.location || !payload.type) {
       return res.status(400).json({

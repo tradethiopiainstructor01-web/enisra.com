@@ -1,4 +1,4 @@
-import {
+﻿import {
   Badge,
   Box,
   Button,
@@ -79,6 +79,7 @@ import {
   FiCheckCircle,
   FiClock,
   FiBarChart2,
+  FiSettings,
 } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import apiClient from "../../utils/apiClient";
@@ -425,6 +426,7 @@ const AdminDashboard = () => {
       title: "Overview",
       description: "Dashboard overview with statistics and progress metrics for employers and employees.",
       icon: FiBarChart2,
+  FiSettings,
       tone: "blue",
     },
     {
@@ -1740,7 +1742,7 @@ const AdminDashboard = () => {
                   <Badge colorScheme="orange">Pending</Badge>
                 </Flex>
                 <Text fontSize="sm" color={mutedText}>
-                  {job.category} · {job.location} · {job.type}
+                  {job.category} Â· {job.location} Â· {job.type}
                 </Text>
                 <Flex gap={2} mt={3} wrap="wrap">
                   <Button size="sm" colorScheme="green" onClick={() => handleApproveJob(job._id)}>

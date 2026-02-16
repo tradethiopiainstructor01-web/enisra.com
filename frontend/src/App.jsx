@@ -59,6 +59,7 @@ import EmployeeProfile from "./pages/employee/EmployeeProfile";
 import EmployeeJobs from "./pages/employee/EmployeeJobs";
 import EmployeeCreateCV from "./pages/employee/EmployeeCreateCV";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
+import "./styles/dashboard-layout.css";
 
 function App() {
   const location = useLocation();

@@ -201,6 +201,7 @@ const EmployerDashboard = () => {
     type: "",
     salary: "",
     deadline: "",
+    expirationDate: "",
     description: "",
     flow: "",
   });
@@ -436,6 +437,7 @@ const EmployerDashboard = () => {
       type: jobForm.type.trim(),
       salary: jobForm.salary.trim(),
       deadline: jobForm.deadline || undefined,
+      expirationDate: jobForm.expirationDate || undefined,
       description: jobForm.description.trim(),
       flow: jobForm.flow.trim(),
     };
@@ -461,6 +463,7 @@ const EmployerDashboard = () => {
         type: "",
         salary: "",
         deadline: "",
+        expirationDate: "",
         description: "",
         flow: "",
       });
@@ -947,6 +950,14 @@ const EmployerDashboard = () => {
                         type="date"
                         value={jobForm.deadline}
                         onChange={handleFormChange("deadline")}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Job post expiration date</FormLabel>
+                      <Input
+                        type="date"
+                        value={jobForm.expirationDate}
+                        onChange={handleFormChange("expirationDate")}
                       />
                     </FormControl>
                     <FormControl>
