@@ -5,6 +5,8 @@ import {
   Card,
   CardBody,
   CardHeader,
+  Checkbox,
+  CheckboxGroup,
   Divider,
   Drawer,
   DrawerBody,
@@ -27,6 +29,10 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
   Progress,
   Select,
   SimpleGrid,
@@ -49,6 +55,8 @@ import {
   useColorModeValue,
   useDisclosure,
   useToast,
+  Wrap,
+  WrapItem,
 } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -164,11 +172,146 @@ const AdminDashboard = () => {
     servicesText: "",
   });
 
+  // Column visibility state for Employee Directory
+  const [visibleColumns, setVisibleColumns] = useState({
+    name: true,
+    email: true,
+    phone: true,
+    jobTitle: true,
+    status: true,
+    role: true,
+    employeeId: false,
+    department: false,
+    position: false,
+    username: false,
+    fullName: false,
+    firstName: false,
+    middleName: false,
+    lastName: false,
+    gender: false,
+    dateOfBirth: false,
+    nationality: false,
+    maritalStatus: false,
+    nationalIdOrPassportNumber: false,
+    altEmail: false,
+    altPhone: false,
+    emergencyContactName: false,
+    emergencyContactPhone: false,
+    currentAddress: false,
+    city: false,
+    country: false,
+    location: false,
+    workLocation: false,
+    reportingManager: false,
+    employmentType: false,
+    employmentStatus: false,
+    education: false,
+    educationLevel: false,
+    primarySkill: false,
+    yearsOfExperience: false,
+    currentLocation: false,
+    desiredJobTitle: false,
+    salary: false,
+    salaryDetails: false,
+    createdAt: false,
+    updatedAt: false,
+    notes: false,
+    points: false,
+    rating: false,
+    requiresApproval: false,
+  });
+
+  // All available columns for Employee Directory
+  const employeeColumns = [
+    { key: "name", label: "Name", category: "Basic Info" },
+    { key: "fullName", label: "Full Name", category: "Basic Info" },
+    { key: "firstName", label: "First Name", category: "Basic Info" },
+    { key: "middleName", label: "Middle Name", category: "Basic Info" },
+    { key: "lastName", label: "Last Name", category: "Basic Info" },
+    { key: "email", label: "Email", category: "Contact" },
+    { key: "altEmail", label: "Alternate Email", category: "Contact" },
+    { key: "phone", label: "Phone", category: "Contact" },
+    { key: "altPhone", label: "Alternate Phone", category: "Contact" },
+    { key: "username", label: "Username", category: "Account" },
+    { key: "employeeId", label: "Employee ID", category: "Employment" },
+    { key: "jobTitle", label: "Job Title", category: "Employment" },
+    { key: "department", label: "Department", category: "Employment" },
+    { key: "position", label: "Position", category: "Employment" },
+    { key: "workLocation", label: "Work Location", category: "Employment" },
+    { key: "reportingManager", label: "Reporting Manager", category: "Employment" },
+    { key: "employmentType", label: "Employment Type", category: "Employment" },
+    { key: "employmentStatus", label: "Employment Status", category: "Employment" },
+    { key: "role", label: "Role", category: "Account" },
+    { key: "status", label: "Status", category: "Account" },
+    { key: "gender", label: "Gender", category: "Personal" },
+    { key: "dateOfBirth", label: "Date of Birth", category: "Personal" },
+    { key: "nationality", label: "Nationality", category: "Personal" },
+    { key: "maritalStatus", label: "Marital Status", category: "Personal" },
+    { key: "nationalIdOrPassportNumber", label: "ID/Passport", category: "Personal" },
+    { key: "currentAddress", label: "Current Address", category: "Location" },
+    { key: "city", label: "City", category: "Location" },
+    { key: "country", label: "Country", category: "Location" },
+    { key: "location", label: "Location", category: "Location" },
+    { key: "currentLocation", label: "Current Location", category: "Location" },
+    { key: "emergencyContactName", label: "Emergency Contact Name", category: "Emergency" },
+    { key: "emergencyContactPhone", label: "Emergency Contact Phone", category: "Emergency" },
+    { key: "education", label: "Education", category: "Education" },
+    { key: "educationLevel", label: "Education Level", category: "Education" },
+    { key: "primarySkill", label: "Primary Skill", category: "Skills" },
+    { key: "yearsOfExperience", label: "Years of Experience", category: "Skills" },
+    { key: "desiredJobTitle", label: "Desired Job Title", category: "Career" },
+    { key: "salary", label: "Salary", category: "Financial" },
+    { key: "salaryDetails", label: "Salary Details", category: "Financial" },
+    { key: "points", label: "Points", category: "Performance" },
+    { key: "rating", label: "Rating", category: "Performance" },
+    { key: "requiresApproval", label: "Requires Approval", category: "Account" },
+    { key: "notes", label: "Notes", category: "Additional" },
+    { key: "createdAt", label: "Created At", category: "Timestamps" },
+    { key: "updatedAt", label: "Updated At", category: "Timestamps" },
+  ];
+
+  const handleColumnVisibilityChange = (columnKey, isVisible) => {
+    setVisibleColumns((prev) => ({
+      ...prev,
+      [columnKey]: isVisible,
+    }));
+  };
+
+  const handleSelectAllColumns = () => {
+    const allVisible = Object.values(visibleColumns).every((v) => v);
+    const newVisibility = {};
+    employeeColumns.forEach((col) => {
+      newVisibility[col.key] = !allVisible;
+    });
+    setVisibleColumns(newVisibility);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "-";
+      return date.toLocaleDateString();
+    } catch {
+      return "-";
+    }
+  };
+
+  const formatSalaryDetails = (salaryDetails) => {
+    if (!salaryDetails || typeof salaryDetails !== "object") return "-";
+    const parts = [];
+    if (salaryDetails.basicSalary) parts.push(`Basic: ${salaryDetails.basicSalary}`);
+    if (salaryDetails.allowances) parts.push(`Allowances: ${salaryDetails.allowances}`);
+    if (salaryDetails.paymentMethod) parts.push(`Method: ${salaryDetails.paymentMethod}`);
+    return parts.length > 0 ? parts.join(", ") : "-";
+  };
+
   const normalizeRoleValue = (value = "") =>
     value?.toString().trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 
-  // "Employee" accounts are users whose role is explicitly `employee`.
-  const EMPLOYEE_ROLE_SET = new Set(["employee"]);
+  // "Employees" here means all staff accounts (non-admin, non-employer).
+  // This makes "Manage Employee Accounts" work even when users have roles like HR/IT/Sales/etc.
+  const EXCLUDED_STAFF_ROLES = new Set(["admin", "employer", "employers"]);
   const getEmployeePhone = (user) => user?.phone || user?.username || "";
 
   // Calculate statistics
@@ -280,9 +423,23 @@ const AdminDashboard = () => {
     {
       id: "overview",
       title: "Overview",
-      description: "Dashboard overview with statistics and progress metrics.",
+      description: "Dashboard overview with statistics and progress metrics for employers and employees.",
       icon: FiBarChart2,
       tone: "blue",
+    },
+    {
+      id: "employer-management",
+      title: "Employer Management",
+      description: "Comprehensive management of employer accounts, profiles, and settings.",
+      icon: FiUsers,
+      tone: "blue",
+    },
+    {
+      id: "employee-management",
+      title: "Employee Management",
+      description: "Manage employee accounts, profiles, and track their progress.",
+      icon: FiUser,
+      tone: "orange",
     },
     {
       id: "job-post",
@@ -304,8 +461,8 @@ const AdminDashboard = () => {
     },
     {
       id: "employer",
-      title: "Employer",
-      description: "Manage employer accounts and access requests.",
+      title: "Employer Approval",
+      description: "Review and approve pending employer account requests.",
       icon: FiUsers,
       tone: "blue",
       to: "/users",
@@ -322,7 +479,7 @@ const AdminDashboard = () => {
     },
     {
       id: "employee",
-      title: "Employee",
+      title: "Employee Directory",
       description: "Browse registered employees and search employee accounts.",
       icon: FiUser,
       tone: "orange",
@@ -416,8 +573,7 @@ const AdminDashboard = () => {
         const normalizedRole = normalizeRoleValue(user?.role);
         const username = user?.username?.toString?.() || "";
         return (
-          EMPLOYEE_ROLE_SET.has(normalizedRole) &&
-          normalizedRole !== "employer" &&
+          !EXCLUDED_STAFF_ROLES.has(normalizedRole) &&
           username !== "." &&
           username !== ".."
         );
@@ -738,6 +894,12 @@ const AdminDashboard = () => {
     if (activeSectionId === "employee" && employees.length === 0 && !employeesLoading) {
       loadEmployees();
     }
+    if (activeSectionId === "employee-management") {
+      // Always load employees when accessing employee management section
+      if (employees.length === 0 && !employeesLoading) {
+        loadEmployees();
+      }
+    }
     if (activeSectionId === "package" && packages.length === 0 && !packagesLoading) {
       loadPackages();
     }
@@ -1055,6 +1217,232 @@ const AdminDashboard = () => {
   };
 
   const renderSectionBody = (section) => {
+    if (section.id === "employer-management") {
+      return (
+        <Stack spacing={6}>
+          <Text color={mutedText} fontSize="sm">
+            Comprehensive management of employer accounts, profiles, and dashboard settings.
+          </Text>
+
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader>
+                <Heading size="md">Employer Dashboard Management</Heading>
+              </CardHeader>
+              <CardBody>
+                <Stack spacing={4}>
+                  <Button
+                    leftIcon={<Icon as={FiUsers} />}
+                    colorScheme="blue"
+                    onClick={() => setActiveSectionId("employer")}
+                    width="100%"
+                  >
+                    Manage Employer Accounts
+                  </Button>
+                  <Button
+                    leftIcon={<Icon as={FiBriefcase} />}
+                    colorScheme="green"
+                    onClick={() => setActiveSectionId("job-post")}
+                    width="100%"
+                  >
+                    Review Job Posts
+                  </Button>
+                  <Button
+                    leftIcon={<Icon as={FiTag} />}
+                    colorScheme="teal"
+                    onClick={() => setActiveSectionId("employer-categories")}
+                    width="100%"
+                  >
+                    Manage Categories
+                  </Button>
+                </Stack>
+              </CardBody>
+            </Card>
+
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader>
+                <Heading size="md">Employer Statistics</Heading>
+              </CardHeader>
+              <CardBody>
+                <Stack spacing={4}>
+                  <Stat>
+                    <StatLabel>Total Employers</StatLabel>
+                    <StatNumber>{employerStats.total}</StatNumber>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Pending Approval</StatLabel>
+                    <StatNumber color="orange.500">{employerStats.pending}</StatNumber>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Approved</StatLabel>
+                    <StatNumber color="green.500">{employerStats.approved}</StatNumber>
+                  </Stat>
+                  <Box>
+                    <Flex justify="space-between" mb={2}>
+                      <Text fontSize="sm" fontWeight="semibold">Approval Rate</Text>
+                      <Text fontSize="sm">{employerStats.approvalRate}%</Text>
+                    </Flex>
+                    <Progress value={employerStats.approvalRate} colorScheme="green" size="sm" borderRadius="md" />
+                  </Box>
+                </Stack>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Heading size="md">Quick Actions</Heading>
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
+                <Button
+                  leftIcon={<Icon as={FiCheckCircle} />}
+                  colorScheme="green"
+                  variant="outline"
+                  onClick={() => {
+                    if (pendingEmployers.length > 0) {
+                      handleApproveEmployer(pendingEmployers[0]._id);
+                    }
+                  }}
+                  isDisabled={pendingEmployers.length === 0}
+                >
+                  Approve Next Pending
+                </Button>
+                <Button
+                  leftIcon={<Icon as={FiUsers} />}
+                  colorScheme="blue"
+                  variant="outline"
+                  onClick={loadAllEmployers}
+                  isLoading={employersStatsLoading}
+                >
+                  Refresh Employer List
+                </Button>
+                <Button
+                  leftIcon={<Icon as={FiBarChart2} />}
+                  colorScheme="purple"
+                  variant="outline"
+                  onClick={() => setActiveSectionId("overview")}
+                >
+                  View Full Statistics
+                </Button>
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+        </Stack>
+      );
+    }
+
+    if (section.id === "employee-management") {
+      return (
+        <Stack spacing={6}>
+          <Text color={mutedText} fontSize="sm">
+            Comprehensive management of employee accounts, profiles, and dashboard settings.
+          </Text>
+
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader>
+                <Heading size="md">Employee Dashboard Management</Heading>
+              </CardHeader>
+              <CardBody>
+                <Stack spacing={4}>
+                  <Button
+                    leftIcon={<Icon as={FiUser} />}
+                    colorScheme="orange"
+                    onClick={() => setActiveSectionId("employee")}
+                    width="100%"
+                  >
+                    Manage Employee Accounts
+                  </Button>
+                  <Button
+                    leftIcon={<Icon as={FiPlus} />}
+                    colorScheme="green"
+                    onClick={onAddEmployeeOpen}
+                    width="100%"
+                  >
+                    Add New Employee
+                  </Button>
+                  <Button
+                    leftIcon={<Icon as={FiDownload} />}
+                    colorScheme="blue"
+                    onClick={() => handleExportEmployees(employees)}
+                    isDisabled={employees.length === 0}
+                    width="100%"
+                  >
+                    Export Employee List
+                  </Button>
+                </Stack>
+              </CardBody>
+            </Card>
+
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader>
+                <Heading size="md">Employee Statistics</Heading>
+              </CardHeader>
+              <CardBody>
+                <Stack spacing={4}>
+                  <Stat>
+                    <StatLabel>Total Employees</StatLabel>
+                    <StatNumber>{employeeStats.total}</StatNumber>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Active</StatLabel>
+                    <StatNumber color="green.500">{employeeStats.active}</StatNumber>
+                  </Stat>
+                  <Stat>
+                    <StatLabel>Inactive</StatLabel>
+                    <StatNumber color="red.500">{employeeStats.inactive}</StatNumber>
+                  </Stat>
+                  <Box>
+                    <Flex justify="space-between" mb={2}>
+                      <Text fontSize="sm" fontWeight="semibold">Active Rate</Text>
+                      <Text fontSize="sm">{employeeStats.activeRate}%</Text>
+                    </Flex>
+                    <Progress value={employeeStats.activeRate} colorScheme="green" size="sm" borderRadius="md" />
+                  </Box>
+                </Stack>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Heading size="md">Quick Actions</Heading>
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
+                <Button
+                  leftIcon={<Icon as={FiPlus} />}
+                  colorScheme="green"
+                  variant="outline"
+                  onClick={onAddEmployeeOpen}
+                >
+                  Add Employee
+                </Button>
+                <Button
+                  leftIcon={<Icon as={FiUser} />}
+                  colorScheme="blue"
+                  variant="outline"
+                  onClick={loadEmployees}
+                  isLoading={employeesLoading}
+                >
+                  Refresh Employee List
+                </Button>
+                <Button
+                  leftIcon={<Icon as={FiBarChart2} />}
+                  colorScheme="purple"
+                  variant="outline"
+                  onClick={() => setActiveSectionId("overview")}
+                >
+                  View Full Statistics
+                </Button>
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+        </Stack>
+      );
+    }
+
     if (section.id === "overview") {
       return (
         <Stack spacing={6}>
@@ -1653,11 +2041,19 @@ const AdminDashboard = () => {
         if (!normalizedQuery) return true;
         const haystack = [
           user?.fullName,
+          user?.firstName,
+          user?.lastName,
           user?.username,
           user?.phone,
           user?.email,
           user?.role,
           user?.jobTitle,
+          user?.employeeId,
+          user?.department,
+          user?.position,
+          user?.nationality,
+          user?.city,
+          user?.country,
         ]
           .filter(Boolean)
           .join(" ")
@@ -1673,8 +2069,106 @@ const AdminDashboard = () => {
             .localeCompare((b?.fullName || b?.username || "").toString().toLowerCase())
         );
 
+      // Group columns by category
+      const columnsByCategory = employeeColumns.reduce((acc, col) => {
+        if (!acc[col.category]) acc[col.category] = [];
+        acc[col.category].push(col);
+        return acc;
+      }, {});
+
+      // Get visible column keys
+      const visibleColumnKeys = employeeColumns
+        .filter((col) => visibleColumns[col.key])
+        .map((col) => col.key);
+
       return (
         <Stack spacing={4}>
+          {/* Column Visibility Toggle */}
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader pb={2}>
+              <Flex justify="space-between" align="center">
+                <Heading size="sm">Column Visibility</Heading>
+                <Popover placement="bottom-end">
+                  <PopoverTrigger>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      leftIcon={<Icon as={FiSettings} />}
+                    >
+                      Configure Columns
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent maxW="400px" maxH="500px" overflowY="auto">
+                    <PopoverBody>
+                      <Stack spacing={4}>
+                        <Flex justify="space-between" align="center">
+                          <Text fontWeight="semibold" fontSize="sm">
+                            Show/Hide Columns
+                          </Text>
+                          <Button
+                            size="xs"
+                            variant="ghost"
+                            onClick={handleSelectAllColumns}
+                          >
+                            {Object.values(visibleColumns).every((v) => v) ? "Hide All" : "Show All"}
+                          </Button>
+                        </Flex>
+                        <Divider />
+                        {Object.entries(columnsByCategory).map(([category, cols]) => (
+                          <Box key={category}>
+                            <Text fontWeight="semibold" fontSize="xs" color={mutedText} mb={2}>
+                              {category}
+                            </Text>
+                            <Wrap spacing={2}>
+                              {cols.map((col) => (
+                                <WrapItem key={col.key}>
+                                  <Checkbox
+                                    isChecked={visibleColumns[col.key]}
+                                    onChange={(e) =>
+                                      handleColumnVisibilityChange(col.key, e.target.checked)
+                                    }
+                                    size="sm"
+                                  >
+                                    <Text fontSize="xs">{col.label}</Text>
+                                  </Checkbox>
+                                </WrapItem>
+                              ))}
+                            </Wrap>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </PopoverBody>
+                  </PopoverContent>
+                </Popover>
+              </Flex>
+            </CardHeader>
+            <CardBody pt={0}>
+              <Text fontSize="xs" color={mutedText} mb={2}>
+                Showing {visibleColumnKeys.length} of {employeeColumns.length} columns
+              </Text>
+              <Wrap spacing={2}>
+                {visibleColumnKeys.slice(0, 10).map((key) => {
+                  const col = employeeColumns.find((c) => c.key === key);
+                  return col ? (
+                    <WrapItem key={key}>
+                      <Badge colorScheme="blue" fontSize="xs">
+                        {col.label}
+                      </Badge>
+                    </WrapItem>
+                  ) : null;
+                })}
+                {visibleColumnKeys.length > 10 && (
+                  <WrapItem>
+                    <Badge colorScheme="gray" fontSize="xs">
+                      +{visibleColumnKeys.length - 10} more
+                    </Badge>
+                  </WrapItem>
+                )}
+              </Wrap>
+            </CardBody>
+          </Card>
+
+          {/* Search and Actions */}
           <Flex
             gap={3}
             direction={{ base: "column", md: "row" }}
@@ -1688,7 +2182,7 @@ const AdminDashboard = () => {
                   <Icon as={FiSearch} color={mutedText} />
                 </InputLeftElement>
                 <Input
-                  placeholder="Name, phone, email, role..."
+                  placeholder="Search by name, email, phone, ID, department..."
                   value={employeeSearch}
                   onChange={(event) => setEmployeeSearch(event.target.value)}
                 />
@@ -1729,48 +2223,192 @@ const AdminDashboard = () => {
           ) : sortedEmployees.length ? (
             <Stack spacing={3}>
               <Text color={mutedText} fontSize="sm">
-                Showing {sortedEmployees.length} employee{sortedEmployees.length === 1 ? "" : "s"}.
+                Showing {sortedEmployees.length} employee{sortedEmployees.length === 1 ? "" : "s"} with {visibleColumnKeys.length} visible column{visibleColumnKeys.length === 1 ? "" : "s"}.
               </Text>
               <TableContainer border="1px solid" borderColor={borderColor} borderRadius="md" overflowX="auto">
                 <Table size="sm" variant="simple">
                   <Thead bg={tableHeadBg}>
                     <Tr>
-                      <Th>Name</Th>
-                      <Th>Email</Th>
-                      <Th>Phone</Th>
-                      <Th>Job Title</Th>
-                      <Th>Status</Th>
+                      {visibleColumns.name && <Th>Name</Th>}
+                      {visibleColumns.fullName && <Th>Full Name</Th>}
+                      {visibleColumns.firstName && <Th>First Name</Th>}
+                      {visibleColumns.middleName && <Th>Middle Name</Th>}
+                      {visibleColumns.lastName && <Th>Last Name</Th>}
+                      {visibleColumns.email && <Th>Email</Th>}
+                      {visibleColumns.altEmail && <Th>Alt Email</Th>}
+                      {visibleColumns.phone && <Th>Phone</Th>}
+                      {visibleColumns.altPhone && <Th>Alt Phone</Th>}
+                      {visibleColumns.username && <Th>Username</Th>}
+                      {visibleColumns.employeeId && <Th>Employee ID</Th>}
+                      {visibleColumns.jobTitle && <Th>Job Title</Th>}
+                      {visibleColumns.department && <Th>Department</Th>}
+                      {visibleColumns.position && <Th>Position</Th>}
+                      {visibleColumns.workLocation && <Th>Work Location</Th>}
+                      {visibleColumns.reportingManager && <Th>Reporting Manager</Th>}
+                      {visibleColumns.employmentType && <Th>Employment Type</Th>}
+                      {visibleColumns.employmentStatus && <Th>Employment Status</Th>}
+                      {visibleColumns.role && <Th>Role</Th>}
+                      {visibleColumns.status && <Th>Status</Th>}
+                      {visibleColumns.gender && <Th>Gender</Th>}
+                      {visibleColumns.dateOfBirth && <Th>Date of Birth</Th>}
+                      {visibleColumns.nationality && <Th>Nationality</Th>}
+                      {visibleColumns.maritalStatus && <Th>Marital Status</Th>}
+                      {visibleColumns.nationalIdOrPassportNumber && <Th>ID/Passport</Th>}
+                      {visibleColumns.currentAddress && <Th>Current Address</Th>}
+                      {visibleColumns.city && <Th>City</Th>}
+                      {visibleColumns.country && <Th>Country</Th>}
+                      {visibleColumns.location && <Th>Location</Th>}
+                      {visibleColumns.currentLocation && <Th>Current Location</Th>}
+                      {visibleColumns.emergencyContactName && <Th>Emergency Contact</Th>}
+                      {visibleColumns.emergencyContactPhone && <Th>Emergency Phone</Th>}
+                      {visibleColumns.education && <Th>Education</Th>}
+                      {visibleColumns.educationLevel && <Th>Education Level</Th>}
+                      {visibleColumns.primarySkill && <Th>Primary Skill</Th>}
+                      {visibleColumns.yearsOfExperience && <Th>Years Exp.</Th>}
+                      {visibleColumns.desiredJobTitle && <Th>Desired Job</Th>}
+                      {visibleColumns.salary && <Th>Salary</Th>}
+                      {visibleColumns.salaryDetails && <Th>Salary Details</Th>}
+                      {visibleColumns.points && <Th>Points</Th>}
+                      {visibleColumns.rating && <Th>Rating</Th>}
+                      {visibleColumns.requiresApproval && <Th>Requires Approval</Th>}
+                      {visibleColumns.notes && <Th>Notes</Th>}
+                      {visibleColumns.createdAt && <Th>Created At</Th>}
+                      {visibleColumns.updatedAt && <Th>Updated At</Th>}
                       <Th textAlign="right">Actions</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {sortedEmployees.map((user) => (
                       <Tr key={user._id}>
-                        <Td>
-                          <Text fontWeight="semibold">
-                            {user.fullName || user.username || "Employee"}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <Text fontSize="sm" color={mutedText}>
-                            {user.email || "No email"}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <Text fontSize="sm" color={mutedText}>
-                            {getEmployeePhone(user) || "N/A"}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <Text fontSize="sm" color={mutedText}>
-                            {user.jobTitle || "-"}
-                          </Text>
-                        </Td>
-                        <Td>
-                          <Badge colorScheme={user.status === "active" ? "green" : "red"}>
-                            {user.status || "unknown"}
-                          </Badge>
-                        </Td>
+                        {visibleColumns.name && (
+                          <Td>
+                            <Text fontWeight="semibold">
+                              {user.fullName || `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.username || "Employee"}
+                            </Text>
+                          </Td>
+                        )}
+                        {visibleColumns.fullName && <Td><Text fontSize="sm">{user.fullName || "-"}</Text></Td>}
+                        {visibleColumns.firstName && <Td><Text fontSize="sm">{user.firstName || "-"}</Text></Td>}
+                        {visibleColumns.middleName && <Td><Text fontSize="sm">{user.middleName || "-"}</Text></Td>}
+                        {visibleColumns.lastName && <Td><Text fontSize="sm">{user.lastName || "-"}</Text></Td>}
+                        {visibleColumns.email && (
+                          <Td>
+                            <Text fontSize="sm" color={mutedText}>
+                              {user.email || "No email"}
+                            </Text>
+                          </Td>
+                        )}
+                        {visibleColumns.altEmail && <Td><Text fontSize="sm">{user.altEmail || "-"}</Text></Td>}
+                        {visibleColumns.phone && (
+                          <Td>
+                            <Text fontSize="sm" color={mutedText}>
+                              {getEmployeePhone(user) || "N/A"}
+                            </Text>
+                          </Td>
+                        )}
+                        {visibleColumns.altPhone && <Td><Text fontSize="sm">{user.altPhone || "-"}</Text></Td>}
+                        {visibleColumns.username && <Td><Text fontSize="sm">{user.username || "-"}</Text></Td>}
+                        {visibleColumns.employeeId && <Td><Text fontSize="sm" fontWeight="semibold">{user.employeeId || "-"}</Text></Td>}
+                        {visibleColumns.jobTitle && (
+                          <Td>
+                            <Text fontSize="sm" color={mutedText}>
+                              {user.jobTitle || "-"}
+                            </Text>
+                          </Td>
+                        )}
+                        {visibleColumns.department && <Td><Text fontSize="sm">{user.department || "-"}</Text></Td>}
+                        {visibleColumns.position && <Td><Text fontSize="sm">{user.position || "-"}</Text></Td>}
+                        {visibleColumns.workLocation && <Td><Text fontSize="sm">{user.workLocation || "-"}</Text></Td>}
+                        {visibleColumns.reportingManager && <Td><Text fontSize="sm">{user.reportingManager || "-"}</Text></Td>}
+                        {visibleColumns.employmentType && (
+                          <Td>
+                            <Badge colorScheme="blue" fontSize="xs">
+                              {user.employmentType || "-"}
+                            </Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.employmentStatus && <Td><Text fontSize="sm">{user.employmentStatus || "-"}</Text></Td>}
+                        {visibleColumns.role && (
+                          <Td>
+                            <Badge colorScheme="purple" fontSize="xs">
+                              {user.role || "-"}
+                            </Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.status && (
+                          <Td>
+                            <Badge colorScheme={user.status === "active" ? "green" : "red"}>
+                              {user.status || "unknown"}
+                            </Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.gender && (
+                          <Td>
+                            <Badge colorScheme="teal" fontSize="xs">
+                              {user.gender || "-"}
+                            </Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.dateOfBirth && <Td><Text fontSize="sm">{formatDate(user.dateOfBirth)}</Text></Td>}
+                        {visibleColumns.nationality && <Td><Text fontSize="sm">{user.nationality || "-"}</Text></Td>}
+                        {visibleColumns.maritalStatus && <Td><Text fontSize="sm">{user.maritalStatus || "-"}</Text></Td>}
+                        {visibleColumns.nationalIdOrPassportNumber && <Td><Text fontSize="sm">{user.nationalIdOrPassportNumber || "-"}</Text></Td>}
+                        {visibleColumns.currentAddress && <Td><Text fontSize="sm" noOfLines={1}>{user.currentAddress || "-"}</Text></Td>}
+                        {visibleColumns.city && <Td><Text fontSize="sm">{user.city || "-"}</Text></Td>}
+                        {visibleColumns.country && <Td><Text fontSize="sm">{user.country || "-"}</Text></Td>}
+                        {visibleColumns.location && <Td><Text fontSize="sm">{user.location || "-"}</Text></Td>}
+                        {visibleColumns.currentLocation && <Td><Text fontSize="sm">{user.currentLocation || "-"}</Text></Td>}
+                        {visibleColumns.emergencyContactName && <Td><Text fontSize="sm">{user.emergencyContactName || "-"}</Text></Td>}
+                        {visibleColumns.emergencyContactPhone && <Td><Text fontSize="sm">{user.emergencyContactPhone || "-"}</Text></Td>}
+                        {visibleColumns.education && <Td><Text fontSize="sm">{user.education || "-"}</Text></Td>}
+                        {visibleColumns.educationLevel && <Td><Text fontSize="sm">{user.educationLevel || "-"}</Text></Td>}
+                        {visibleColumns.primarySkill && <Td><Text fontSize="sm">{user.primarySkill || "-"}</Text></Td>}
+                        {visibleColumns.yearsOfExperience && <Td><Text fontSize="sm">{user.yearsOfExperience || "-"}</Text></Td>}
+                        {visibleColumns.desiredJobTitle && <Td><Text fontSize="sm">{user.desiredJobTitle || "-"}</Text></Td>}
+                        {visibleColumns.salary && (
+                          <Td>
+                            <Text fontSize="sm" fontWeight="semibold">
+                              {user.salary ? `$${user.salary.toLocaleString()}` : "-"}
+                            </Text>
+                          </Td>
+                        )}
+                        {visibleColumns.salaryDetails && (
+                          <Td>
+                            <Tooltip label={formatSalaryDetails(user.salaryDetails)}>
+                              <Text fontSize="sm" noOfLines={1}>
+                                {formatSalaryDetails(user.salaryDetails)}
+                              </Text>
+                            </Tooltip>
+                          </Td>
+                        )}
+                        {visibleColumns.points && (
+                          <Td>
+                            <Badge colorScheme="yellow">{user.points || 0}</Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.rating && (
+                          <Td>
+                            <Badge colorScheme="orange">{user.rating || 0}</Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.requiresApproval && (
+                          <Td>
+                            <Badge colorScheme={user.requiresApproval ? "orange" : "gray"}>
+                              {user.requiresApproval ? "Yes" : "No"}
+                            </Badge>
+                          </Td>
+                        )}
+                        {visibleColumns.notes && (
+                          <Td>
+                            <Tooltip label={user.notes || "-"}>
+                              <Text fontSize="sm" noOfLines={1} maxW="200px">
+                                {user.notes || "-"}
+                              </Text>
+                            </Tooltip>
+                          </Td>
+                        )}
+                        {visibleColumns.createdAt && <Td><Text fontSize="sm">{formatDate(user.createdAt)}</Text></Td>}
+                        {visibleColumns.updatedAt && <Td><Text fontSize="sm">{formatDate(user.updatedAt)}</Text></Td>}
                         <Td>
                           <Flex justify="flex-end" gap={1} wrap="wrap">
                             <Tooltip label="Edit">
