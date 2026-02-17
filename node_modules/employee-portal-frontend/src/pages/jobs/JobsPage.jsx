@@ -30,6 +30,7 @@ import {
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
+import { useLanguage } from '../../context/language';
 
 const safeDate = (value) => {
   if (!value) return '';
@@ -46,6 +47,7 @@ const JobsPage = () => {
   const promoBg = useColorModeValue('gray.50', 'gray.800');
   const navBg = useColorModeValue('white', 'gray.800');
   const navBorder = useColorModeValue('gray.200', 'gray.700');
+  const { t } = useLanguage();
 
   const [jobs, setJobs] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -153,22 +155,22 @@ const JobsPage = () => {
       >
         <Container maxW="7xl">
           <Flex align="center" justify="space-between" wrap="wrap" gap={3}>
-            <Heading size="md">Jobs</Heading>
+            <Heading size="md">{t('jobs')}</Heading>
             <HStack spacing={2} flexWrap="wrap" justify="flex-end">
               <Button as={RouterLink} to="/" size="sm" variant="ghost">
-                Home
+                {t('home')}
               </Button>
               <Button as={RouterLink} to="/scholarships" size="sm" variant="ghost">
-                Scholarships
+                {t('scholarships')}
               </Button>
               <Button as={RouterLink} to="/free-trainings" size="sm" variant="ghost">
-                Free Trainings
+                {t('freeTrainings')}
               </Button>
               <Button as={RouterLink} to="/employee/profile" size="sm" variant="ghost">
-                Profile
+                {t('profile')}
               </Button>
               <Button as={RouterLink} to="/login" size="sm" colorScheme="teal">
-                Log In
+                {t('login')}
               </Button>
             </HStack>
           </Flex>
@@ -178,9 +180,9 @@ const JobsPage = () => {
       <Container maxW="7xl">
         <Card bg={cardBg} borderWidth="1px" borderColor={borderColor} borderRadius="2xl" boxShadow="lg">
           <CardBody>
-            <Heading size="lg" mb={2}>Jobs</Heading>
+            <Heading size="lg" mb={2}>{t('jobs')}</Heading>
             <Text color={muted} mb={5}>
-              Browse open roles and filter by keyword, location, category, or job type.
+              {t('browseJobsSubtitle')}
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 4 }} spacing={3} mb={4}>
@@ -188,35 +190,35 @@ const JobsPage = () => {
                 <InputLeftElement pointerEvents="none">
                   <SearchIcon />
                 </InputLeftElement>
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search jobs..."
-                />
-              </InputGroup>
-              <Select
-                placeholder="Location"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              >
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('heroSearchPlaceholder')}
+              />
+            </InputGroup>
+            <Select
+              placeholder={t('location')}
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+            >
                 {filteredLocations.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
               </Select>
-              <Select
-                placeholder="Category"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
+            <Select
+              placeholder={t('category')}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
                 {filteredCategories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </Select>
-              <Select
-                placeholder="Type"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
+            <Select
+              placeholder={t('type')}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
                 {filteredTypes.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
@@ -225,10 +227,10 @@ const JobsPage = () => {
 
             <HStack spacing={2} mb={6} justify="flex-start">
               <Button leftIcon={<RepeatIcon />} variant="outline" onClick={() => fetchJobs()} isLoading={loading}>
-                Refresh
+                {t('refresh')}
               </Button>
               <Button variant="ghost" onClick={resetFilters}>
-                Clear filters
+                {t('clearFilters')}
               </Button>
             </HStack>
 
@@ -239,7 +241,7 @@ const JobsPage = () => {
             {loading ? (
               <Flex justify="center" py={8}><Spinner size="xl" /></Flex>
             ) : jobs.length === 0 ? (
-              <Text color={muted}>No jobs found.</Text>
+              <Text color={muted}>{t('noJobs')}</Text>
             ) : (
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                 {jobs.map((job) => (
@@ -259,10 +261,10 @@ const JobsPage = () => {
                       {job.location ? <Badge colorScheme="green">{job.location}</Badge> : null}
                     </HStack>
                     {job.company ? (
-                      <Text fontSize="sm" color={muted}>Company: {job.company}</Text>
+                      <Text fontSize="sm" color={muted}>{t('company')}: {job.company}</Text>
                     ) : null}
                     {job.deadline ? (
-                      <Text fontSize="sm" color={muted}>Deadline: {safeDate(job.deadline)}</Text>
+                      <Text fontSize="sm" color={muted}>{t('deadline')}: {safeDate(job.deadline)}</Text>
                     ) : null}
                     {job.description ? (
                       <Text fontSize="sm" mt={2} noOfLines={3}>{job.description}</Text>
