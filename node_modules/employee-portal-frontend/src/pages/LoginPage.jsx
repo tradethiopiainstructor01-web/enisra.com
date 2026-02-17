@@ -15,8 +15,10 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { FaLock, FaUser } from 'react-icons/fa';
+import { FcGoogle } from 'react-icons/fc';
 import axiosInstance from '../services/axiosInstance';
 import { useUserStore } from '../store/user';
+import { resolveApiBase } from '../utils/apiBase';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -32,6 +34,7 @@ const LoginPage = () => {
   const formBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const inputBg = useColorModeValue('gray.50', 'gray.700');
+  const googleAuthUrl = `${resolveApiBase()}/auth/google`;
 
   // If already authenticated, skip login page and go to appropriate area.
   useEffect(() => {
@@ -247,6 +250,18 @@ const LoginPage = () => {
             transition="all 0.2s"
           >
             Log In
+          </Button>
+          <Button
+            leftIcon={<FcGoogle />}
+            variant="outline"
+            size={{ base: 'md', sm: 'lg' }}
+            minH="48px"
+            fontSize={{ base: 'sm', sm: 'md' }}
+            fontWeight="medium"
+            borderRadius="lg"
+            onClick={() => window.location.href = googleAuthUrl}
+          >
+            Continue with Google
           </Button>
         </Stack>
         <Stack direction="row" spacing={3} mt={{ base: 3, sm: 4 }}>

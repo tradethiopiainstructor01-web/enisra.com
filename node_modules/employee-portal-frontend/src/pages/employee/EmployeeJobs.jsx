@@ -288,14 +288,14 @@ const EmployeeJobs = () => {
                   size="sm"
                   colorScheme="teal"
                   onClick={() => {
-                    const email = job.contactEmail || job.email || '';
+                    const email = job.contactEmail;
+                    if (!email) {
+                      window.alert('No contact email provided for this job.');
+                      return;
+                    }
                     const subject = encodeURIComponent(`Application for ${job.title || 'job'}`);
                     const body = encodeURIComponent('Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.');
-                    if (email) {
-                      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-                    } else {
-                      window.alert('No application email provided for this job.');
-                    }
+                    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
                   }}
                 >
                   Apply

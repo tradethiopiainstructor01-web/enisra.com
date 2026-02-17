@@ -232,13 +232,13 @@ const JobDetail = ({ jobId, onBack, onApply }) => {
               onApply(job);
               return;
             }
-            const email = job?.contactEmail || job?.email || job?.companyEmail;
-            if (email) {
-              const subject = encodeURIComponent(`Application for ${job?.title || 'job'}`);
-              window.location.href = `mailto:${email}?subject=${subject}`;
-            } else {
+            const email = job?.contactEmail;
+            if (!email) {
               alert('No contact email provided for this job.');
+              return;
             }
+            const subject = encodeURIComponent(`Application for ${job?.title || 'job'}`);
+            window.location.href = `mailto:${email}?subject=${subject}`;
           }}
           mt={4}
         >
