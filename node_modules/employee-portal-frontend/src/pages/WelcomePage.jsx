@@ -53,7 +53,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
 import { useUserStore } from '../store/user';
-import { useLanguage } from '../context/language';
+import { useLanguage } from '../context/language.jsx';
 
 const translations = {
   en: {

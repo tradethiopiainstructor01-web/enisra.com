@@ -30,7 +30,7 @@ import {
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
-import { useLanguage } from '../../context/language';
+import { useLanguage } from '../../context/language.jsx';
 
 const safeDate = (value) => {
   if (!value) return '';

@@ -29,7 +29,7 @@ import B2BDashboard from "./pages/B2BDashboard";
 import COODashboard from "./pages/COODashboard";
 import TradexTVDashboard from "./pages/TradexTVDashboard";
 import ITDashboard from "./pages/ITDashboard";
-import { LanguageProvider } from "./context/language";
+import { LanguageProvider } from "./context/language.jsx";
 import ENISRALayout from "./components/ENSRA/ENSRALayout";
 import ENISRAEnhancedDashboard from "./components/ENSRA/ENISRAEnhancedDashboard";
 import ENISRANoticeBoard from "./components/ENSRA/ENSRANoticeBoard";

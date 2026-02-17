@@ -25,7 +25,7 @@ import { FiMenu } from "react-icons/fi";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useUserStore } from "../store/user";
 import { useEffect, useState } from "react";
-import { useLanguage } from "../context/language";
+import { useLanguage } from "../context/language.jsx";
 
 const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, navbarHeight = "52px" }) => {
     const { colorMode, toggleColorMode } = useColorMode();
