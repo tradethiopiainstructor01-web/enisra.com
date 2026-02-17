@@ -280,15 +280,23 @@ const JobsPage = () => {
                       >
                         Read more
                       </Button>
-                      <Button
-                        size="sm"
-                        colorScheme="teal"
-                        onClick={() => window.alert(`Apply to ${job.title || 'this job'}`)}
-                      >
-                        Apply
-                      </Button>
-                    </HStack>
-                  </Box>
+                  <Button
+                    size="sm"
+                    colorScheme="teal"
+                    onClick={() => {
+                      const email = job.contactEmail || job.email || job.companyEmail;
+                      if (email) {
+                        const subject = encodeURIComponent(`Application for ${job.title || 'job'}`);
+                        window.location.href = `mailto:${email}?subject=${subject}`;
+                      } else {
+                        window.alert('No contact email provided for this job.');
+                      }
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </HStack>
+              </Box>
                 ))}
               </SimpleGrid>
             )}
@@ -354,17 +362,31 @@ const JobsPage = () => {
                 {selectedJob.salary ? (
                   <Text fontSize="sm" color={muted}>
                     Salary: {selectedJob.salary}
-                  </Text>
-                ) : null}
-                <Divider />
-                <Text fontSize="sm" whiteSpace="pre-wrap">
-                  {selectedJob.description || 'No description provided.'}
                 </Text>
-              </VStack>
-            ) : (
-              <Text color={muted}>Select a job to view details.</Text>
-            )}
-          </DrawerBody>
+              ) : null}
+              <Divider />
+              <Text fontSize="sm" whiteSpace="pre-wrap">
+                {selectedJob.description || 'No description provided.'}
+              </Text>
+              <Button
+                colorScheme="teal"
+                onClick={() => {
+                  const email = selectedJob?.contactEmail || selectedJob?.email || selectedJob?.companyEmail;
+                  if (email) {
+                    const subject = encodeURIComponent(`Application for ${selectedJob.title || 'job'}`);
+                    window.location.href = `mailto:${email}?subject=${subject}`;
+                  } else {
+                    window.alert('No contact email provided for this job.');
+                  }
+                }}
+              >
+                Apply via email
+              </Button>
+            </VStack>
+          ) : (
+            <Text color={muted}>Select a job to view details.</Text>
+          )}
+        </DrawerBody>
         </DrawerContent>
       </Drawer>
     </Box>

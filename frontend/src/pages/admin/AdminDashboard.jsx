@@ -128,6 +128,8 @@ const AdminDashboard = () => {
 
   const [pendingJobs, setPendingJobs] = useState([]);
   const [jobsLoading, setJobsLoading] = useState(false);
+  const [postedJobs, setPostedJobs] = useState([]);
+  const [postedJobsLoading, setPostedJobsLoading] = useState(false);
   const [pendingEmployers, setPendingEmployers] = useState([]);
   const [employersLoading, setEmployersLoading] = useState(false);
   const [allEmployers, setAllEmployers] = useState([]);
@@ -162,6 +164,42 @@ const AdminDashboard = () => {
   const [documentCategorySection, setDocumentCategorySection] = useState("companys");
   const [documentCategorySubmitting, setDocumentCategorySubmitting] = useState(false);
   const [documentCategoryActionId, setDocumentCategoryActionId] = useState(null);
+  const [adminJobForm, setAdminJobForm] = useState({
+    title: "",
+    department: "",
+    contactEmail: "",
+    category: "",
+    location: "",
+    address: "",
+    type: "",
+    salary: "",
+    deadline: "",
+    expirationDate: "",
+    description: "",
+    flow: "",
+  });
+  const [adminJobSubmitting, setAdminJobSubmitting] = useState(false);
+  const [editJobForm, setEditJobForm] = useState({
+    title: "",
+    department: "",
+    contactEmail: "",
+    category: "",
+    location: "",
+    address: "",
+    type: "",
+    salary: "",
+    deadline: "",
+    expirationDate: "",
+    description: "",
+    flow: "",
+  });
+  const [selectedJobId, setSelectedJobId] = useState(null);
+  const {
+    isOpen: isEditJobOpen,
+    onOpen: onEditJobOpen,
+    onClose: onEditJobClose,
+  } = useDisclosure();
+  const [editJobSubmitting, setEditJobSubmitting] = useState(false);
   const [packages, setPackages] = useState([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [packageSubmitting, setPackageSubmitting] = useState(false);
@@ -528,6 +566,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadPostedJobs = async () => {
+    setPostedJobsLoading(true);
+    try {
+      const response = await apiClient.get("/jobs", { params: { limit: 200 } });
+      const payload = response?.data;
+      const jobsArray = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : [];
+      const approved = jobsArray.filter((job) => job?.approved === true || job?.status === "approved");
+      setPostedJobs(approved);
+    } catch (error) {
+      setPostedJobs([]);
+      console.error("Failed to load posted jobs", error);
+    } finally {
+      setPostedJobsLoading(false);
+    }
+  };
+
   const loadEmployers = async () => {
     setEmployersLoading(true);
     try {
@@ -887,6 +945,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     loadPendingJobs();
+    loadPostedJobs();
     loadEmployers();
     loadAllEmployers();
     loadEmployees();
@@ -915,6 +974,9 @@ const AdminDashboard = () => {
       loadAllEmployers();
       loadEmployees();
     }
+    if (activeSectionId === "job-post" && !postedJobsLoading) {
+      loadPostedJobs();
+    }
   }, [activeSectionId]);
 
   const handleLogout = () => {
@@ -933,6 +995,7 @@ const AdminDashboard = () => {
     try {
       await apiClient.patch(`/jobs/${jobId}/approve`);
       setPendingJobs((prev) => prev.filter((job) => job._id !== jobId));
+      await loadPostedJobs();
       toast({
         title: "Job approved",
         status: "success",
@@ -954,6 +1017,7 @@ const AdminDashboard = () => {
     try {
       await apiClient.patch(`/jobs/${jobId}/reject`);
       setPendingJobs((prev) => prev.filter((job) => job._id !== jobId));
+      setPostedJobs((prev) => prev.filter((job) => job._id !== jobId));
       toast({
         title: "Job rejected",
         status: "info",
@@ -968,6 +1032,132 @@ const AdminDashboard = () => {
         duration: 3000,
         isClosable: true,
       });
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!jobId) return;
+    const confirmed = window.confirm("Delete this job post? This cannot be undone.");
+    if (!confirmed) return;
+    try {
+      await apiClient.delete(`/jobs/${jobId}`);
+      setPostedJobs((prev) => prev.filter((job) => job._id !== jobId));
+      setPendingJobs((prev) => prev.filter((job) => job._id !== jobId));
+      toast({
+        title: "Job deleted",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete job",
+        description: error?.response?.data?.message || error?.message || "Unable to delete job.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const openEditJobModal = (job) => {
+    if (!job) return;
+    setSelectedJobId(job._id);
+    setEditJobForm({
+      title: job.title || "",
+      department: job.department || "",
+      contactEmail: job.contactEmail || job.email || "",
+      category: job.category || "",
+      location: job.location || "",
+      address: job.address || "",
+      type: job.type || "",
+      salary: job.salary || "",
+      deadline: job.deadline ? job.deadline.slice(0, 10) : "",
+      expirationDate: job.expirationDate ? job.expirationDate.slice(0, 10) : "",
+      description: job.description || "",
+      flow: job.flow || "",
+    });
+    onEditJobOpen();
+  };
+
+  const closeEditJobModal = () => {
+    setSelectedJobId(null);
+    setEditJobForm({
+      title: "",
+      department: "",
+      contactEmail: "",
+      category: "",
+      location: "",
+      address: "",
+      type: "",
+      salary: "",
+      deadline: "",
+      expirationDate: "",
+      description: "",
+      flow: "",
+    });
+    onEditJobClose();
+  };
+
+  const handleEditJobChange = (field) => (event) => {
+    setEditJobForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleEditJob = async () => {
+    if (
+      !selectedJobId ||
+      !editJobForm.title.trim() ||
+      !editJobForm.category.trim() ||
+      !editJobForm.location.trim() ||
+      !editJobForm.type.trim() ||
+      !editJobForm.contactEmail.trim()
+    ) {
+      toast({
+        title: "Missing details",
+        description: "Please add job title, category, location, type, and contact email.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const payload = {
+      title: editJobForm.title.trim(),
+      department: editJobForm.department.trim(),
+      contactEmail: editJobForm.contactEmail.trim(),
+      category: editJobForm.category.trim(),
+      location: editJobForm.location.trim(),
+      address: editJobForm.address.trim(),
+      type: editJobForm.type.trim(),
+      salary: editJobForm.salary.trim(),
+      deadline: editJobForm.deadline || undefined,
+      expirationDate: editJobForm.expirationDate || undefined,
+      description: editJobForm.description.trim(),
+      flow: editJobForm.flow.trim(),
+    };
+
+    try {
+      setEditJobSubmitting(true);
+      await apiClient.patch(`/jobs/${selectedJobId}`, payload);
+      toast({
+        title: "Job updated",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      closeEditJobModal();
+      await loadPostedJobs();
+    } catch (error) {
+      toast({
+        title: "Failed to update job",
+        description: error?.response?.data?.message || error?.message || "Unable to update job.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setEditJobSubmitting(false);
     }
   };
 
@@ -1100,6 +1290,85 @@ const AdminDashboard = () => {
       });
     } finally {
       setEmployeeActionLoading(false);
+    }
+  };
+
+  const handleAdminJobChange = (field) => (event) => {
+    setAdminJobForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const resetAdminJobForm = () => {
+    setAdminJobForm({
+      title: "",
+      department: "",
+      contactEmail: "",
+      category: "",
+      location: "",
+      address: "",
+      type: "",
+      salary: "",
+      deadline: "",
+      expirationDate: "",
+      description: "",
+      flow: "",
+    });
+  };
+
+  const handleAdminPostJob = async () => {
+    if (
+      !adminJobForm.title.trim() ||
+      !adminJobForm.category.trim() ||
+      !adminJobForm.location.trim() ||
+      !adminJobForm.type.trim() ||
+      !adminJobForm.contactEmail.trim()
+    ) {
+      toast({
+        title: "Missing details",
+        description: "Please add job title, category, location, type, and contact email.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const payload = {
+      title: adminJobForm.title.trim(),
+      department: adminJobForm.department.trim(),
+      contactEmail: adminJobForm.contactEmail.trim(),
+      category: adminJobForm.category.trim(),
+      location: adminJobForm.location.trim(),
+      address: adminJobForm.address.trim(),
+      type: adminJobForm.type.trim(),
+      salary: adminJobForm.salary.trim(),
+      deadline: adminJobForm.deadline || undefined,
+      expirationDate: adminJobForm.expirationDate || undefined,
+      description: adminJobForm.description.trim(),
+      flow: adminJobForm.flow.trim(),
+    };
+
+    try {
+      setAdminJobSubmitting(true);
+      await apiClient.post("/jobs", payload);
+      toast({
+        title: "Job submitted",
+        description: "Job posted by admin. It will appear in pending until approved.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+      resetAdminJobForm();
+      await loadPendingJobs();
+    } catch (error) {
+      toast({
+        title: "Failed to post job",
+        description: error?.response?.data?.message || error?.message || "Unable to save job.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setAdminJobSubmitting(false);
     }
   };
 
@@ -1726,37 +1995,247 @@ const AdminDashboard = () => {
     if (section.id === "job-post") {
       return (
         <Stack spacing={4}>
-          {jobsLoading ? (
-            <Text color={mutedText}>Loading pending jobs...</Text>
-          ) : pendingJobs.length ? (
-            pendingJobs.map((job) => (
-              <Box
-                key={job._id}
-                p={4}
-                border="1px solid"
-                borderColor={borderColor}
-                borderRadius="md"
-              >
-                <Flex justify="space-between" align="center" mb={2}>
-                  <Heading size="sm">{job.title}</Heading>
-                  <Badge colorScheme="orange">Pending</Badge>
-                </Flex>
-                <Text fontSize="sm" color={mutedText}>
-                  {job.category} Â· {job.location} Â· {job.type}
-                </Text>
-                <Flex gap={2} mt={3} wrap="wrap">
-                  <Button size="sm" colorScheme="green" onClick={() => handleApproveJob(job._id)}>
-                    Approve
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Flex justify="space-between" align="center" gap={3} wrap="wrap">
+                <Box>
+                  <Heading size="md">Create a job post</Heading>
+                  <Text color={mutedText} fontSize="sm" mt={1}>
+                    Post a new role without leaving the admin dashboard.
+                  </Text>
+                </Box>
+                <Badge colorScheme="blue" variant="subtle">
+                  Admin quick post
+                </Badge>
+              </Flex>
+            </CardHeader>
+            <CardBody>
+              <Stack spacing={4}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel>Job title</FormLabel>
+                    <Input
+                      placeholder="e.g., Senior Frontend Engineer"
+                      value={adminJobForm.title}
+                      onChange={handleAdminJobChange("title")}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Department</FormLabel>
+                    <Input
+                      placeholder="Product, Engineering, HR"
+                      value={adminJobForm.department}
+                      onChange={handleAdminJobChange("department")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Contact email</FormLabel>
+                    <Input
+                      type="email"
+                      placeholder="hiring@company.com"
+                      value={adminJobForm.contactEmail}
+                      onChange={handleAdminJobChange("contactEmail")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Category</FormLabel>
+                    <Input
+                      placeholder="Engineering, Marketing"
+                      value={adminJobForm.category}
+                      onChange={handleAdminJobChange("category")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Location</FormLabel>
+                    <Input
+                      placeholder="Addis Ababa, Remote"
+                      value={adminJobForm.location}
+                      onChange={handleAdminJobChange("location")}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Address</FormLabel>
+                    <Input
+                      placeholder="Office or onsite address"
+                      value={adminJobForm.address}
+                      onChange={handleAdminJobChange("address")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Job type</FormLabel>
+                    <Select
+                      placeholder="Select type"
+                      value={adminJobForm.type}
+                      onChange={handleAdminJobChange("type")}
+                    >
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Internship">Internship</option>
+                      <option value="Temporary">Temporary</option>
+                    </Select>
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Salary range</FormLabel>
+                    <Input
+                      placeholder="ETB 15,000 - 20,000"
+                      value={adminJobForm.salary}
+                      onChange={handleAdminJobChange("salary")}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Application deadline</FormLabel>
+                    <Input
+                      type="date"
+                      value={adminJobForm.deadline}
+                      onChange={handleAdminJobChange("deadline")}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Post expiration date</FormLabel>
+                    <Input
+                      type="date"
+                      value={adminJobForm.expirationDate}
+                      onChange={handleAdminJobChange("expirationDate")}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Hiring flow</FormLabel>
+                    <Select
+                      placeholder="Select flow"
+                      value={adminJobForm.flow}
+                      onChange={handleAdminJobChange("flow")}
+                    >
+                      <option value="Interview only">Interview only</option>
+                      <option value="Exam + Interview">Exam + Interview</option>
+                      <option value="Multi-stage">Multi-stage</option>
+                    </Select>
+                  </FormControl>
+                </SimpleGrid>
+
+                <FormControl>
+                  <FormLabel>Job description</FormLabel>
+                  <Textarea
+                    placeholder="Describe responsibilities, qualifications, and benefits."
+                    value={adminJobForm.description}
+                    onChange={handleAdminJobChange("description")}
+                    minH="120px"
+                  />
+                </FormControl>
+
+                <Flex justify="flex-end">
+                  <Button
+                    leftIcon={<Icon as={FiPlus} />}
+                    colorScheme="blue"
+                    onClick={handleAdminPostJob}
+                    isLoading={adminJobSubmitting}
+                  >
+                    Post job
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleRejectJob(job._id)}>
-                    Reject
-                  </Button>
                 </Flex>
-              </Box>
-            ))
-          ) : (
-            <Text color={mutedText}>No pending jobs.</Text>
-          )}
+              </Stack>
+            </CardBody>
+          </Card>
+
+          <Stack spacing={5}>
+            <Box>
+              <Heading size="sm" mb={3}>
+                Pending jobs
+              </Heading>
+              {jobsLoading ? (
+                <Text color={mutedText}>Loading pending jobs...</Text>
+              ) : pendingJobs.length ? (
+                pendingJobs.map((job) => (
+                  <Box
+                    key={job._id}
+                    p={4}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="md"
+                  >
+                    <Flex justify="space-between" align="center" mb={2}>
+                      <Heading size="sm">{job.title}</Heading>
+                      <Badge colorScheme="orange">Pending</Badge>
+                    </Flex>
+                    <Text fontSize="sm" color={mutedText}>
+                      {job.category} - {job.location} - {job.type}
+                    </Text>
+                    <Flex gap={2} mt={3} wrap="wrap">
+                      <Button size="sm" colorScheme="green" onClick={() => handleApproveJob(job._id)}>
+                        Approve
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleRejectJob(job._id)}>
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        variant="ghost"
+                        leftIcon={<Icon as={FiTrash2} />}
+                        onClick={() => handleDeleteJob(job._id)}
+                      >
+                        Delete
+                      </Button>
+                    </Flex>
+                  </Box>
+                ))
+              ) : (
+                <Text color={mutedText}>No pending jobs.</Text>
+              )}
+            </Box>
+
+            <Divider />
+
+            <Box>
+              <Heading size="sm" mb={3}>
+                Posted jobs
+              </Heading>
+              {postedJobsLoading ? (
+                <Text color={mutedText}>Loading posted jobs...</Text>
+              ) : postedJobs.length ? (
+                postedJobs.map((job) => (
+                  <Box
+                    key={job._id}
+                    p={4}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="md"
+                  >
+                    <Flex justify="space-between" align="center" mb={2} gap={3} wrap="wrap">
+                      <Box>
+                        <Heading size="sm">{job.title}</Heading>
+                        <Text fontSize="sm" color={mutedText}>
+                          {job.category} - {job.location} - {job.type}
+                        </Text>
+                      </Box>
+                      <Badge colorScheme="green">Posted</Badge>
+                    </Flex>
+                    <Flex gap={2} mt={3} wrap="wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        leftIcon={<Icon as={FiEdit} />}
+                        onClick={() => openEditJobModal(job)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        variant="ghost"
+                        leftIcon={<Icon as={FiTrash2} />}
+                        onClick={() => handleDeleteJob(job._id)}
+                      >
+                        Delete
+                      </Button>
+                    </Flex>
+                  </Box>
+                ))
+              ) : (
+                <Text color={mutedText}>No posted jobs yet.</Text>
+              )}
+            </Box>
+          </Stack>
         </Stack>
       );
     }
@@ -2740,6 +3219,133 @@ const AdminDashboard = () => {
           </DrawerBody>
         </DrawerContent>
       </Drawer>
+
+      <Modal isOpen={isEditJobOpen} onClose={closeEditJobModal} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Edit job post</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Stack spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Job title</FormLabel>
+                  <Input
+                    value={editJobForm.title}
+                    onChange={handleEditJobChange("title")}
+                    placeholder="Job title"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Department</FormLabel>
+                  <Input
+                    value={editJobForm.department}
+                    onChange={handleEditJobChange("department")}
+                    placeholder="Department"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Contact email</FormLabel>
+                  <Input
+                    type="email"
+                    value={editJobForm.contactEmail}
+                    onChange={handleEditJobChange("contactEmail")}
+                    placeholder="contact@company.com"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Category</FormLabel>
+                  <Input
+                    value={editJobForm.category}
+                    onChange={handleEditJobChange("category")}
+                    placeholder="Category"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Location</FormLabel>
+                  <Input
+                    value={editJobForm.location}
+                    onChange={handleEditJobChange("location")}
+                    placeholder="City, Remote"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Address</FormLabel>
+                  <Input
+                    value={editJobForm.address}
+                    onChange={handleEditJobChange("address")}
+                    placeholder="Office address"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Job type</FormLabel>
+                  <Select value={editJobForm.type} onChange={handleEditJobChange("type")} placeholder="Select type">
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Temporary">Temporary</option>
+                  </Select>
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Salary range</FormLabel>
+                  <Input
+                    value={editJobForm.salary}
+                    onChange={handleEditJobChange("salary")}
+                    placeholder="ETB 15,000 - 20,000"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Application deadline</FormLabel>
+                  <Input
+                    type="date"
+                    value={editJobForm.deadline}
+                    onChange={handleEditJobChange("deadline")}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Post expiration date</FormLabel>
+                  <Input
+                    type="date"
+                    value={editJobForm.expirationDate}
+                    onChange={handleEditJobChange("expirationDate")}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Hiring flow</FormLabel>
+                  <Select
+                    value={editJobForm.flow}
+                    onChange={handleEditJobChange("flow")}
+                    placeholder="Select flow"
+                  >
+                    <option value="Interview only">Interview only</option>
+                    <option value="Exam + Interview">Exam + Interview</option>
+                    <option value="Multi-stage">Multi-stage</option>
+                  </Select>
+                </FormControl>
+              </SimpleGrid>
+
+              <FormControl>
+                <FormLabel>Job description</FormLabel>
+                <Textarea
+                  value={editJobForm.description}
+                  onChange={handleEditJobChange("description")}
+                  placeholder="Describe responsibilities, qualifications, and benefits."
+                  minH="120px"
+                />
+              </FormControl>
+            </Stack>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={closeEditJobModal}>
+              Cancel
+            </Button>
+            <Button colorScheme="blue" onClick={handleEditJob} isLoading={editJobSubmitting}>
+              Save changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <Modal isOpen={isAddEmployeeOpen} onClose={closeAddEmployeeModal} size="lg">
         <ModalOverlay />

@@ -249,18 +249,29 @@ const LoginPage = () => {
             Log In
           </Button>
         </Stack>
-        <Button
-          as={RouterLink}
-          to="/"
-          variant="ghost"
-          size={{ base: 'sm', sm: 'sm' }}
-          color="gray.500"
-          mt={{ base: 3, sm: 4 }}
-          fontSize={{ base: 'sm', sm: 'md' }}
-          _hover={{ bg: 'gray.100' }}
-        >
-          Back to home
-        </Button>
+        <Stack direction="row" spacing={3} mt={{ base: 3, sm: 4 }}>
+          <Button
+            as={RouterLink}
+            to="/"
+            variant="ghost"
+            size={{ base: 'sm', sm: 'sm' }}
+            color="gray.500"
+            fontSize={{ base: 'sm', sm: 'md' }}
+            _hover={{ bg: 'gray.100' }}
+          >
+            Back to home
+          </Button>
+          <Button
+            as={RouterLink}
+            to="/register"
+            variant="outline"
+            size={{ base: 'sm', sm: 'sm' }}
+            colorScheme="green"
+            fontSize={{ base: 'sm', sm: 'md' }}
+          >
+            Sign up
+          </Button>
+        </Stack>
       </Flex>
     </Container>
   );

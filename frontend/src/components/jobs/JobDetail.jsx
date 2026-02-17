@@ -227,7 +227,19 @@ const JobDetail = ({ jobId, onBack, onApply }) => {
           colorScheme="green"
           size="lg"
           width="full"
-          onClick={() => onApply && onApply(job)}
+          onClick={() => {
+            if (onApply) {
+              onApply(job);
+              return;
+            }
+            const email = job?.contactEmail || job?.email || job?.companyEmail;
+            if (email) {
+              const subject = encodeURIComponent(`Application for ${job?.title || 'job'}`);
+              window.location.href = `mailto:${email}?subject=${subject}`;
+            } else {
+              alert('No contact email provided for this job.');
+            }
+          }}
           mt={4}
         >
           Apply to this Job

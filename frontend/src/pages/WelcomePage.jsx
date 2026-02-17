@@ -216,7 +216,7 @@ const WelcomePage = () => {
     localStorage.setItem('lang', language);
   }, [language]);
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (signal) => {
     setJobsLoading(true);
     setJobsError(null);
     try {
@@ -228,6 +228,7 @@ const WelcomePage = () => {
           type: jobFilters.type || undefined,
           limit: 100,
         },
+        signal,
       });
       const payload = response?.data?.data ?? response?.data ?? [];
       setJobs(Array.isArray(payload) ? payload : []);
@@ -313,33 +314,20 @@ const WelcomePage = () => {
 
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadJobs = async () => {
-      setJobsLoading(true);
-      setJobsError(null);
-      try {
-        const response = await apiClient.get('jobs', {
-          params: { limit: 100 },
-        });
-        if (!isMounted) return;
-        const payload = response?.data?.data ?? response?.data ?? [];
-        setJobs(Array.isArray(payload) ? payload : []);
-      } catch (error) {
-        if (!isMounted) return;
-        setJobsError(error?.message || 'Failed to load jobs');
-        setJobs([]);
-      } finally {
-        if (isMounted) setJobsLoading(false);
-      }
-    };
-
-    loadJobs();
-
-    return () => {
-      isMounted = false;
-    };
+    const controller = new AbortController();
+    fetchJobs(controller.signal);
+    return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!showAllJobs) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => fetchJobs(controller.signal), 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [jobSearchTerm, jobFilters.location, jobFilters.category, jobFilters.type, showAllJobs]);
 
   useEffect(() => {
     let isMounted = true;
@@ -629,7 +617,10 @@ const WelcomePage = () => {
                         _focus={{ borderColor: primaryGreen }}
                         _placeholder={{ color: placeholder }}
                         value={jobSearchTerm}
-                        onChange={(event) => setJobSearchTerm(event.target.value)}
+                        onChange={(event) => {
+                          setShowAllJobs(true);
+                          setJobSearchTerm(event.target.value);
+                        }}
                         onKeyDown={handleJobSearchKeyDown}
                         pr="2.25rem"
                       />
@@ -653,7 +644,10 @@ const WelcomePage = () => {
                         color={textPrimary}
                         value={jobFilters.location}
                         onChange={(event) =>
-                          setJobFilters((prev) => ({ ...prev, location: event.target.value }))
+                          setJobFilters((prev) => {
+                            setShowAllJobs(true);
+                            return { ...prev, location: event.target.value };
+                          })
                         }
                       >
                         {locationOptions.map((option) => (
@@ -674,7 +668,10 @@ const WelcomePage = () => {
                         color={textPrimary}
                         value={jobFilters.category}
                         onChange={(event) =>
-                          setJobFilters((prev) => ({ ...prev, category: event.target.value }))
+                          setJobFilters((prev) => {
+                            setShowAllJobs(true);
+                            return { ...prev, category: event.target.value };
+                          })
                         }
                       >
                         {categoryOptions.map((option) => (
@@ -695,7 +692,10 @@ const WelcomePage = () => {
                         color={textPrimary}
                         value={jobFilters.type}
                         onChange={(event) =>
-                          setJobFilters((prev) => ({ ...prev, type: event.target.value }))
+                          setJobFilters((prev) => {
+                            setShowAllJobs(true);
+                            return { ...prev, type: event.target.value };
+                          })
                         }
                       >
                         {typeOptions.map((option) => (

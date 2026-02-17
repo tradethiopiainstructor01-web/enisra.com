@@ -37,6 +37,7 @@ const EmployerPostJob = () => {
   const [jobForm, setJobForm] = useState({
     title: "",
     department: "",
+    contactEmail: "",
     category: "",
     location: "",
     address: "",
@@ -117,6 +118,7 @@ const EmployerPostJob = () => {
     const payload = {
       title: jobForm.title.trim(),
       department: jobForm.department.trim(),
+      contactEmail: jobForm.contactEmail.trim(),
       category: jobForm.category.trim(),
       location: jobForm.location.trim(),
       address: jobForm.address.trim(),
@@ -133,16 +135,17 @@ const EmployerPostJob = () => {
       await apiClient.post("/jobs", payload);
       setJobForm({
         title: "",
-        department: "",
-        category: "",
-        location: "",
-        address: "",
-        type: "",
-        salary: "",
-        deadline: "",
-        expirationDate: "",
-        description: "",
-        flow: "",
+      department: "",
+      contactEmail: "",
+      category: "",
+      location: "",
+      address: "",
+      type: "",
+      salary: "",
+      deadline: "",
+      expirationDate: "",
+      description: "",
+      flow: "",
       });
 
       toast({
@@ -233,6 +236,15 @@ const EmployerPostJob = () => {
                     placeholder="Street / office address"
                     value={jobForm.address}
                     onChange={handleFormChange("address")}
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Contact Email</FormLabel>
+                  <Input
+                    type="email"
+                    placeholder="hr@example.com"
+                    value={jobForm.contactEmail}
+                    onChange={handleFormChange("contactEmail")}
                   />
                 </FormControl>
               </SimpleGrid>
