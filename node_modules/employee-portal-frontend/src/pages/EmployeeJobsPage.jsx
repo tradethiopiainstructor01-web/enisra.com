@@ -250,11 +250,28 @@ const EmployeeJobsPage = () => {
                     </Text>
                   ) : null}
 
-                  {job.description ? (
-                    <Text mt={3} fontSize="sm" noOfLines={5}>
-                      {job.description}
-                    </Text>
-                  ) : null}
+                {job.description ? (
+                  <Text mt={3} fontSize="sm" noOfLines={5}>
+                    {job.description}
+                  </Text>
+                ) : null}
+
+                  <Button
+                    mt={4}
+                    size="sm"
+                    colorScheme="teal"
+                    onClick={() => {
+                      const email = job.contactEmail || job.email || job.companyEmail || '';
+                      const subject = encodeURIComponent(`Application for ${job.title || 'job'}`);
+                      if (email) {
+                        window.location.href = `mailto:${email}?subject=${subject}`;
+                      } else {
+                        window.alert('No contact email provided for this job.');
+                      }
+                    }}
+                  >
+                    Apply
+                  </Button>
                 </Box>
               ))}
             </SimpleGrid>
