@@ -53,6 +53,31 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
 import { useUserStore } from '../store/user';
+import { useLanguage } from '../context/language';
+
+const translations = {
+  en: {
+    jobs: 'Jobs',
+    login: 'Login',
+    register: 'Register',
+    scholarships: 'Scholarships',
+    freeTrainings: 'Free Trainings',
+    homeCtaTitle: 'Enisra connects you to trusted jobs + scholarships.',
+    heroSearchPlaceholder: 'Search jobs, scholarships, trainings...',
+  },
+  am: {
+    jobs: 'ስራዎች',
+    login: 'ግባ',
+    register: 'መመዝገብ',
+    scholarships: 'የትምህርት ልዩነቶች',
+    freeTrainings: 'ነጻ ስልጠናዎች',
+    homeCtaTitle: 'ኢኒስራ እርስዎን ከታማኝ ስራዎችና የትምህርት ልዩነቶች ጋር ያገናኛል።',
+    heroSearchPlaceholder: 'ስራዎች፣ ትምህርት ልዩነቶች፣ ስልጠናዎች ፈልግ...',
+  },
+};
+
+const useTranslations = (lang) => (key) =>
+  translations[lang]?.[key] || translations.en[key] || key;
 
 const heroCards = [
   {
@@ -161,6 +186,7 @@ const WelcomePage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
   const currentUser = useUserStore((s) => s.currentUser);
   const [applyingId, setApplyingId] = useState('');
   const [appliedIds, setAppliedIds] = useState(() => new Set());
@@ -183,6 +209,10 @@ const WelcomePage = () => {
     const values = jobs.map((job) => job.type).filter(Boolean);
     return Array.from(new Set([...baseTypes, ...values]));
   }, [jobs]);
+
+  useEffect(() => {
+    localStorage.setItem('lang', language);
+  }, [language]);
 
   const fetchJobs = async () => {
     setJobsLoading(true);
@@ -452,6 +482,16 @@ const WelcomePage = () => {
                 color={primaryGreen}
                 _hover={{ bg: softGreenBg }}
               />
+              <Button
+                as={RouterLink}
+                to="/jobs"
+                variant="ghost"
+                size="sm"
+                color={textPrimary}
+                _hover={{ bg: softGreenBg }}
+              >
+                {t('jobs')}
+              </Button>
               <HStack spacing={2} display={{ base: 'none', md: 'flex' }}>
                 <Button
                   as={RouterLink}
@@ -460,7 +500,7 @@ const WelcomePage = () => {
                   size="sm"
                   color={textPrimary}
                 >
-                  Login
+                  {t('login')}
                 </Button>
                 <Button
                   as={RouterLink}
@@ -471,8 +511,22 @@ const WelcomePage = () => {
                   borderRadius="full"
                   _hover={{ bg: primaryGreenHover }}
                 >
-                  Register
+                  {t('register')}
                 </Button>
+                <Select
+                  size="sm"
+                  variant="outline"
+                  borderColor={border}
+                  color={textPrimary}
+                  _hover={{ borderColor: primaryGreen }}
+                  width="110px"
+                  aria-label="Language selector"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                >
+                  <option value="en">English</option>
+                  <option value="am">Amharic</option>
+                </Select>
               </HStack>
               <IconButton
                 aria-label="Go to dashboard"
@@ -508,7 +562,10 @@ const WelcomePage = () => {
           <DrawerBody>
             <Stack spacing={3} mt={2}>
               <Button as={RouterLink} to="/login" onClick={onClose} variant="ghost">
-                Login
+                {t('login')}
+              </Button>
+              <Button as={RouterLink} to="/jobs" onClick={onClose} variant="ghost">
+                {t('jobs')}
               </Button>
               <Button
                 as={RouterLink}
@@ -518,7 +575,7 @@ const WelcomePage = () => {
                 color="white"
                 _hover={{ bg: primaryGreenHover }}
               >
-                Register
+                {t('register')}
               </Button>
               <Button
                 variant="outline"
@@ -538,7 +595,7 @@ const WelcomePage = () => {
             <SimpleGrid columns={{ base: 1, lg: 2 }} alignItems="center" spacing={10} mb={10}>
               <Stack spacing={4}>
                 <Heading size="2xl" color={textPrimary}>
-                  Enisra connects you to trusted jobs + scholarships.
+                  {t('homeCtaTitle')}
                 </Heading>
                 <Stack spacing={3} w="100%">
                   <Box maxW={{ base: '100%', md: '460px' }} w="100%">
@@ -557,7 +614,7 @@ const WelcomePage = () => {
                         />
                       </InputRightElement>
                       <Input
-                        placeholder="Search jobs, scholarships, trainings..."
+                        placeholder={t('heroSearchPlaceholder')}
                         bg={softGreenBg}
                         borderColor={border}
                         borderRadius="full"

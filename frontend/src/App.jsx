@@ -29,6 +29,7 @@ import B2BDashboard from "./pages/B2BDashboard";
 import COODashboard from "./pages/COODashboard";
 import TradexTVDashboard from "./pages/TradexTVDashboard";
 import ITDashboard from "./pages/ITDashboard";
+import { LanguageProvider } from "./context/language";
 import ENISRALayout from "./components/ENSRA/ENSRALayout";
 import ENISRAEnhancedDashboard from "./components/ENSRA/ENISRAEnhancedDashboard";
 import ENISRANoticeBoard from "./components/ENSRA/ENSRANoticeBoard";
@@ -59,6 +60,7 @@ import EmployeeProfile from "./pages/employee/EmployeeProfile";
 import EmployeeJobs from "./pages/employee/EmployeeJobs";
 import EmployeeCreateCV from "./pages/employee/EmployeeCreateCV";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
+import JobsPage from "./pages/jobs/JobsPage.jsx";
 import "./styles/dashboard-layout.css";
 
 function App() {
@@ -112,8 +114,9 @@ function App() {
   };
 
   return (
-    <Routes>
-      <Route path="/" element={<WelcomePage />} />
+    <LanguageProvider>
+      <Routes>
+        <Route path="/" element={<WelcomePage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/InfoForm" element={<InfoForm />} />
@@ -123,6 +126,7 @@ function App() {
       <Route path="/fifthpage" element={<FifthPage />} />
       <Route path="/exam" element={<QuizPage />} />
       <Route path="/WaitingForApproval" element={<WaitingForApproval />} />
+      <Route path="/jobs" element={<JobsPage />} />
       <Route path="/resource" element={<Navigate to="/resources" replace />} />
       <Route
         path="/employee"
@@ -137,6 +141,7 @@ function App() {
         <Route path="jobs" element={<EmployeeJobs />} />
         <Route path="create-cv" element={<EmployeeCreateCV />} />
         <Route path="dashboard" element={<EmployeeDashboard />} />
+        <Route path="all-jobs" element={<JobsPage />} />
       </Route>
       <Route path="/employee-info" element={<Navigate to="/employee/profile" replace />} />
       <Route path="/employee-jobs" element={<Navigate to="/employee/jobs" replace />} />
@@ -337,13 +342,14 @@ function App() {
         }
       />
 
-      <Route path="/supervisor" element={<SupervisorLayout />}>
-        <Route index element={<SupervisorDashboardPage />} />
-        <Route path="requests" element={<TeamRequestsPage />} />
-        <Route path="notice-board" element={<NoticeBoardPage embedded />} />
-      </Route>
-      <Route path="/supervisor/account" element={<SupervisorAccountPage />} />
-    </Routes>
+        <Route path="/supervisor" element={<SupervisorLayout />}>
+          <Route index element={<SupervisorDashboardPage />} />
+          <Route path="requests" element={<TeamRequestsPage />} />
+          <Route path="notice-board" element={<NoticeBoardPage embedded />} />
+        </Route>
+        <Route path="/supervisor/account" element={<SupervisorAccountPage />} />
+      </Routes>
+    </LanguageProvider>
   );
 }
 

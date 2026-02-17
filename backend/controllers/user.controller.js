@@ -65,7 +65,8 @@ const loginUser = async (req, res) => {
         }
 
         // Generate a token
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        // Keep sessions active for 2 hours per requirement
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
 
         const buildAppwriteUrl = (fileId) => {
             if (!fileId) return null;
@@ -384,6 +385,38 @@ const updateUserInfo = async (req, res) => {
     }
 };
 
+// Get currently authenticated user
+const getMe = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: "Not authorized" });
+        }
+
+        const buildAppwriteUrl = (fileId) => {
+            if (!fileId) return null;
+            return `https://cloud.appwrite.io/v1/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${fileId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+        };
+
+        const userObj = req.user.toObject ? req.user.toObject() : req.user;
+        delete userObj.password;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                ...userObj,
+                photoUrl: buildAppwriteUrl(userObj.photo),
+                guarantorFileUrl: buildAppwriteUrl(userObj.guarantorFile),
+                cvResumeUrl: buildAppwriteUrl(userObj.cvResume),
+                idPassportUrl: buildAppwriteUrl(userObj.idPassport),
+                contractDocumentUrl: buildAppwriteUrl(userObj.contractDocument),
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching current user:", error.message);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 module.exports = {
     userHealthCheck,
     loginUser,
@@ -392,5 +425,6 @@ module.exports = {
     updateuser,
     deleteuser,
     getUserCounts,
-    updateUserInfo
+    updateUserInfo,
+    getMe
 };

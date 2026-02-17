@@ -23,13 +23,15 @@ import {
     useColorModeValue 
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUserStore } from '../store/user.js';
 import UserCard from '../components/UserCard';
 import { SearchIcon, AddIcon, RepeatIcon, ArrowUpDownIcon } from '@chakra-ui/icons'; 
 import CreatePage from './CreatePage';
 
 const HomePage = () => {
-    const { fetchUsers, users, loading, error } = useUserStore();
+    const navigate = useNavigate();
+    const { fetchUsers, users, loading, error, currentUser } = useUserStore();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('');
     const [sortOrder, setSortOrder] = useState('asc');
@@ -41,6 +43,25 @@ const HomePage = () => {
     useEffect(() => {
         fetchUsers();
     }, [fetchUsers]);
+
+    // If already logged in, keep session and send user to their area when landing on home.
+    useEffect(() => {
+        if (!currentUser?.token) return;
+        const role = (currentUser.role || currentUser.normalizedRole || '').toLowerCase();
+        const roleRedirects = {
+            admin: '/admin',
+            coo: '/admin',
+            supervisor: '/supervisor',
+            employee: '/employee/dashboard',
+            enisra: '/enisra',
+            tradextv: '/tradextv-dashboard',
+            tradextvmanager: '/tradextv-dashboard',
+            it: '/it',
+            employer: '/employer',
+        };
+        const target = roleRedirects[role] || '/employee/dashboard';
+        navigate(target, { replace: true });
+    }, [currentUser, navigate]);
 
     const filteredUsers = users.filter(user => {
         // Filter out users with username 

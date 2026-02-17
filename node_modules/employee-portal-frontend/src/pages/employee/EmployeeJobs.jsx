@@ -10,6 +10,7 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  Select,
   SimpleGrid,
   Spinner,
   Text,
@@ -32,8 +33,12 @@ const EmployeeJobs = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const mutedText = useColorModeValue('gray.600', 'gray.300');
   const jobCardBg = useColorModeValue('gray.50', 'gray.900');
+  const promoBg = useColorModeValue('gray.50', 'gray.800');
 
   const [search, setSearch] = useState('');
+  const [filterLocation, setFilterLocation] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterType, setFilterType] = useState('');
   const [page, setPage] = useState(1);
   const limit = 25;
 
@@ -41,11 +46,30 @@ const EmployeeJobs = () => {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [partners, setPartners] = useState([]);
+  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [partnersError, setPartnersError] = useState('');
 
   const totalPages = useMemo(
     () => Math.max(Math.ceil((total || 0) / limit), 1),
     [total]
   );
+
+  const locationOptions = useMemo(() => {
+    const values = jobs.map((j) => j.location).filter(Boolean);
+    return Array.from(new Set(values));
+  }, [jobs]);
+
+  const categoryOptions = useMemo(() => {
+    const values = jobs.map((j) => j.category).filter(Boolean);
+    return Array.from(new Set(values));
+  }, [jobs]);
+
+  const typeOptions = useMemo(() => {
+    const base = ['Full-time', 'Part-time', 'Contract', 'Remote', 'Internship'];
+    const values = jobs.map((j) => j.type).filter(Boolean);
+    return Array.from(new Set([...base, ...values]));
+  }, [jobs]);
 
   const fetchJobs = useCallback(
     async (signal) => {
@@ -57,6 +81,9 @@ const EmployeeJobs = () => {
             q: search || undefined,
             page,
             limit,
+            location: filterLocation || undefined,
+            category: filterCategory || undefined,
+            type: filterType || undefined,
           },
           signal,
         });
@@ -77,7 +104,7 @@ const EmployeeJobs = () => {
         setIsLoading(false);
       }
     },
-    [search, page]
+    [search, page, filterLocation, filterCategory, filterType]
   );
 
   useEffect(() => {
@@ -94,6 +121,33 @@ const EmployeeJobs = () => {
     setPage(1);
   };
 
+  const onFilterChange = (setter) => (e) => {
+    setter(e.target.value);
+    setPage(1);
+  };
+
+  // Load partner promotions
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadPartners = async () => {
+      setPartnersLoading(true);
+      setPartnersError('');
+      try {
+        const res = await apiClient.get('/partners', { signal: controller.signal });
+        const payload = res?.data?.data ?? res?.data ?? [];
+        setPartners(Array.isArray(payload) ? payload : []);
+      } catch (err) {
+        if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+        setPartnersError(err?.message || 'Failed to load partner promotions.');
+        setPartners([]);
+      } finally {
+        setPartnersLoading(false);
+      }
+    };
+    loadPartners();
+    return () => controller.abort();
+  }, []);
+
   return (
     <Card bg={cardBg} borderWidth="1px" borderColor={borderColor} borderRadius="2xl" boxShadow="lg">
       <CardBody>
@@ -107,17 +161,53 @@ const EmployeeJobs = () => {
           <Box>
             <Heading size="md">Jobs</Heading>
             <Text fontSize="sm" color={mutedText} mt={1}>
-              Browse approved jobs and search by keyword.
+              Browse approved jobs and search or filter by keyword, location, category, or type.
             </Text>
           </Box>
 
           <HStack spacing={2} flexWrap="wrap" justify={{ base: 'flex-start', md: 'flex-end' }}>
-            <InputGroup maxW="320px">
+            <InputGroup maxW="280px">
               <InputLeftElement pointerEvents="none">
                 <SearchIcon />
               </InputLeftElement>
               <Input value={search} onChange={onSearchChange} placeholder="Search jobs..." />
             </InputGroup>
+            <Select
+              placeholder="Location"
+              maxW="180px"
+              value={filterLocation}
+              onChange={onFilterChange(setFilterLocation)}
+            >
+              {locationOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </Select>
+            <Select
+              placeholder="Category"
+              maxW="180px"
+              value={filterCategory}
+              onChange={onFilterChange(setFilterCategory)}
+            >
+              {categoryOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </Select>
+            <Select
+              placeholder="Type"
+              maxW="160px"
+              value={filterType}
+              onChange={onFilterChange(setFilterType)}
+            >
+              {typeOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </Select>
             <Button
               leftIcon={<RepeatIcon />}
               variant="outline"
@@ -220,10 +310,53 @@ const EmployeeJobs = () => {
             </Button>
           </HStack>
         </HStack>
+
+        {/* Promotions / Partner companies */}
+        <Box mt={10} p={5} borderWidth="1px" borderColor={borderColor} borderRadius="xl" bg={promoBg}>
+          <Flex justify="space-between" align="center" mb={4} wrap="wrap" gap={3}>
+            <Heading size="md">Promoted Companies</Heading>
+            <Badge colorScheme="teal">{partners.length || 0} partners</Badge>
+          </Flex>
+          {partnersLoading ? (
+            <Flex align="center" gap={2}>
+              <Spinner size="sm" />
+              <Text color={mutedText}>Loading companies…</Text>
+            </Flex>
+          ) : partnersError ? (
+            <Text color="red.500">{partnersError}</Text>
+          ) : partners.length === 0 ? (
+            <Text color={mutedText}>No partner promotions available right now.</Text>
+          ) : (
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
+              {partners.map((partner) => (
+                <Box
+                  key={partner._id || partner.name}
+                  p={4}
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                  borderRadius="lg"
+                  bg={cardBg}
+                >
+                  <Heading size="sm" mb={2}>
+                    {partner.name || 'Partner'}
+                  </Heading>
+                  {partner.description ? (
+                    <Text fontSize="sm" color={mutedText} noOfLines={3}>
+                      {partner.description}
+                    </Text>
+                  ) : (
+                    <Text fontSize="sm" color={mutedText}>
+                      Trusted company working with us.
+                    </Text>
+                  )}
+                </Box>
+              ))}
+            </SimpleGrid>
+          )}
+        </Box>
       </CardBody>
     </Card>
   );
 };
 
 export default EmployeeJobs;
-

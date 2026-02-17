@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -28,9 +28,46 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const setCurrentUser = useUserStore((state) => state.setCurrentUser);
+  const currentUser = useUserStore((state) => state.currentUser);
   const formBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const inputBg = useColorModeValue('gray.50', 'gray.700');
+
+  // If already authenticated, skip login page and go to appropriate area.
+  useEffect(() => {
+    if (!currentUser?.token) return;
+    const normalizedRole = (currentUser.role || currentUser.normalizedRole || '')
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+    const roleRouteMap = {
+      admin: '/admin',
+      employee: '/employee/profile',
+      employer: '/employer/profile',
+      customerservice: '/employee/profile',
+      customersuccess: '/employee/profile',
+      customersuccessmanager: '/employee/profile',
+      hr: '/requests',
+      sales: '/requests',
+      salesmanager: '/requests',
+      socialmedia: '/social-media',
+      socialmediamanager: '/social-media',
+      it: '/it',
+      supervisor: '/supervisor',
+      tradextv: '/tradextv-dashboard',
+      tradex: '/tradextv-dashboard',
+      tetv: '/tradextv-dashboard',
+      coo: '/coo-dashboard',
+      reception: '/requests',
+      finance: '/requests',
+      eventmanager: '/requests',
+      instructor: '/instructor',
+      enisra: '/enisra',
+    };
+    const destination = roleRouteMap[normalizedRole] || '/';
+    navigate(destination, { replace: true });
+  }, [currentUser, navigate]);
 
   const handleFieldChange = (field) => (event) => {
     setFormData((prev) => ({ ...prev, [field]: event.target.value }));

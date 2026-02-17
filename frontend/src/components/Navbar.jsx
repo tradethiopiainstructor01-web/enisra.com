@@ -18,13 +18,14 @@ import {
     VStack,
     useColorModeValue
 } from "@chakra-ui/react";
-import { BsBell, BsChat } from "react-icons/bs";
+import { BsBell, BsChat, BsBriefcase } from "react-icons/bs";
 import { IoMoon } from "react-icons/io5";
 import { SunIcon } from "@chakra-ui/icons";
 import { FiMenu } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useUserStore } from "../store/user";
 import { useEffect, useState } from "react";
+import { useLanguage } from "../context/language";
 
 const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, navbarHeight = "52px" }) => {
     const { colorMode, toggleColorMode } = useColorMode();
@@ -36,6 +37,7 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, nav
     const borderColor = useColorModeValue("rgba(15,23,42,0.8)", "rgba(255,255,255,0.2)");
     const toggleLabel = colorMode === "light" ? "Switch to dark theme" : "Switch to light theme";
     const navigate = useNavigate();
+    const { language, setLanguage, t } = useLanguage?.() || { language: 'en', setLanguage: () => {}, t: (k) => k };
     const currentUser = useUserStore((state) => state.currentUser);
     const users = useUserStore((state) => state.users);
     const [notifications, setNotifications] = useState([]);
@@ -123,6 +125,20 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, nav
                     justifyContent="flex-end"
                     flexWrap="nowrap"
                 >
+                    {/* Jobs text link */}
+                    <Button
+                        as={RouterLink}
+                        to="/jobs"
+                        size="sm"
+                        variant="ghost"
+                        color="white"
+                        px={3}
+                        minW="auto"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                    >
+                        {t('jobs')}
+                    </Button>
+
                     {/* Notifications Dropdown */}
                     <Menu>
                         <MenuButton 
@@ -201,6 +217,38 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, nav
                             <MenuItem>No new messages</MenuItem>
                         </MenuList>
                     </Menu>
+
+                    {/* Jobs Link */}
+                    <Button
+                        as={RouterLink}
+                        to="/jobs"
+                        variant="ghost"
+                        minW="44px"
+                        minH="44px"
+                        p={2}
+                        borderRadius="full"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                        aria-label={t('jobs')}
+                        title={t('jobs')}
+                    >
+                        <BsBriefcase size={20} color="white" />
+                    </Button>
+
+                    <Select
+                        size="sm"
+                        width="110px"
+                        variant="outline"
+                        borderColor="whiteAlpha.400"
+                        color="white"
+                        bg="transparent"
+                        _hover={{ borderColor: "white" }}
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                        aria-label="Language selector"
+                    >
+                        <option value="en">English</option>
+                        <option value="am">Amharic</option>
+                    </Select>
 
                     {/* User Profile Dropdown */}
                     <Menu>

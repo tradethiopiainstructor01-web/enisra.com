@@ -49,6 +49,7 @@ const jobRoutes = require('./routes/jobRoutes.js');
 const partnerCompanyRoutes = require('./routes/partnerCompanyRoutes.js');
 const adminRoutes = require('./routes/adminRoutes.js');
 const employerCategoryRoutes = require('./routes/employerCategoryRoutes.js');
+const favoritesRoutes = require('./routes/favoritesRoutes.js');
 // Load environment variables
 
 // Initialize Express app
@@ -290,6 +291,7 @@ app.use('/api/analytics/registrations', registrationAnalyticsRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/partners', partnerCompanyRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 
 // Global error handler

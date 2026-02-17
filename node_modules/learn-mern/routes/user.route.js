@@ -7,8 +7,10 @@ const {
     updateuser, 
     loginUser, 
     getUserCounts, 
-    updateUserInfo // Import the new function
+    updateUserInfo, // Import the new function
+    getMe
 } = require('../controllers/user.controller.js');
+const { protect } = require('../middleware/auth.js');
 
 const router = express.Router();
 
@@ -26,6 +28,9 @@ router.get("/", getuser);
 
 // Get user counts route
 router.get("/count", getUserCounts);
+
+// Get current user profile
+router.get("/me", protect, getMe);
 
 // Update user by ID route
 router.put("/:id", updateuser);

@@ -1,25 +1,29 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Flex,
   HStack,
   IconButton,
-  Text,
+  Button,
   useBreakpointValue,
   useColorMode,
   useColorModeValue,
   useDisclosure,
 } from '@chakra-ui/react';
 import { HamburgerIcon, MoonIcon, SunIcon } from '@chakra-ui/icons';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, Link as RouterLink } from 'react-router-dom';
 import EmployeeNavDrawer from '../../components/employee/EmployeeNavDrawer';
 import EmployeeSidebar from '../../components/employee/EmployeeSidebar';
 
 const EmployeeLayout = () => {
-  const location = useLocation();
   const { colorMode, toggleColorMode } = useColorMode();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isDesktop = useBreakpointValue({ base: false, lg: true }) || false;
+
+  const bgGradient = useColorModeValue(
+    'linear(to-br, gray.50, teal.50)',
+    'linear(to-br, gray.900, teal.900)'
+  );
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem('employeeSidebarCollapsed') === '1'
@@ -29,30 +33,18 @@ const EmployeeLayout = () => {
     localStorage.setItem('employeeSidebarCollapsed', sidebarCollapsed ? '1' : '0');
   }, [sidebarCollapsed]);
 
-  const bgGradient = useColorModeValue(
-    'linear(to-br, gray.50, teal.50)',
-    'linear(to-br, gray.900, teal.900)'
-  );
-  const mutedText = useColorModeValue('gray.600', 'gray.300');
-  const brandText = useColorModeValue('teal.700', 'teal.200');
-
-  const pageTitle = useMemo(() => {
-    const path = location.pathname.toLowerCase();
-    if (path.includes('/employee/dashboard')) return 'Dashboard';
-    if (path.includes('/employee/jobs')) return 'Jobs';
-    if (path.includes('/employee/create-cv')) return 'Create CV';
-    return 'Profile';
-  }, [location.pathname]);
+  const navBg = useColorModeValue('white', 'gray.800');
+  const navBorder = useColorModeValue('gray.200', 'gray.700');
 
   return (
     <Box bgGradient={bgGradient} minH="100vh">
       <Flex
-        maxW="7xl"
-        mx="auto"
+        width="100%"
         direction={{ base: 'column', lg: 'row' }}
         gap={{ base: 0, lg: 6 }}
-        px={{ base: 3, md: 5 }}
-        py={{ base: 4, lg: 6 }}
+        px={{ base: 0, md: 0, lg: 0 }}
+        pt={0}
+        pb={0}
         align="stretch"
       >
         {isDesktop ? (
@@ -67,7 +59,7 @@ const EmployeeLayout = () => {
         )}
 
         <Box flex="1" minW={0}>
-          <HStack justify="space-between" mb={6} align="center">
+          <HStack justify="space-between" mb={4} align="center">
             <HStack spacing={3}>
               {!isDesktop ? (
                 <IconButton
@@ -77,25 +69,6 @@ const EmployeeLayout = () => {
                   colorScheme="teal"
                 />
               ) : null}
-              <Box>
-                <HStack spacing={2}>
-                  <Text
-                    fontWeight="bold"
-                    fontSize="lg"
-                    letterSpacing="0.08em"
-                    textTransform="uppercase"
-                    color={brandText}
-                  >
-                    ENISRA
-                  </Text>
-                  <Text fontWeight="bold" fontSize="lg">
-                    Employee Dashboard
-                  </Text>
-                </HStack>
-                <Text fontSize="sm" color={mutedText}>
-                  {pageTitle}
-                </Text>
-              </Box>
             </HStack>
 
             <IconButton
@@ -105,6 +78,45 @@ const EmployeeLayout = () => {
               onClick={toggleColorMode}
             />
           </HStack>
+
+          <Flex
+            align="center"
+            justify="space-between"
+            bg={navBg}
+            borderWidth="1px"
+            borderColor={navBorder}
+            borderRadius="lg"
+            px={{ base: 3, md: 4 }}
+            py={{ base: 2, md: 3 }}
+            boxShadow="sm"
+            gap={3}
+            flexWrap="wrap"
+            position="sticky"
+            top="0"
+            zIndex="banner"
+            mb={6}
+          >
+            <HStack spacing={2}>
+              <Button as={RouterLink} to="/" size="sm" variant="ghost">
+                Home
+              </Button>
+              <Button as={RouterLink} to="/employee/jobs" size="sm" variant="ghost">
+                Jobs
+              </Button>
+              <Button as={RouterLink} to="/employee/scholarships" size="sm" variant="ghost">
+                Scholarships
+              </Button>
+              <Button
+                as={RouterLink}
+                to="/employee/free-trainings"
+                size="sm"
+                colorScheme="teal"
+                variant="solid"
+              >
+                Free Trainings
+              </Button>
+            </HStack>
+          </Flex>
 
           <Outlet />
         </Box>
