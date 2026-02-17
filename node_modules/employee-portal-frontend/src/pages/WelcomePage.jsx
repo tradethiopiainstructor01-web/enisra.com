@@ -84,7 +84,8 @@ const heroCards = [
     id: 1,
     title: '🔍 Search Jobs',
     subtitle: 'Local & International',
-    cta: 'Browse Jobs',
+    cta: 'Browse Jobs', ctaLink: '/jobs',
+    ctaLink: '/jobs',
     icon: FaSearch,
     description: 'Refine by skill, location, salary, and remote preferences.',
   },
@@ -193,6 +194,7 @@ const WelcomePage = () => {
   const [applyModal, setApplyModal] = useState({ open: false, title: '', message: '', status: 'success' });
   const partnersCarouselRef = useRef(null);
   const partnersCarouselPausedRef = useRef(false);
+  const jobsSectionRef = useRef(null);
 
   const locationOptions = useMemo(() => {
     const values = jobs.map((job) => job.location).filter(Boolean);
@@ -237,14 +239,18 @@ const WelcomePage = () => {
     }
   };
 
-  const handleJobSearch = () => {
-    fetchJobs();
+  const handleJobSearch = async () => {
+    setShowAllJobs(true);
+    await fetchJobs();
+    if (jobsSectionRef.current) {
+      jobsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleJobSearchKeyDown = (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      fetchJobs();
+      handleJobSearch();
     }
   };
 
@@ -829,77 +835,7 @@ const WelcomePage = () => {
           </Container>
         </Box>
 
-        <Container maxW="7xl" py={10}>
-          <Box
-            bg={cardBg}
-            borderRadius="2xl"
-            p={{ base: 6, md: 8 }}
-            boxShadow="xl"
-            border="1px solid"
-            borderColor={border}
-          >
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} alignItems="center">
-              <Stack spacing={3}>
-                <Heading size="lg" color={textPrimary}>
-                  Employers can post jobs here
-                </Heading>
-                <Text color={textSecondary} fontSize="md">
-                  Use the Employer Dashboard to publish job openings, track applicants,
-                  and manage your postings in one place.
-                </Text>
-                <HStack spacing={3} flexWrap="wrap">
-                  <Button
-                    as={RouterLink}
-                    to="/employer/post"
-                    bg={primaryGreen}
-                    color="white"
-                    borderRadius="full"
-                    _hover={{ bg: primaryGreenHover }}
-                  >
-                    Post a Job
-                  </Button>
-                  <Button
-                    as={RouterLink}
-                    to="/employer/profile"
-                    variant="outline"
-                    borderRadius="full"
-                    borderColor={primaryGreen}
-                    color={primaryGreen}
-                    _hover={{ bg: softGreenBg }}
-                  >
-                    Go to Employer Dashboard
-                  </Button>
-                </HStack>
-              </Stack>
-              <Box
-                borderRadius="xl"
-                bg={softGreenBg}
-                p={6}
-                border="1px solid"
-                borderColor={border}
-              >
-                <Text fontWeight="semibold" color={textPrimary} mb={2}>
-                  Ready to create a new job post?
-                </Text>
-                <Text color={textSecondary} fontSize="sm" mb={4}>
-                  Click “Post a Job” to open the employer job form and publish in minutes.
-                </Text>
-                <Button
-                  as={RouterLink}
-                  to="/employer/post"
-                  size="sm"
-                  bg={primaryGold}
-                  color="white"
-                  borderRadius="full"
-                  _hover={{ bg: primaryGoldHover }}
-                >
-                  Create Job Post
-                </Button>
-              </Box>
-            </SimpleGrid>
-          </Box>
-        </Container>
-        <Container maxW="7xl" py={12}>
+        <Container ref={jobsSectionRef} maxW="7xl" py={12}>
           <Box
             bg={cardBg}
             borderRadius="2xl"
@@ -1314,3 +1250,4 @@ const WelcomePage = () => {
 };
 
 export default WelcomePage;
+

@@ -393,7 +393,7 @@ const EmployeeDashboard = () => {
                           name="educationLevel"
                           value={formData.educationLevel}
                           onChange={handleChange}
-                          placeholder="Select education level"
+                          placeholder="Select education level (e.g. Bachelor's Degree)"
                         >
                           {educationLevels.map((level) => (
                             <option key={level} value={level}>
@@ -430,7 +430,7 @@ const EmployeeDashboard = () => {
                           min="0"
                           value={formData.yearsOfExperience}
                           onChange={handleChange}
-                          placeholder="0"
+                          placeholder="e.g. 3"
                         />
                       </FormControl>
 
@@ -484,7 +484,7 @@ const EmployeeDashboard = () => {
                           name="profileStatus"
                           value={formData.profileStatus}
                           onChange={handleChange}
-                          placeholder="Select profile status"
+                          placeholder="Select profile status (e.g. Active)"
                         >
                           {profileStatusOptions.map((status) => (
                             <option key={status} value={status}>
@@ -516,7 +516,7 @@ const EmployeeDashboard = () => {
                           name="cvFileName"
                           value={formData.cvFileName}
                           onChange={handleChange}
-                          placeholder="resume.pdf"
+                          placeholder="e.g. resume.pdf"
                         />
                       </FormControl>
 

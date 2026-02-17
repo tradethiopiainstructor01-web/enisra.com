@@ -352,11 +352,14 @@ const EmployeeInfoForm = () => {
     const middleName = profile.middleName.trim();
     const lastName = profile.lastName.trim();
     const phoneNumber = profile.phoneNumber.trim();
+    const gender = profile.gender.trim();
+    const dateOfBirth = profile.dateOfBirth;
+    const nationality = profile.nationality.trim();
 
-    if (!firstName || !lastName || !phoneNumber) {
+    if (!firstName || !lastName || !phoneNumber || !gender || !dateOfBirth || !nationality) {
       toast({
         title: 'Missing required fields',
-        description: 'First name, last name, and phone number are required.',
+        description: 'First name, last name, phone number, gender, date of birth, and nationality are required.',
         status: 'warning',
         duration: 3500,
         isClosable: true,
@@ -372,9 +375,9 @@ const EmployeeInfoForm = () => {
       firstName,
       middleName,
       lastName,
-      gender: profile.gender || '',
-      dateOfBirth: profile.dateOfBirth || undefined,
-      nationality: profile.nationality.trim(),
+      gender,
+      dateOfBirth,
+      nationality,
       maritalStatus: profile.maritalStatus || '',
       nationalIdOrPassportNumber: profile.nationalIdOrPassportNumber.trim(),
 
@@ -628,31 +631,31 @@ const EmployeeInfoForm = () => {
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             <FormControl isRequired>
               <FormLabel>First Name</FormLabel>
-              <Input value={profile.firstName} onChange={setField('firstName')} />
+              <Input value={profile.firstName} onChange={setField('firstName')} placeholder="e.g. Sara" />
             </FormControl>
             <FormControl>
               <FormLabel>Middle Name</FormLabel>
-              <Input value={profile.middleName} onChange={setField('middleName')} />
+              <Input value={profile.middleName} onChange={setField('middleName')} placeholder="e.g. Bekele" />
             </FormControl>
             <FormControl isRequired>
               <FormLabel>Last Name</FormLabel>
-              <Input value={profile.lastName} onChange={setField('lastName')} />
+              <Input value={profile.lastName} onChange={setField('lastName')} placeholder="e.g. Tesfaye" />
             </FormControl>
 
-            <FormControl>
+            <FormControl isRequired>
               <FormLabel>Gender</FormLabel>
               <Select value={profile.gender} onChange={setField('gender')} placeholder="Select">
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </Select>
             </FormControl>
-            <FormControl>
+            <FormControl isRequired>
               <FormLabel>Date of Birth</FormLabel>
               <Input type="date" value={profile.dateOfBirth} onChange={setField('dateOfBirth')} />
             </FormControl>
-            <FormControl>
+            <FormControl isRequired>
               <FormLabel>Nationality</FormLabel>
-              <Input value={profile.nationality} onChange={setField('nationality')} />
+              <Input value={profile.nationality} onChange={setField('nationality')} placeholder="e.g. Ethiopian" />
             </FormControl>
 
             <FormControl>
@@ -666,7 +669,7 @@ const EmployeeInfoForm = () => {
             </FormControl>
             <FormControl>
               <FormLabel>National ID / Passport Number</FormLabel>
-              <Input value={profile.nationalIdOrPassportNumber} onChange={setField('nationalIdOrPassportNumber')} />
+              <Input value={profile.nationalIdOrPassportNumber} onChange={setField('nationalIdOrPassportNumber')} placeholder="e.g. AB1234567" />
             </FormControl>
           </SimpleGrid>
         </Stack>
@@ -676,7 +679,7 @@ const EmployeeInfoForm = () => {
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             <FormControl>
               <FormLabel>Personal Email</FormLabel>
-              <Input type="email" value={profile.personalEmail} onChange={setField('personalEmail')} />
+              <Input type="email" value={profile.personalEmail} onChange={setField('personalEmail')} placeholder="e.g. name@example.com" />
             </FormControl>
             <FormControl>
               <FormLabel>Work Email</FormLabel>
@@ -684,93 +687,37 @@ const EmployeeInfoForm = () => {
             </FormControl>
             <FormControl isRequired>
               <FormLabel>Phone Number</FormLabel>
-              <Input type="tel" value={profile.phoneNumber} onChange={setField('phoneNumber')} />
+              <Input type="tel" value={profile.phoneNumber} onChange={setField('phoneNumber')} placeholder="+251 9xx xxx xxx" />
             </FormControl>
 
             <FormControl>
               <FormLabel>Emergency Contact Name</FormLabel>
-              <Input value={profile.emergencyContactName} onChange={setField('emergencyContactName')} />
+              <Input value={profile.emergencyContactName} onChange={setField('emergencyContactName')} placeholder="e.g. Family member name" />
             </FormControl>
             <FormControl>
               <FormLabel>Emergency Contact Phone</FormLabel>
-              <Input type="tel" value={profile.emergencyContactPhone} onChange={setField('emergencyContactPhone')} />
+              <Input type="tel" value={profile.emergencyContactPhone} onChange={setField('emergencyContactPhone')} placeholder="+251 9xx xxx xxx" />
             </FormControl>
 
             <FormControl>
               <FormLabel>Current Address</FormLabel>
-              <Input value={profile.currentAddress} onChange={setField('currentAddress')} />
+              <Input value={profile.currentAddress} onChange={setField('currentAddress')} placeholder="e.g. Bole, Addis Ababa" />
             </FormControl>
             <FormControl>
               <FormLabel>City</FormLabel>
-              <Input value={profile.city} onChange={setField('city')} />
+              <Input value={profile.city} onChange={setField('city')} placeholder="e.g. Addis Ababa" />
             </FormControl>
             <FormControl>
               <FormLabel>Country</FormLabel>
-              <Input value={profile.country} onChange={setField('country')} />
+              <Input value={profile.country} onChange={setField('country')} placeholder="e.g. Ethiopia" />
             </FormControl>
           </SimpleGrid>
         </Stack>
 
-        <Stack spacing={4}>
-          <Heading size="md">3. Employment Details</Heading>
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-            <FormControl>
-              <FormLabel>Employee ID</FormLabel>
-              <Input value={profile.employeeId} onChange={setField('employeeId')} />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Job Title</FormLabel>
-              <Input value={profile.jobTitle} onChange={setField('jobTitle')} />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Department</FormLabel>
-              <Input value={profile.department} onChange={setField('department')} />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>Role / Position</FormLabel>
-              <Input value={profile.position} onChange={setField('position')} />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Employment Type</FormLabel>
-              <Select value={profile.employmentType} onChange={setField('employmentType')} placeholder="Select">
-                <option value="full-time">Full-time</option>
-                <option value="part-time">Part-time</option>
-                <option value="contract">Contract</option>
-                <option value="intern">Internship</option>
-                <option value="remote">Remote</option>
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel>Date of Joining</FormLabel>
-              <Input type="date" value={profile.dateOfJoining} onChange={setField('dateOfJoining')} />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>Work Location (Office / Remote / Hybrid)</FormLabel>
-              <Select value={profile.workLocation} onChange={setField('workLocation')} placeholder="Select">
-                <option value="office">Office</option>
-                <option value="remote">Remote</option>
-                <option value="hybrid">Hybrid</option>
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel>Reporting Manager</FormLabel>
-              <Input value={profile.reportingManager} onChange={setField('reportingManager')} />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Employment Status</FormLabel>
-              <Select value={profile.employmentStatus} onChange={setField('employmentStatus')} placeholder="Select">
-                <option value="active">Active</option>
-                <option value="on-leave">On Leave</option>
-                <option value="terminated">Terminated</option>
-              </Select>
-            </FormControl>
-          </SimpleGrid>
-        </Stack>
+        {/* Employment details intentionally hidden for employee self-registration */}
 
         <Stack spacing={4}>
-          <Heading size="md">4. Education Background</Heading>
+          <Heading size="md">3. Education Background</Heading>
           <Stack spacing={4}>
             {profile.educationBackground.map((item, index) => (
               <Box key={`edu-${index}`} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={4}>
@@ -824,7 +771,7 @@ const EmployeeInfoForm = () => {
         </Stack>
 
         <Stack spacing={4}>
-          <Heading size="md">5. Work Experience</Heading>
+          <Heading size="md">4. Work Experience</Heading>
           <Stack spacing={4}>
             {profile.workExperience.map((item, index) => (
               <Box key={`exp-${index}`} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={4}>
@@ -878,7 +825,7 @@ const EmployeeInfoForm = () => {
         </Stack>
 
         <Stack spacing={4}>
-          <Heading size="md">6. Skills & Competencies</Heading>
+          <Heading size="md">5. Skills & Competencies</Heading>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <FormControl>
               <FormLabel>Technical Skills (comma separated)</FormLabel>
@@ -889,6 +836,15 @@ const EmployeeInfoForm = () => {
               <Input value={profile.softSkills} onChange={setField('softSkills')} placeholder="e.g. Communication, Teamwork" />
             </FormControl>
           </SimpleGrid>
+          <FormControl>
+            <FormLabel>Additional Details</FormLabel>
+            <Textarea
+              value={profile.skillsSummary || ''}
+              onChange={(e) => setProfile((prev) => ({ ...prev, skillsSummary: e.target.value }))}
+              placeholder="Describe your strongest skills, tools, and accomplishments in a few sentences."
+              rows={4}
+            />
+          </FormControl>
 
           <Stack spacing={3}>
             <HStack justify="space-between" align="center">
@@ -901,7 +857,7 @@ const EmployeeInfoForm = () => {
               <SimpleGrid key={`lang-${index}`} columns={{ base: 1, md: 3 }} spacing={3}>
                 <FormControl>
                   <FormLabel>Language</FormLabel>
-                  <Input value={item.language} onChange={updateArrayField('languagesSpoken', index, 'language')} />
+                  <Input value={item.language} onChange={updateArrayField('languagesSpoken', index, 'language')} placeholder="e.g. Amharic" />
                 </FormControl>
                 <FormControl>
                   <FormLabel>Proficiency Level</FormLabel>
@@ -932,7 +888,7 @@ const EmployeeInfoForm = () => {
 
         {isHrOrAdmin && (
           <Stack spacing={4}>
-            <Heading size="md">7. Salary & Contract Details (HR Only)</Heading>
+            <Heading size="md">6. Salary & Contract Details (HR Only)</Heading>
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
               <FormControl>
                 <FormLabel>Salary Type</FormLabel>
@@ -980,7 +936,7 @@ const EmployeeInfoForm = () => {
         )}
 
         <Stack spacing={4}>
-          <Heading size="md">8. Documents Upload</Heading>
+          <Heading size="md">7. Documents Upload</Heading>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <FormControl>
               <FormLabel>Profile Photo (Upload)</FormLabel>
