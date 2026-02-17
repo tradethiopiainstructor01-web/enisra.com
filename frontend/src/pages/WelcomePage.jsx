@@ -595,7 +595,7 @@ const WelcomePage = () => {
             <SimpleGrid columns={{ base: 1, lg: 2 }} alignItems="center" spacing={10} mb={10}>
               <Stack spacing={4}>
                 <Heading size="2xl" color={textPrimary}>
-                  {t('homeCtaTitle')}
+                  {t('Enisra connects you to trusted jobs + scholarshipsle')}
                 </Heading>
                 <Stack spacing={3} w="100%">
                   <Box maxW={{ base: '100%', md: '460px' }} w="100%">
