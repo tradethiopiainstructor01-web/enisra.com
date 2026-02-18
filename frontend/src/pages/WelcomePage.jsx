@@ -45,6 +45,7 @@ import {
 } from 'react-icons/fa';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
+import { openJobApplicationEmail } from '../utils/jobEmail.js';
 import { useLanguage } from '../context/language.jsx';
 
 const translations = {
@@ -236,14 +237,12 @@ const WelcomePage = () => {
   };
 
   const handleApply = (job) => {
-    const email =
-      job?.contactEmail ||
-      job?.contact_email ||
-      job?.contact ||
-      job?.email ||
-      '';
+    const didOpenMailClient = openJobApplicationEmail(
+      job,
+      `Hello,\n\nI would like to apply for the ${job?.title || 'role'}.\nPlease find my CV attached.\n\nThank you.`
+    );
 
-    if (!email) {
+    if (!didOpenMailClient) {
       toast({
         title: 'Contact email missing',
         description: 'No contact email provided for this job.',
@@ -253,14 +252,6 @@ const WelcomePage = () => {
       });
       return;
     }
-
-    const subject = encodeURIComponent(`Application for ${job?.title || 'job'}`);
-    const body = encodeURIComponent(
-      `Hello,\n\nI would like to apply for the ${job?.title || 'role'}.\nPlease find my CV attached.\n\nThank you.`
-    );
-
-    // Open default mail client so the applicant can send their CV.
-    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
   };
 
   const formatDeadline = (value) => {

@@ -103,11 +103,12 @@ const EmployerPostJob = () => {
       !jobForm.title.trim() ||
       !jobForm.category.trim() ||
       !jobForm.location.trim() ||
-      !jobForm.type.trim()
+      !jobForm.type.trim() ||
+      !jobForm.contactEmail.trim()
     ) {
       toast({
         title: "Missing details",
-        description: "Please add a job title, category, location, and job type.",
+        description: "Please add a job title, category, location, job type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,

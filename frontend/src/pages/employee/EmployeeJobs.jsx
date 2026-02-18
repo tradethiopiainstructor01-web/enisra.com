@@ -20,6 +20,7 @@ import { RepeatIcon, SearchIcon } from '@chakra-ui/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import apiClient from '../../utils/apiClient';
+import { openJobApplicationEmail } from '../../utils/jobEmail';
 
 const safeDateLabel = (value) => {
   if (!value) return '';
@@ -288,14 +289,14 @@ const EmployeeJobs = () => {
                   size="sm"
                   colorScheme="teal"
                   onClick={() => {
-                    const email = job.contactEmail;
-                    if (!email) {
+                    const didOpenMailClient = openJobApplicationEmail(
+                      job,
+                      'Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.'
+                    );
+                    if (!didOpenMailClient) {
                       window.alert('No contact email provided for this job.');
                       return;
                     }
-                    const subject = encodeURIComponent(`Application for ${job.title || 'job'}`);
-                    const body = encodeURIComponent('Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.');
-                    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
                   }}
                 >
                   Apply

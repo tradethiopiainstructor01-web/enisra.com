@@ -21,6 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { FiHeart, FiMapPin, FiBriefcase, FiDollarSign, FiCalendar, FiClock, FiUser } from 'react-icons/fi';
 import apiClient from '../../utils/apiClient';
+import { openJobApplicationEmail } from '../../utils/jobEmail';
 
 const JobDetail = ({ jobId, onBack, onApply }) => {
   const [job, setJob] = useState(null);
@@ -232,13 +233,11 @@ const JobDetail = ({ jobId, onBack, onApply }) => {
               onApply(job);
               return;
             }
-            const email = job?.contactEmail;
-            if (!email) {
+            const didOpenMailClient = openJobApplicationEmail(job);
+            if (!didOpenMailClient) {
               alert('No contact email provided for this job.');
               return;
             }
-            const subject = encodeURIComponent(`Application for ${job?.title || 'job'}`);
-            window.location.href = `mailto:${email}?subject=${subject}`;
           }}
           mt={4}
         >

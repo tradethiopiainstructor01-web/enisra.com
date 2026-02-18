@@ -21,6 +21,7 @@ import { HamburgerIcon, MoonIcon, RepeatIcon, SearchIcon, SunIcon } from '@chakr
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import apiClient from '../utils/apiClient';
+import { openJobApplicationEmail } from '../utils/jobEmail';
 import EmployeeNavDrawer from '../components/employee/EmployeeNavDrawer';
 import EmployeeSidebar from '../components/employee/EmployeeSidebar';
 
@@ -261,13 +262,11 @@ const EmployeeJobsPage = () => {
                     size="sm"
                     colorScheme="teal"
                     onClick={() => {
-                      const email = job.contactEmail;
-                      if (!email) {
+                      const didOpenMailClient = openJobApplicationEmail(job);
+                      if (!didOpenMailClient) {
                         window.alert('No contact email provided for this job.');
                         return;
                       }
-                      const subject = encodeURIComponent(`Application for ${job.title || 'job'}`);
-                      window.location.href = `mailto:${email}?subject=${subject}`;
                     }}
                   >
                     Apply

@@ -5,12 +5,42 @@ const Notification = require('../models/Notification');
 const toTrimmedString = (value) => (value || '').toString().trim();
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
 const parseDate = (value) => {
   if (!value) return undefined;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
+
+const extractEmail = (value) => {
+  const candidate = toTrimmedString(value)
+    .replace(/^mailto:/i, '')
+    .split('?')[0];
+  const match = candidate.match(EMAIL_REGEX);
+  return match ? match[0].toLowerCase() : '';
+};
+
+const normalizeJobForResponse = (job) => {
+  if (!job || typeof job !== 'object') return job;
+
+  const postedByObject =
+    job.postedBy && typeof job.postedBy === 'object' && !Array.isArray(job.postedBy)
+      ? job.postedBy
+      : null;
+  const postedById = postedByObject && postedByObject._id ? postedByObject._id : job.postedBy;
+  const postedByEmail = postedByObject ? extractEmail(postedByObject.email) : '';
+
+  return {
+    ...job,
+    postedBy: postedById,
+    contactEmail: extractEmail(
+      job.contactEmail || job.contact_email || job.email || postedByEmail || job.postedByName
+    ),
+  };
+};
+
+const normalizeJobsForResponse = (jobs) => (Array.isArray(jobs) ? jobs.map(normalizeJobForResponse) : []);
 
 exports.listJobs = async (req, res) => {
   try {
@@ -64,16 +94,18 @@ exports.listJobs = async (req, res) => {
 
     const [jobs, total] = await Promise.all([
       Job.find(filter)
+        .populate('postedBy', 'email')
         .sort({ postedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limitNumber)
         .lean(),
       Job.countDocuments(filter),
     ]);
+    const normalizedJobs = normalizeJobsForResponse(jobs);
 
     res.json({
       success: true,
-      data: jobs,
+      data: normalizedJobs,
       total,
       page: pageNumber,
       limit: limitNumber,
@@ -90,9 +122,10 @@ exports.listJobs = async (req, res) => {
 exports.listPendingJobs = async (_req, res) => {
   try {
     const jobs = await Job.find({ approved: false, active: true })
+      .populate('postedBy', 'email')
       .sort({ postedAt: -1, createdAt: -1 })
       .lean();
-    res.json({ success: true, data: jobs });
+    res.json({ success: true, data: normalizeJobsForResponse(jobs) });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -118,10 +151,11 @@ exports.listMyJobs = async (req, res) => {
     if (active === 'false') filter.active = false;
 
     const jobs = await Job.find(filter)
+      .populate('postedBy', 'email')
       .sort({ postedAt: -1, createdAt: -1 })
       .lean();
 
-    res.json({ success: true, data: jobs });
+    res.json({ success: true, data: normalizeJobsForResponse(jobs) });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -136,6 +170,7 @@ exports.createJob = async (req, res) => {
     const payload = {
       title: toTrimmedString(req.body.title),
       department: toTrimmedString(req.body.department),
+      contactEmail: extractEmail(req.body.contactEmail || req.body.contact_email || req.body.email),
       category: toTrimmedString(req.body.category),
       location: toTrimmedString(req.body.location),
       address: toTrimmedString(req.body.address),
@@ -152,10 +187,14 @@ exports.createJob = async (req, res) => {
     const expirationDate = parseDate(req.body.expirationDate);
     if (expirationDate) payload.expirationDate = expirationDate;
 
-    if (!payload.title || !payload.category || !payload.location || !payload.type) {
+    if (!payload.contactEmail && req.user?.email) {
+      payload.contactEmail = extractEmail(req.user.email);
+    }
+
+    if (!payload.title || !payload.category || !payload.location || !payload.type || !payload.contactEmail) {
       return res.status(400).json({
         success: false,
-        message: 'Title, category, location, and job type are required.',
+        message: 'Title, category, location, job type, and contact email are required.',
       });
     }
 

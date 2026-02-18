@@ -1,6 +1,5 @@
 const PartnerCompany = require('../models/PartnerCompany');
-const { storage: appwriteStorage } = require('../config/appwriteClient');
-const { File } = require('node-fetch-native-with-agent');
+const { storage: appwriteStorage, InputFile } = require('../config/appwriteClient');
 
 const toTrimmedString = (value) => (value || '').toString().trim();
 const normalizeRole = (role) => (role || '').toString().trim().toLowerCase();
@@ -175,15 +174,22 @@ exports.uploadPartnerLogo = async (req, res) => {
       });
     }
 
-    if (!process.env.APPWRITE_BUCKET_ID || !process.env.APPWRITE_PROJECT_ID) {
+    const missingAppwriteKeys = [
+      'APPWRITE_ENDPOINT',
+      'APPWRITE_PROJECT_ID',
+      'APPWRITE_API_KEY',
+      'APPWRITE_BUCKET_ID',
+    ].filter((key) => !process.env[key]);
+
+    if (missingAppwriteKeys.length) {
       return res.status(500).json({
         success: false,
-        message: 'Appwrite storage is not configured.',
+        message: `Appwrite storage is not configured. Missing: ${missingAppwriteKeys.join(', ')}`,
       });
     }
 
     const fileName = `${Date.now()}-${file.originalname}`;
-    const fileObj = new File([file.buffer], fileName, { type: file.mimetype });
+    const fileObj = InputFile.fromBuffer(file.buffer, fileName);
     const uploaded = await appwriteStorage.createFile({
       bucketId: process.env.APPWRITE_BUCKET_ID,
       fileId: 'unique()',

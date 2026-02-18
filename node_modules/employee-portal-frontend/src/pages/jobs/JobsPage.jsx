@@ -32,6 +32,7 @@ import {
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
 import { Link as RouterLink } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
+import { openJobApplicationEmail } from '../../utils/jobEmail';
 import { useLanguage } from '../../context/language.jsx';
 
 const safeDate = (value) => {
@@ -382,13 +383,11 @@ const JobsPage = () => {
                     size="sm"
                     colorScheme="teal"
                     onClick={() => {
-                      const email = job.contactEmail;
-                      if (!email) {
+                      const didOpenMailClient = openJobApplicationEmail(job);
+                      if (!didOpenMailClient) {
                         window.alert('No contact email provided for this job.');
                         return;
                       }
-                      const subject = encodeURIComponent(`Application for ${job.title || 'job'}`);
-                      window.location.href = `mailto:${email}?subject=${subject}`;
                     }}
                   >
                     Apply
@@ -532,13 +531,11 @@ const JobsPage = () => {
               <Button
                 colorScheme="teal"
                 onClick={() => {
-                  const email = selectedJob?.contactEmail;
-                  if (!email) {
+                  const didOpenMailClient = openJobApplicationEmail(selectedJob);
+                  if (!didOpenMailClient) {
                     window.alert('No contact email provided for this job.');
                     return;
                   }
-                  const subject = encodeURIComponent(`Application for ${selectedJob.title || 'job'}`);
-                  window.location.href = `mailto:${email}?subject=${subject}`;
                 }}
               >
                 Apply via email

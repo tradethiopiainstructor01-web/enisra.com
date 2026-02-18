@@ -11,6 +11,11 @@ const JobSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    contactEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
     category: {
       type: String,
       required: true,
