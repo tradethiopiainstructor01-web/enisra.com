@@ -263,6 +263,97 @@ exports.rejectJob = async (req, res) => {
   }
 };
 
+exports.updateJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const setPayload = {
+      title: toTrimmedString(req.body.title),
+      department: toTrimmedString(req.body.department),
+      contactEmail: extractEmail(req.body.contactEmail || req.body.contact_email || req.body.email),
+      category: toTrimmedString(req.body.category),
+      location: toTrimmedString(req.body.location),
+      address: toTrimmedString(req.body.address),
+      type: toTrimmedString(req.body.type),
+      salary: toTrimmedString(req.body.salary),
+      description: toTrimmedString(req.body.description),
+      flow: toTrimmedString(req.body.flow),
+    };
+
+    if (!setPayload.title || !setPayload.category || !setPayload.location || !setPayload.type || !setPayload.contactEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, category, location, job type, and contact email are required.',
+      });
+    }
+
+    const unsetPayload = {};
+    if (Object.prototype.hasOwnProperty.call(req.body, 'deadline')) {
+      const deadline = parseDate(req.body.deadline);
+      if (req.body.deadline && !deadline) {
+        return res.status(400).json({ success: false, message: 'Invalid deadline value.' });
+      }
+      if (deadline) {
+        setPayload.deadline = deadline;
+      } else {
+        unsetPayload.deadline = 1;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(req.body, 'expirationDate')) {
+      const expirationDate = parseDate(req.body.expirationDate);
+      if (req.body.expirationDate && !expirationDate) {
+        return res.status(400).json({ success: false, message: 'Invalid expiration date value.' });
+      }
+      if (expirationDate) {
+        setPayload.expirationDate = expirationDate;
+      } else {
+        unsetPayload.expirationDate = 1;
+      }
+    }
+
+    const update = {
+      $set: setPayload,
+      ...(Object.keys(unsetPayload).length ? { $unset: unsetPayload } : {}),
+    };
+
+    const updated = await Job.findByIdAndUpdate(id, update, { new: true, runValidators: true }).lean();
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    res.json({ success: true, data: normalizeJobForResponse(updated) });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update job',
+      error: error.message,
+    });
+  }
+};
+
+exports.deleteJob = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await Job.findByIdAndUpdate(
+      id,
+      { active: false, approved: false },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    res.json({ success: true, data: normalizeJobForResponse(updated) });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete job',
+      error: error.message,
+    });
+  }
+};
+
 exports.applyToJob = async (req, res) => {
   try {
     const { id } = req.params;
