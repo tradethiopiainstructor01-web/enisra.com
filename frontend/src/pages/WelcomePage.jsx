@@ -45,7 +45,7 @@ import {
 } from 'react-icons/fa';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../utils/apiClient.js';
-import { openJobApplicationEmail } from '../utils/jobEmail.js';
+import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../utils/jobEmail.js';
 import { useLanguage } from '../context/language.jsx';
 
 const translations = {
@@ -237,6 +237,21 @@ const WelcomePage = () => {
   };
 
   const handleApply = (job) => {
+    const applyAccess = getJobApplyAccess();
+    if (!applyAccess.allowed) {
+      toast({
+        title: 'Apply access restricted',
+        description: getJobApplyAccessMessage(applyAccess.reason),
+        status: 'warning',
+        duration: 3500,
+        isClosable: true,
+      });
+      if (applyAccess.reason === 'not_authenticated') {
+        navigate('/login');
+      }
+      return;
+    }
+
     const didOpenMailClient = openJobApplicationEmail(
       job,
       `Hello,\n\nI would like to apply for the ${job?.title || 'role'}.\nPlease find my CV attached.\n\nThank you.`
@@ -1048,17 +1063,29 @@ const WelcomePage = () => {
                         <Text mt={2} fontWeight="semibold" color={textPrimary}>
                           Deadline: {formatDeadline(job.deadline)}
                         </Text>
-                        <Button
-                          mt={4}
-                          size="sm"
-                          borderRadius="full"
-                          bg={primaryGreen}
-                          color="white"
-                          _hover={{ bg: primaryGreenHover }}
-                          onClick={() => handleApply(job)}
-                        >
-                          Apply Now
-                        </Button>
+                        <HStack mt={4} spacing={3}>
+                          <Button
+                            size="sm"
+                            borderRadius="full"
+                            bg={primaryGreen}
+                            color="white"
+                            _hover={{ bg: primaryGreenHover }}
+                            onClick={() => handleApply(job)}
+                          >
+                            Apply Now
+                          </Button>
+                          <Button
+                            size="sm"
+                            borderRadius="full"
+                            variant="outline"
+                            borderColor={primaryBlue}
+                            color={primaryBlue}
+                            _hover={{ bg: softBlueBg }}
+                            onClick={() => navigate('/jobs')}
+                          >
+                            Read more
+                          </Button>
+                        </HStack>
                       </Box>
                     );
                   })

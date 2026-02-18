@@ -30,9 +30,9 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
-import { openJobApplicationEmail } from '../../utils/jobEmail';
+import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
 import { useLanguage } from '../../context/language.jsx';
 
 const safeDate = (value) => {
@@ -43,6 +43,7 @@ const safeDate = (value) => {
 };
 
 const JobsPage = () => {
+  const navigate = useNavigate();
   const bg = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -386,6 +387,15 @@ const JobsPage = () => {
                     size="sm"
                     colorScheme="teal"
                     onClick={() => {
+                      const applyAccess = getJobApplyAccess();
+                      if (!applyAccess.allowed) {
+                        window.alert(getJobApplyAccessMessage(applyAccess.reason));
+                        if (applyAccess.reason === 'not_authenticated') {
+                          navigate('/login');
+                        }
+                        return;
+                      }
+
                       const didOpenMailClient = openJobApplicationEmail(job);
                       if (!didOpenMailClient) {
                         window.alert('No contact email provided for this job.');
@@ -537,6 +547,15 @@ const JobsPage = () => {
               <Button
                 colorScheme="teal"
                 onClick={() => {
+                  const applyAccess = getJobApplyAccess();
+                  if (!applyAccess.allowed) {
+                    window.alert(getJobApplyAccessMessage(applyAccess.reason));
+                    if (applyAccess.reason === 'not_authenticated') {
+                      navigate('/login');
+                    }
+                    return;
+                  }
+
                   const didOpenMailClient = openJobApplicationEmail(selectedJob);
                   if (!didOpenMailClient) {
                     window.alert('No contact email provided for this job.');

@@ -21,7 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { FiHeart, FiMapPin, FiBriefcase, FiDollarSign, FiCalendar, FiClock, FiUser } from 'react-icons/fi';
 import apiClient from '../../utils/apiClient';
-import { openJobApplicationEmail } from '../../utils/jobEmail';
+import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
 
 const JobDetail = ({ jobId, onBack, onApply }) => {
   const [job, setJob] = useState(null);
@@ -233,6 +233,16 @@ const JobDetail = ({ jobId, onBack, onApply }) => {
               onApply(job);
               return;
             }
+
+            const applyAccess = getJobApplyAccess();
+            if (!applyAccess.allowed) {
+              alert(getJobApplyAccessMessage(applyAccess.reason));
+              if (applyAccess.reason === 'not_authenticated') {
+                window.location.href = '/login';
+              }
+              return;
+            }
+
             const didOpenMailClient = openJobApplicationEmail(job);
             if (!didOpenMailClient) {
               alert('No contact email provided for this job.');

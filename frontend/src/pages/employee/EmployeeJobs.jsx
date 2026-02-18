@@ -19,8 +19,9 @@ import {
 import { RepeatIcon, SearchIcon } from '@chakra-ui/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
-import { openJobApplicationEmail } from '../../utils/jobEmail';
+import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
 
 const safeDateLabel = (value) => {
   if (!value) return '';
@@ -30,6 +31,7 @@ const safeDateLabel = (value) => {
 };
 
 const EmployeeJobs = () => {
+  const navigate = useNavigate();
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const mutedText = useColorModeValue('gray.600', 'gray.300');
@@ -289,6 +291,15 @@ const EmployeeJobs = () => {
                   size="sm"
                   colorScheme="teal"
                   onClick={() => {
+                    const applyAccess = getJobApplyAccess();
+                    if (!applyAccess.allowed) {
+                      window.alert(getJobApplyAccessMessage(applyAccess.reason));
+                      if (applyAccess.reason === 'not_authenticated') {
+                        navigate('/login');
+                      }
+                      return;
+                    }
+
                     const didOpenMailClient = openJobApplicationEmail(
                       job,
                       'Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.'

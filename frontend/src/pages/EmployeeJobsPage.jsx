@@ -20,8 +20,9 @@ import {
 import { HamburgerIcon, MoonIcon, RepeatIcon, SearchIcon, SunIcon } from '@chakra-ui/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../utils/apiClient';
-import { openJobApplicationEmail } from '../utils/jobEmail';
+import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../utils/jobEmail';
 import EmployeeNavDrawer from '../components/employee/EmployeeNavDrawer';
 import EmployeeSidebar from '../components/employee/EmployeeSidebar';
 
@@ -33,6 +34,7 @@ const safeDateLabel = (value) => {
 };
 
 const EmployeeJobsPage = () => {
+  const navigate = useNavigate();
   const { colorMode, toggleColorMode } = useColorMode();
   const panelBg = useColorModeValue('white', 'gray.700');
   const jobCardBg = useColorModeValue('gray.50', 'gray.800');
@@ -262,6 +264,15 @@ const EmployeeJobsPage = () => {
                     size="sm"
                     colorScheme="teal"
                     onClick={() => {
+                      const applyAccess = getJobApplyAccess();
+                      if (!applyAccess.allowed) {
+                        window.alert(getJobApplyAccessMessage(applyAccess.reason));
+                        if (applyAccess.reason === 'not_authenticated') {
+                          navigate('/login');
+                        }
+                        return;
+                      }
+
                       const didOpenMailClient = openJobApplicationEmail(job);
                       if (!didOpenMailClient) {
                         window.alert('No contact email provided for this job.');

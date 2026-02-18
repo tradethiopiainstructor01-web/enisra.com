@@ -16,7 +16,7 @@ import {
 } from '@chakra-ui/react';
 import { FiHeart, FiMapPin, FiBriefcase, FiDollarSign, FiCalendar } from 'react-icons/fi';
 import apiClient from '../../utils/apiClient';
-import { openJobApplicationEmail } from '../../utils/jobEmail';
+import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
 
 const JobCard = ({ job, onApply, onFavoriteToggle, isFavorite: initialIsFavorite }) => {
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
@@ -157,6 +157,16 @@ const JobCard = ({ job, onApply, onFavoriteToggle, isFavorite: initialIsFavorite
               onApply(job);
               return;
             }
+
+            const applyAccess = getJobApplyAccess();
+            if (!applyAccess.allowed) {
+              alert(getJobApplyAccessMessage(applyAccess.reason));
+              if (applyAccess.reason === 'not_authenticated') {
+                window.location.href = '/login';
+              }
+              return;
+            }
+
             const didOpenMailClient = openJobApplicationEmail(job);
             if (!didOpenMailClient) {
               alert('No contact email provided for this job.');
