@@ -4,6 +4,8 @@ const User = require('../models/user.model.js');
 const jwt = require('jsonwebtoken');
 const { logRegistrationEvent } = require('./registrationAnalyticsController.js');
 
+const escapeRegex = (value = '') => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // Health check endpoint for users
 const userHealthCheck = async (req, res) => {
   try {
@@ -40,9 +42,10 @@ const userHealthCheck = async (req, res) => {
 // User login function
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
+    const identifier = typeof email === 'string' ? email.trim() : '';
 
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: "Please provide both email and password" });
+    if (!identifier || !password) {
+        return res.status(400).json({ success: false, message: "Please provide both email/username and password" });
     }
 
     try {
@@ -51,14 +54,21 @@ const loginUser = async (req, res) => {
             return res.status(500).json({ success: false, message: "Database connection error" });
         }
         
-        const user = await User.findOne({ email });
+        const escapedIdentifier = escapeRegex(identifier);
+        const user = await User.findOne({
+            $or: [
+                { email: { $regex: new RegExp(`^${escapedIdentifier}$`, 'i') } },
+                { username: identifier },
+                { username: identifier.toLowerCase() },
+            ],
+        });
         if (!user) {
-            return res.status(401).json({ success: false, message: "Invalid email or password" });
+            return res.status(401).json({ success: false, message: "Invalid email/username or password" });
         }
 
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
-            return res.status(401).json({ success: false, message: "Invalid email or password" });
+            return res.status(401).json({ success: false, message: "Invalid email/username or password" });
         }
         if (user.status !== 'active') {
             return res.status(403).json({ success: false, message: "Account is not active yet. Awaiting approval." });

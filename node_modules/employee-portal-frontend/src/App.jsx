@@ -43,7 +43,6 @@ import InstructorNoticeBoard from "./pages/instructor/NoticeBoard";
 import MessagesPage from "./pages/MessagesPage";
 import NoticeBoardPage from "./pages/NoticeBoardPage";
 import SocialMediaDashboardPage from "./pages/socialmedia/SocialMediaDashboardPage";
-import RequestPage from "./pages/RequestPage";
 import TeamRequestsPage from "./pages/supervisor/TeamRequestsPage.jsx";
 import AppLayout from "./components/AppLayout";
 import SupervisorLayout from "./pages/supervisor/SupervisorLayout.jsx";
@@ -302,14 +301,7 @@ function App() {
           </LayoutWrapper>
         }
       />
-      <Route
-        path="/requests"
-        element={
-          <LayoutWrapper>
-            <RequestPage />
-          </LayoutWrapper>
-        }
-      />
+      <Route path="/requests" element={<Navigate to="/jobs" replace />} />
       <Route path="/it" element={<ITDashboard />} />
 
       <Route

@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   Box,
+  Center,
   Container,
   Heading,
   SimpleGrid,
@@ -25,6 +26,7 @@ import {
   DrawerOverlay,
   DrawerCloseButton,
   VStack,
+  Image,
   useDisclosure,
 } from '@chakra-ui/react';
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
@@ -52,11 +54,14 @@ const JobsPage = () => {
   const [jobs, setJobs] = useState([]);
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [partnersLoading, setPartnersLoading] = useState(false);
+  const [partnersLoading, setPartnersLoading] = useState(true);
   const [error, setError] = useState('');
   const [partnersError, setPartnersError] = useState('');
+  const [partnersRepeatCount, setPartnersRepeatCount] = useState(2);
   const [selectedJob, setSelectedJob] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const partnersCarouselRef = useRef(null);
+  const partnersCarouselPausedRef = useRef(false);
 
   const [search, setSearch] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -78,6 +83,17 @@ const JobsPage = () => {
     const vals = jobs.map((j) => j.type).filter(Boolean);
     return Array.from(new Set([...base, ...vals]));
   }, [jobs]);
+
+  const partnerList = partners;
+  const partnersCarouselItems = useMemo(() => {
+    if (!partnerList.length) return [];
+    const repeats = Math.max(1, partnersRepeatCount);
+    const items = [];
+    for (let i = 0; i < repeats; i += 1) {
+      items.push(...partnerList);
+    }
+    return items;
+  }, [partnerList, partnersRepeatCount]);
 
   const fetchJobs = useCallback(async (signal) => {
     setLoading(true);
@@ -133,6 +149,88 @@ const JobsPage = () => {
     loadPartners();
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const el = partnersCarouselRef.current;
+    if (!el) return;
+    if (partnersLoading || partnersError) return;
+    if (partnerList.length < 2) return;
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) return;
+
+    // Ensure enough repeated items so looping remains smooth on wide screens.
+    const cycleStart = el.children?.[partnerList.length];
+    const cycleLength = cycleStart ? cycleStart.offsetLeft : 0;
+    const clientWidth = el.clientWidth || 0;
+    const halfCycles =
+      cycleLength > 0 && clientWidth > 0 ? Math.max(1, Math.ceil(clientWidth / cycleLength)) : 1;
+    const desiredRepeatCount = halfCycles * 2;
+
+    if (desiredRepeatCount !== partnersRepeatCount) {
+      setPartnersRepeatCount(desiredRepeatCount);
+      return;
+    }
+
+    el.scrollLeft = 0;
+
+    let loopPoint = 0;
+    const updateLoopPoint = () => {
+      const loopIndex = partnerList.length * halfCycles;
+      const loopChild = el.children?.[loopIndex];
+      loopPoint = loopChild ? loopChild.offsetLeft : el.scrollWidth / 2;
+    };
+
+    const handleResize = () => {
+      const nextCycleStart = el.children?.[partnerList.length];
+      const nextCycleLength = nextCycleStart ? nextCycleStart.offsetLeft : 0;
+      const nextClientWidth = el.clientWidth || 0;
+      const nextHalfCycles =
+        nextCycleLength > 0 && nextClientWidth > 0
+          ? Math.max(1, Math.ceil(nextClientWidth / nextCycleLength))
+          : 1;
+      const nextRepeatCount = nextHalfCycles * 2;
+
+      if (nextRepeatCount !== partnersRepeatCount) {
+        setPartnersRepeatCount(nextRepeatCount);
+        return;
+      }
+
+      updateLoopPoint();
+    };
+
+    updateLoopPoint();
+    window.addEventListener('resize', handleResize);
+
+    const speed = 28;
+    let rafId = 0;
+    let lastTs = performance.now();
+
+    const tick = (ts) => {
+      const delta = ts - lastTs;
+      lastTs = ts;
+
+      if (!partnersCarouselPausedRef.current) {
+        el.scrollLeft += (speed * delta) / 1000;
+        if (loopPoint > 0 && el.scrollLeft >= loopPoint) {
+          el.scrollLeft -= loopPoint;
+        }
+      }
+
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [partnersLoading, partnersError, partnerList, partnersRepeatCount]);
 
   const resetFilters = () => {
     setSearch('');
@@ -304,34 +402,97 @@ const JobsPage = () => {
             <Divider my={8} />
 
             <Box bg={promoBg} borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={4}>
-              <Flex justify="space-between" align="center" wrap="wrap" gap={3} mb={3}>
-                <Heading size="md">Companies That Work With Us</Heading>
-                <Badge colorScheme="teal">{partners.length || 0} partners</Badge>
+              <Flex
+                direction={{ base: 'column', md: 'row' }}
+                align={{ base: 'flex-start', md: 'center' }}
+                justify="space-between"
+                gap={4}
+                mb={4}
+              >
+                <Box>
+                  <Heading size="md">Companies That Work With Us</Heading>
+                  <Text color={muted} fontSize="sm">
+                    Swipe to explore partner companies.
+                  </Text>
+                </Box>
+                <Badge colorScheme="teal" borderRadius="full">
+                  Trusted Partners
+                </Badge>
               </Flex>
               {partnersLoading ? (
-                <Flex align="center" gap={2}><Spinner size="sm" /><Text color={muted}>Loading companies�</Text></Flex>
+                <Flex align="center" gap={2} py={4}>
+                  <Spinner size="sm" />
+                  <Text color={muted}>Loading partners...</Text>
+                </Flex>
               ) : partnersError ? (
                 <Text color="red.500">{partnersError}</Text>
-              ) : partners.length === 0 ? (
+              ) : partnerList.length === 0 ? (
                 <Text color={muted}>No partner companies to show right now.</Text>
               ) : (
-                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
-                  {partners.map((partner) => (
+                <Flex
+                  ref={partnersCarouselRef}
+                  gap={4}
+                  flexWrap="nowrap"
+                  overflowX="auto"
+                  pb={2}
+                  onMouseEnter={() => {
+                    partnersCarouselPausedRef.current = true;
+                  }}
+                  onMouseLeave={() => {
+                    partnersCarouselPausedRef.current = false;
+                  }}
+                  onPointerDown={() => {
+                    partnersCarouselPausedRef.current = true;
+                  }}
+                  onPointerUp={() => {
+                    partnersCarouselPausedRef.current = false;
+                  }}
+                  onTouchStart={() => {
+                    partnersCarouselPausedRef.current = true;
+                  }}
+                  onTouchEnd={() => {
+                    partnersCarouselPausedRef.current = false;
+                  }}
+                  onTouchCancel={() => {
+                    partnersCarouselPausedRef.current = false;
+                  }}
+                  sx={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    '&::-webkit-scrollbar': { display: 'none' },
+                  }}
+                >
+                  {partnersCarouselItems.map((partner, idx) => (
                     <Box
-                      key={partner._id || partner.name}
-                      p={3}
+                      key={`${partner._id || partner.name}-${idx}`}
+                      minW={{ base: '160px', md: '200px' }}
+                      p={4}
                       borderWidth="1px"
                       borderColor={borderColor}
-                      borderRadius="md"
+                      borderRadius="xl"
                       bg={cardBg}
                     >
-                      <Heading size="sm" mb={1}>{partner.name || 'Partner'}</Heading>
-                      <Text fontSize="sm" color={muted} noOfLines={3}>
-                        {partner.description || 'Trusted company partnered with us.'}
+                      <Center
+                        boxSize={16}
+                        borderRadius="full"
+                        bg="white"
+                        boxShadow="sm"
+                        mb={3}
+                      >
+                        <Image
+                          src={partner.logoUrl || partner.logo}
+                          alt={partner.name || 'Partner'}
+                          boxSize={12}
+                          objectFit="cover"
+                          borderRadius="full"
+                        />
+                      </Center>
+                      <Text fontWeight="semibold" color={muted} textAlign="center">
+                        {partner.name || 'Partner'}
                       </Text>
                     </Box>
                   ))}
-                </SimpleGrid>
+                </Flex>
               )}
             </Box>
           </CardBody>

@@ -19,6 +19,7 @@
   Heading,
   Icon,
   IconButton,
+  Image,
   Input,
   InputGroup,
   InputLeftElement,
@@ -209,6 +210,19 @@ const AdminDashboard = () => {
     price: "",
     description: "",
     servicesText: "",
+  });
+  const [carouselPartners, setCarouselPartners] = useState([]);
+  const [pendingCarouselPartners, setPendingCarouselPartners] = useState([]);
+  const [carouselPartnersLoading, setCarouselPartnersLoading] = useState(false);
+  const [pendingCarouselLoading, setPendingCarouselLoading] = useState(false);
+  const [carouselSubmitting, setCarouselSubmitting] = useState(false);
+  const [carouselActionId, setCarouselActionId] = useState(null);
+  const [carouselLogoUploading, setCarouselLogoUploading] = useState(false);
+  const [carouselLogoFileName, setCarouselLogoFileName] = useState("");
+  const [carouselForm, setCarouselForm] = useState({
+    name: "",
+    logoUrl: "",
+    website: "",
   });
 
   // Column visibility state for Employee Directory
@@ -671,6 +685,204 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadCarouselPartners = async () => {
+    setCarouselPartnersLoading(true);
+    try {
+      const response = await apiClient.get("/partners");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setCarouselPartners(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load carousel items",
+        description: error?.message || "Unable to load approved partner companies.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setCarouselPartnersLoading(false);
+    }
+  };
+
+  const loadPendingCarouselPartners = async () => {
+    setPendingCarouselLoading(true);
+    try {
+      const response = await apiClient.get("/partners/pending");
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setPendingCarouselPartners(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load pending carousel items",
+        description: error?.message || "Unable to load pending partner companies.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setPendingCarouselLoading(false);
+    }
+  };
+
+  const handleCarouselFormChange = (field) => (event) => {
+    setCarouselForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleCarouselLogoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type || !file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setCarouselLogoUploading(true);
+    try {
+      const response = await apiClient.post("/partners/upload-logo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const logoUrl =
+        response?.data?.data?.logoUrl ||
+        response?.data?.logoUrl ||
+        "";
+      if (!logoUrl) {
+        throw new Error("Upload succeeded but no logo URL was returned.");
+      }
+      setCarouselForm((prev) => ({ ...prev, logoUrl }));
+      setCarouselLogoFileName(file.name || "");
+      toast({
+        title: "Logo uploaded",
+        description: "Logo URL was added to the form.",
+        status: "success",
+        duration: 2200,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to upload logo",
+        description: error?.response?.data?.message || error?.message || "Unable to upload logo image.",
+        status: "error",
+        duration: 3200,
+        isClosable: true,
+      });
+    } finally {
+      setCarouselLogoUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleAddCarouselItem = async () => {
+    const name = (carouselForm.name || "").trim();
+    const logoUrl = (carouselForm.logoUrl || "").trim();
+    const website = (carouselForm.website || "").trim();
+
+    if (!name || !logoUrl) {
+      toast({
+        title: "Missing fields",
+        description: "Company name and logo URL are required.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setCarouselSubmitting(true);
+    try {
+      await apiClient.post("/partners", {
+        name,
+        logoUrl,
+        website,
+        approved: true,
+      });
+      setCarouselLogoFileName("");
+      setCarouselForm({ name: "", logoUrl: "", website: "" });
+      await loadCarouselPartners();
+      await loadPendingCarouselPartners();
+      toast({
+        title: "Carousel item added",
+        description: "The company now appears in public carousels.",
+        status: "success",
+        duration: 2200,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to add carousel item",
+        description: error?.response?.data?.message || error?.message || "Unable to add partner company.",
+        status: "error",
+        duration: 3200,
+        isClosable: true,
+      });
+    } finally {
+      setCarouselSubmitting(false);
+    }
+  };
+
+  const handleApproveCarouselItem = async (partnerId) => {
+    if (!partnerId) return;
+    setCarouselActionId(partnerId);
+    try {
+      await apiClient.patch(`/partners/${partnerId}/approve`);
+      await loadCarouselPartners();
+      await loadPendingCarouselPartners();
+      toast({
+        title: "Carousel item approved",
+        status: "success",
+        duration: 2200,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to approve carousel item",
+        description: error?.response?.data?.message || error?.message || "Unable to approve partner company.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setCarouselActionId(null);
+    }
+  };
+
+  const handleDeleteCarouselItem = async (partnerId) => {
+    if (!partnerId) return;
+    const confirmed = window.confirm("Remove this company from the carousel?");
+    if (!confirmed) return;
+
+    setCarouselActionId(partnerId);
+    try {
+      await apiClient.delete(`/partners/${partnerId}`);
+      setCarouselPartners((prev) => prev.filter((item) => item._id !== partnerId));
+      setPendingCarouselPartners((prev) => prev.filter((item) => item._id !== partnerId));
+      toast({
+        title: "Carousel item removed",
+        status: "success",
+        duration: 2200,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to remove carousel item",
+        description: error?.response?.data?.message || error?.message || "Unable to remove partner company.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setCarouselActionId(null);
+    }
+  };
+
   const loadDocumentCategories = async () => {
     setDocumentCategoriesLoading(true);
     try {
@@ -976,6 +1188,10 @@ const AdminDashboard = () => {
     }
     if (activeSectionId === "job-post" && !postedJobsLoading) {
       loadPostedJobs();
+    }
+    if (activeSectionId === "promotions") {
+      loadCarouselPartners();
+      loadPendingCarouselPartners();
     }
   }, [activeSectionId]);
 
@@ -2286,6 +2502,238 @@ const AdminDashboard = () => {
           ) : (
             <Text color={mutedText}>No pending employers.</Text>
           )}
+        </Stack>
+      );
+    }
+
+    if (section.id === "promotions") {
+      const approvedPartners = carouselPartners
+        .slice()
+        .sort((a, b) => (a?.name || "").toString().localeCompare((b?.name || "").toString()));
+      const pendingPartners = pendingCarouselPartners
+        .slice()
+        .sort((a, b) => (a?.name || "").toString().localeCompare((b?.name || "").toString()));
+
+      return (
+        <Stack spacing={5}>
+          <Text color={mutedText}>
+            Manage the partner carousel shown on the Home and Jobs pages. Add companies here,
+            approve pending submissions, and remove items when needed.
+          </Text>
+
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Heading size="sm">Add Carousel Item</Heading>
+            </CardHeader>
+            <CardBody>
+              <Stack spacing={4}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel>Company name</FormLabel>
+                    <Input
+                      placeholder="e.g. Trade Ethiopia"
+                      value={carouselForm.name}
+                      onChange={handleCarouselFormChange("name")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Logo URL</FormLabel>
+                    <Input
+                      placeholder="https://example.com/logo.png"
+                      value={carouselForm.logoUrl}
+                      onChange={handleCarouselFormChange("logoUrl")}
+                    />
+                    <Stack spacing={2} mt={2}>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCarouselLogoUpload}
+                        isDisabled={carouselLogoUploading}
+                        p={1}
+                      />
+                      <Text fontSize="xs" color={mutedText}>
+                        {carouselLogoUploading
+                          ? "Uploading logo..."
+                          : carouselLogoFileName
+                            ? `Uploaded: ${carouselLogoFileName}`
+                            : "Upload a logo image to auto-fill the URL."}
+                      </Text>
+                    </Stack>
+                  </FormControl>
+                </SimpleGrid>
+                <FormControl>
+                  <FormLabel>Website (optional)</FormLabel>
+                  <Input
+                    placeholder="https://company.com"
+                    value={carouselForm.website}
+                    onChange={handleCarouselFormChange("website")}
+                  />
+                </FormControl>
+                <Flex gap={2} wrap="wrap">
+                  <Button
+                    colorScheme="purple"
+                    leftIcon={<Icon as={FiPlus} />}
+                    onClick={handleAddCarouselItem}
+                    isLoading={carouselSubmitting}
+                  >
+                    Add to carousel
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={loadCarouselPartners}
+                    isLoading={carouselPartnersLoading}
+                  >
+                    Refresh approved list
+                  </Button>
+                </Flex>
+              </Stack>
+            </CardBody>
+          </Card>
+
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Heading size="sm">Live Carousel Items</Heading>
+            </CardHeader>
+            <CardBody>
+              {carouselPartnersLoading ? (
+                <Text color={mutedText}>Loading carousel items...</Text>
+              ) : approvedPartners.length ? (
+                <Stack spacing={3}>
+                  {approvedPartners.map((partner) => {
+                    const isActing = carouselActionId === partner._id;
+                    return (
+                      <Flex
+                        key={partner._id || partner.name}
+                        align="center"
+                        justify="space-between"
+                        gap={3}
+                        p={3}
+                        border="1px solid"
+                        borderColor={borderColor}
+                        borderRadius="md"
+                        direction={{ base: "column", sm: "row" }}
+                      >
+                        <Flex align="center" gap={3} minW={0}>
+                          <Image
+                            src={partner.logoUrl}
+                            alt={partner.name || "Partner"}
+                            boxSize={12}
+                            borderRadius="full"
+                            objectFit="cover"
+                          />
+                          <Box minW={0}>
+                            <Text fontWeight="semibold" noOfLines={1}>
+                              {partner.name || "Partner"}
+                            </Text>
+                            <Text fontSize="xs" color={mutedText} noOfLines={1}>
+                              {partner.website || "No website"}
+                            </Text>
+                          </Box>
+                          <Badge colorScheme="green" variant="subtle">
+                            Live
+                          </Badge>
+                        </Flex>
+                        <Button
+                          size="xs"
+                          colorScheme="red"
+                          variant="ghost"
+                          leftIcon={<Icon as={FiTrash2} />}
+                          onClick={() => handleDeleteCarouselItem(partner._id)}
+                          isLoading={isActing}
+                        >
+                          Remove
+                        </Button>
+                      </Flex>
+                    );
+                  })}
+                </Stack>
+              ) : (
+                <Text color={mutedText}>No live carousel items yet.</Text>
+              )}
+            </CardBody>
+          </Card>
+
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Flex justify="space-between" align="center" gap={2} wrap="wrap">
+                <Heading size="sm">Pending Carousel Submissions</Heading>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={loadPendingCarouselPartners}
+                  isLoading={pendingCarouselLoading}
+                >
+                  Refresh pending
+                </Button>
+              </Flex>
+            </CardHeader>
+            <CardBody>
+              {pendingCarouselLoading ? (
+                <Text color={mutedText}>Loading pending submissions...</Text>
+              ) : pendingPartners.length ? (
+                <Stack spacing={3}>
+                  {pendingPartners.map((partner) => {
+                    const isActing = carouselActionId === partner._id;
+                    return (
+                      <Flex
+                        key={partner._id || partner.name}
+                        align="center"
+                        justify="space-between"
+                        gap={3}
+                        p={3}
+                        border="1px solid"
+                        borderColor={borderColor}
+                        borderRadius="md"
+                        direction={{ base: "column", sm: "row" }}
+                      >
+                        <Flex align="center" gap={3} minW={0}>
+                          <Image
+                            src={partner.logoUrl}
+                            alt={partner.name || "Pending partner"}
+                            boxSize={12}
+                            borderRadius="full"
+                            objectFit="cover"
+                          />
+                          <Box minW={0}>
+                            <Text fontWeight="semibold" noOfLines={1}>
+                              {partner.name || "Partner"}
+                            </Text>
+                            <Text fontSize="xs" color={mutedText} noOfLines={1}>
+                              {partner.website || "No website"}
+                            </Text>
+                          </Box>
+                          <Badge colorScheme="orange" variant="subtle">
+                            Pending
+                          </Badge>
+                        </Flex>
+                        <Flex gap={2} wrap="wrap">
+                          <Button
+                            size="xs"
+                            colorScheme="green"
+                            onClick={() => handleApproveCarouselItem(partner._id)}
+                            isLoading={isActing}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            colorScheme="red"
+                            onClick={() => handleDeleteCarouselItem(partner._id)}
+                            isLoading={isActing}
+                          >
+                            Reject
+                          </Button>
+                        </Flex>
+                      </Flex>
+                    );
+                  })}
+                </Stack>
+              ) : (
+                <Text color={mutedText}>No pending submissions.</Text>
+              )}
+            </CardBody>
+          </Card>
         </Stack>
       );
     }

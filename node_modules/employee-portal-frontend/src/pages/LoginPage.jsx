@@ -79,7 +79,7 @@ const LoginPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!formData.email.trim() || !formData.password) {
-      setErrorMessage('Email and password are required.');
+      setErrorMessage('Email/username and password are required.');
       return;
     }
 
@@ -196,8 +196,8 @@ const LoginPage = () => {
               <Icon as={FaUser} color="gray.400" boxSize={{ base: 4, sm: 5 }} />
             </InputLeftElement>
             <Input
-              placeholder="Email"
-              type="email"
+              placeholder="Email or username"
+              type="text"
               bg={inputBg}
               value={formData.email}
               onChange={handleFieldChange('email')}

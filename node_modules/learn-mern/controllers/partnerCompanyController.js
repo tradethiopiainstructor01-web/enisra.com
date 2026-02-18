@@ -1,7 +1,13 @@
 const PartnerCompany = require('../models/PartnerCompany');
+const { storage: appwriteStorage } = require('../config/appwriteClient');
+const { File } = require('node-fetch-native-with-agent');
 
 const toTrimmedString = (value) => (value || '').toString().trim();
 const normalizeRole = (role) => (role || '').toString().trim().toLowerCase();
+const buildAppwriteFileUrl = (fileId) => {
+  if (!fileId) return null;
+  return `https://cloud.appwrite.io/v1/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${fileId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+};
 
 exports.listApprovedPartners = async (_req, res) => {
   try {
@@ -147,6 +153,55 @@ exports.removePartner = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to remove company',
+      error: error.message,
+    });
+  }
+};
+
+exports.uploadPartnerLogo = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Logo file is required.',
+      });
+    }
+
+    if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only image files are allowed.',
+      });
+    }
+
+    if (!process.env.APPWRITE_BUCKET_ID || !process.env.APPWRITE_PROJECT_ID) {
+      return res.status(500).json({
+        success: false,
+        message: 'Appwrite storage is not configured.',
+      });
+    }
+
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const fileObj = new File([file.buffer], fileName, { type: file.mimetype });
+    const uploaded = await appwriteStorage.createFile({
+      bucketId: process.env.APPWRITE_BUCKET_ID,
+      fileId: 'unique()',
+      file: fileObj,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        fileId: uploaded.$id,
+        logoUrl: buildAppwriteFileUrl(uploaded.$id),
+        originalName: file.originalname,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload logo',
       error: error.message,
     });
   }

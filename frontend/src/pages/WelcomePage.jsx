@@ -54,7 +54,7 @@ const translations = {
     register: 'Register',
     scholarships: 'Scholarships',
     freeTrainings: 'Free Trainings',
-    homeCtaTitle: 'Enisra connects you to trusted jobs + scholarships.',
+    homeCtaTitle: 'Enisra connects you to trusted jobs.',
     heroSearchPlaceholder: 'Search jobs, scholarships, trainings...',
   },
   am: {
@@ -63,20 +63,17 @@ const translations = {
     register: 'መመዝገብ',
     scholarships: 'የትምህርት ልዩነቶች',
     freeTrainings: 'ነጻ ስልጠናዎች',
-    homeCtaTitle: 'ኢኒስራ እርስዎን ከታማኝ ስራዎችና የትምህርት ልዩነቶች ጋር ያገናኛል።',
+    homeCtaTitle: 'ኢኒስራ እርስዎን ከታማኝ ስራዎች ጋር ያገናኛል።',
     heroSearchPlaceholder: 'ስራዎች፣ ትምህርት ልዩነቶች፣ ስልጠናዎች ፈልግ...',
   },
 };
-
-const useTranslations = (lang) => (key) =>
-  translations[lang]?.[key] || translations.en[key] || key;
 
 const heroCards = [
   {
     id: 1,
     title: '🔍 Search Jobs',
     subtitle: 'Local & International',
-    cta: 'Browse Jobs', ctaLink: '/jobs',
+    cta: 'Browse Jobs',
     ctaLink: '/jobs',
     icon: FaSearch,
     description: 'Refine by skill, location, salary, and remote preferences.',
@@ -86,6 +83,7 @@ const heroCards = [
     title: '🌍 International Jobs',
     subtitle: 'Top destinations',
     cta: 'View International Jobs',
+    ctaLink: '/jobs',
     icon: FaGlobe,
     flags: ['🇺🇸', '🇨🇦', '🇦🇪', '🇬🇧', '🇰🇪', '🇳🇱'],
   },
@@ -94,6 +92,7 @@ const heroCards = [
     title: '🎁 Win Training Scholarship',
     subtitle: 'Limited slots, high impact reward',
     cta: 'Apply & Get Selected',
+    ctaLink: '/jobs',
     icon: FaMedal,
     highlight: true,
   },
@@ -121,14 +120,6 @@ const themeColors = {
   error: '#DC2626',
   info: '#2563EB',
 };
-
-
-const partnerCompanies = [
-  { name: 'Trade Ethiopia', logo: '/logo.jpg' },
-  { name: 'Ethio Trade', logo: '/Ethio.jpg' },
-  { name: 'Tesbinn', logo: '/tesbinn.jpg' },
-  { name: 'Enisra', logo: '/enisra.jpg' },
-];
 
 const trainingHighlights = [
   'CV Writing',
@@ -280,7 +271,7 @@ const WelcomePage = () => {
   };
 
   const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 3);
-  const partnerList = partners.length ? partners : partnerCompanies;
+  const partnerList = partners;
   const partnersCarouselItems = useMemo(() => {
     if (!partnerList.length) return [];
     const repeats = Math.max(1, partnersRepeatCount);
@@ -562,13 +553,13 @@ const WelcomePage = () => {
         </DrawerContent>
       </Drawer>
 
-        <Box as="main">
-          <Box py={12} bg={softGoldBg}>
+        <Box as="main" display="flex" flexDirection="column">
+          <Box py={12} bg={softGoldBg} order={0}>
           <Container maxW="7xl">
             <SimpleGrid columns={{ base: 1, lg: 2 }} alignItems="center" spacing={10} mb={10}>
               <Stack spacing={4}>
                 <Heading size="2xl" color={textPrimary}>
-                  {t('Enisra connects you to trusted jobs + scholarshipsle')}
+                  {t('Enisra connects you to trusted jobs')}
                 </Heading>
                 <Stack spacing={3} w="100%">
                   <Box maxW={{ base: '100%', md: '460px' }} w="100%">
@@ -700,6 +691,8 @@ const WelcomePage = () => {
                     Register as Employer
                   </Button>
                   <Button
+                    as={RouterLink}
+                    to="/jobs"
                     w="fit-content"
                     variant="outline"
                     color={primaryGreen}
@@ -748,6 +741,11 @@ const WelcomePage = () => {
                 return (
                   <Box
                     key={card.id}
+                    as={RouterLink}
+                    to={card.ctaLink || '/jobs'}
+                    display="block"
+                    textDecoration="none"
+                    cursor="pointer"
                     bg={isHighlight ? undefined : cardBg}
                     borderWidth={isHighlight ? 0 : '1px'}
                     borderColor={isHighlight ? 'transparent' : border}
@@ -764,6 +762,9 @@ const WelcomePage = () => {
                     _hover={{
                       borderColor: isHighlight ? border : primaryGreen,
                       transform: 'translateY(-2px)',
+                    }}
+                    _focusVisible={{
+                      boxShadow: `0 0 0 3px ${softGreenBg}`,
                     }}
                   >
                     <Flex align="center" justify="space-between">
@@ -796,6 +797,8 @@ const WelcomePage = () => {
                       </HStack>
                     )}
                     <Button
+                      as="span"
+                      pointerEvents="none"
                       mt={6}
                       size="sm"
                       borderRadius="full"
@@ -814,7 +817,7 @@ const WelcomePage = () => {
           </Container>
         </Box>
 
-        <Container ref={jobsSectionRef} maxW="7xl" py={12}>
+        <Container maxW="7xl" py={12} order={2}>
           <Box
             bg={cardBg}
             borderRadius="2xl"
@@ -882,6 +885,8 @@ const WelcomePage = () => {
                 </Flex>
               ) : partnersError ? (
                 <Text color={warning}>{partnersError}</Text>
+              ) : partnerList.length === 0 ? (
+                <Text color={textSecondary}>No partner companies to show right now.</Text>
               ) : (
                 partnersCarouselItems.map((company, idx) => (
                   <Box
@@ -920,7 +925,7 @@ const WelcomePage = () => {
         </Container>
 
 
-        <Container maxW="7xl" py={12}>
+        <Container maxW="7xl" py={12} order={3}>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
             <Box
               bg={cardBg}
@@ -990,7 +995,7 @@ const WelcomePage = () => {
           </SimpleGrid>
         </Container>
 
-        <Container maxW="7xl" py={12}>
+        <Container ref={jobsSectionRef} maxW="7xl" py={12} order={1}>
           <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
             <Box
               bg={cardBg}
@@ -1138,6 +1143,7 @@ const WelcomePage = () => {
         </Container>
 
         <Box
+          order={4}
           bgGradient={`linear(to-r, ${primaryGold}, ${primaryGoldHover})`}
           color="white"
           borderRadius="2xl"
@@ -1214,4 +1220,3 @@ const WelcomePage = () => {
 };
 
 export default WelcomePage;
-
