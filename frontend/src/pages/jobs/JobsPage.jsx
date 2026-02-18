@@ -362,6 +362,9 @@ const JobsPage = () => {
                     {job.company ? (
                       <Text fontSize="sm" color={muted}>{t('company')}: {job.company}</Text>
                     ) : null}
+                    {job.companyAddress ? (
+                      <Text fontSize="sm" color={muted}>Company address: {job.companyAddress}</Text>
+                    ) : null}
                     {job.deadline ? (
                       <Text fontSize="sm" color={muted}>{t('deadline')}: {safeDate(job.deadline)}</Text>
                     ) : null}
@@ -509,6 +512,9 @@ const JobsPage = () => {
             {selectedJob ? (
               <VStack align="stretch" spacing={3}>
                 <Text fontWeight="semibold">{selectedJob.company || 'Company not specified'}</Text>
+                {selectedJob.companyAddress ? (
+                  <Text fontSize="sm" color={muted}>Company address: {selectedJob.companyAddress}</Text>
+                ) : null}
                 <HStack spacing={2} flexWrap="wrap">
                   {selectedJob.category ? <Badge colorScheme="purple">{selectedJob.category}</Badge> : null}
                   {selectedJob.type ? <Badge colorScheme="blue">{selectedJob.type}</Badge> : null}

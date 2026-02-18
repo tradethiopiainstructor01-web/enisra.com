@@ -168,6 +168,8 @@ const AdminDashboard = () => {
   const [adminJobForm, setAdminJobForm] = useState({
     title: "",
     department: "",
+    company: "",
+    companyAddress: "",
     contactEmail: "",
     category: "",
     location: "",
@@ -183,6 +185,8 @@ const AdminDashboard = () => {
   const [editJobForm, setEditJobForm] = useState({
     title: "",
     department: "",
+    company: "",
+    companyAddress: "",
     contactEmail: "",
     category: "",
     location: "",
@@ -1282,6 +1286,8 @@ const AdminDashboard = () => {
     setEditJobForm({
       title: job.title || "",
       department: job.department || "",
+      company: job.company || job.companyName || job.postedByName || "",
+      companyAddress: job.companyAddress || "",
       contactEmail: job.contactEmail || job.email || "",
       category: job.category || "",
       location: job.location || "",
@@ -1301,6 +1307,8 @@ const AdminDashboard = () => {
     setEditJobForm({
       title: "",
       department: "",
+      company: "",
+      companyAddress: "",
       contactEmail: "",
       category: "",
       location: "",
@@ -1323,6 +1331,8 @@ const AdminDashboard = () => {
     if (
       !selectedJobId ||
       !editJobForm.title.trim() ||
+      !editJobForm.company.trim() ||
+      !editJobForm.companyAddress.trim() ||
       !editJobForm.category.trim() ||
       !editJobForm.location.trim() ||
       !editJobForm.type.trim() ||
@@ -1330,7 +1340,7 @@ const AdminDashboard = () => {
     ) {
       toast({
         title: "Missing details",
-        description: "Please add job title, category, location, type, and contact email.",
+        description: "Please add company name, company address, job title, category, location, type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -1341,6 +1351,8 @@ const AdminDashboard = () => {
     const payload = {
       title: editJobForm.title.trim(),
       department: editJobForm.department.trim(),
+      company: editJobForm.company.trim(),
+      companyAddress: editJobForm.companyAddress.trim(),
       contactEmail: editJobForm.contactEmail.trim(),
       category: editJobForm.category.trim(),
       location: editJobForm.location.trim(),
@@ -1517,6 +1529,8 @@ const AdminDashboard = () => {
     setAdminJobForm({
       title: "",
       department: "",
+      company: "",
+      companyAddress: "",
       contactEmail: "",
       category: "",
       location: "",
@@ -1533,6 +1547,8 @@ const AdminDashboard = () => {
   const handleAdminPostJob = async () => {
     if (
       !adminJobForm.title.trim() ||
+      !adminJobForm.company.trim() ||
+      !adminJobForm.companyAddress.trim() ||
       !adminJobForm.category.trim() ||
       !adminJobForm.location.trim() ||
       !adminJobForm.type.trim() ||
@@ -1540,7 +1556,7 @@ const AdminDashboard = () => {
     ) {
       toast({
         title: "Missing details",
-        description: "Please add job title, category, location, type, and contact email.",
+        description: "Please add company name, company address, job title, category, location, type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -1551,6 +1567,8 @@ const AdminDashboard = () => {
     const payload = {
       title: adminJobForm.title.trim(),
       department: adminJobForm.department.trim(),
+      company: adminJobForm.company.trim(),
+      companyAddress: adminJobForm.companyAddress.trim(),
       contactEmail: adminJobForm.contactEmail.trim(),
       category: adminJobForm.category.trim(),
       location: adminJobForm.location.trim(),
@@ -2245,6 +2263,22 @@ const AdminDashboard = () => {
                     />
                   </FormControl>
                   <FormControl isRequired>
+                    <FormLabel>Company name</FormLabel>
+                    <Input
+                      placeholder="Company name"
+                      value={adminJobForm.company}
+                      onChange={handleAdminJobChange("company")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Company address</FormLabel>
+                    <Input
+                      placeholder="Head office address"
+                      value={adminJobForm.companyAddress}
+                      onChange={handleAdminJobChange("companyAddress")}
+                    />
+                  </FormControl>
+                  <FormControl isRequired>
                     <FormLabel>Contact email</FormLabel>
                     <Input
                       type="email"
@@ -2374,6 +2408,14 @@ const AdminDashboard = () => {
                       <Badge colorScheme="orange">Pending</Badge>
                     </Flex>
                     <Text fontSize="sm" color={mutedText}>
+                      {job.company || "Company not specified"}
+                    </Text>
+                    {job.companyAddress ? (
+                      <Text fontSize="sm" color={mutedText}>
+                        {job.companyAddress}
+                      </Text>
+                    ) : null}
+                    <Text fontSize="sm" color={mutedText}>
                       {job.category} - {job.location} - {job.type}
                     </Text>
                     <Flex gap={2} mt={3} wrap="wrap">
@@ -2420,6 +2462,14 @@ const AdminDashboard = () => {
                     <Flex justify="space-between" align="center" mb={2} gap={3} wrap="wrap">
                       <Box>
                         <Heading size="sm">{job.title}</Heading>
+                        <Text fontSize="sm" color={mutedText}>
+                          {job.company || "Company not specified"}
+                        </Text>
+                        {job.companyAddress ? (
+                          <Text fontSize="sm" color={mutedText}>
+                            {job.companyAddress}
+                          </Text>
+                        ) : null}
                         <Text fontSize="sm" color={mutedText}>
                           {job.category} - {job.location} - {job.type}
                         </Text>
@@ -3690,6 +3740,22 @@ const AdminDashboard = () => {
                     value={editJobForm.department}
                     onChange={handleEditJobChange("department")}
                     placeholder="Department"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Company name</FormLabel>
+                  <Input
+                    value={editJobForm.company}
+                    onChange={handleEditJobChange("company")}
+                    placeholder="Company name"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel>Company address</FormLabel>
+                  <Input
+                    value={editJobForm.companyAddress}
+                    onChange={handleEditJobChange("companyAddress")}
+                    placeholder="Head office address"
                   />
                 </FormControl>
                 <FormControl isRequired>

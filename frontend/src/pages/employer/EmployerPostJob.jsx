@@ -37,6 +37,8 @@ const EmployerPostJob = () => {
   const [jobForm, setJobForm] = useState({
     title: "",
     department: "",
+    company: "",
+    companyAddress: "",
     contactEmail: "",
     category: "",
     location: "",
@@ -101,6 +103,8 @@ const EmployerPostJob = () => {
     event.preventDefault();
     if (
       !jobForm.title.trim() ||
+      !jobForm.company.trim() ||
+      !jobForm.companyAddress.trim() ||
       !jobForm.category.trim() ||
       !jobForm.location.trim() ||
       !jobForm.type.trim() ||
@@ -108,7 +112,7 @@ const EmployerPostJob = () => {
     ) {
       toast({
         title: "Missing details",
-        description: "Please add a job title, category, location, job type, and contact email.",
+        description: "Please add company name, company address, job title, category, location, job type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -119,6 +123,8 @@ const EmployerPostJob = () => {
     const payload = {
       title: jobForm.title.trim(),
       department: jobForm.department.trim(),
+      company: jobForm.company.trim(),
+      companyAddress: jobForm.companyAddress.trim(),
       contactEmail: jobForm.contactEmail.trim(),
       category: jobForm.category.trim(),
       location: jobForm.location.trim(),
@@ -136,17 +142,19 @@ const EmployerPostJob = () => {
       await apiClient.post("/jobs", payload);
       setJobForm({
         title: "",
-      department: "",
-      contactEmail: "",
-      category: "",
-      location: "",
-      address: "",
-      type: "",
-      salary: "",
-      deadline: "",
-      expirationDate: "",
-      description: "",
-      flow: "",
+        department: "",
+        company: "",
+        companyAddress: "",
+        contactEmail: "",
+        category: "",
+        location: "",
+        address: "",
+        type: "",
+        salary: "",
+        deadline: "",
+        expirationDate: "",
+        description: "",
+        flow: "",
       });
 
       toast({
@@ -205,6 +213,14 @@ const EmployerPostJob = () => {
                 />
               </FormControl>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel>Company name</FormLabel>
+                  <Input
+                    placeholder="Company name"
+                    value={jobForm.company}
+                    onChange={handleFormChange("company")}
+                  />
+                </FormControl>
                 <FormControl>
                   <FormLabel>Department</FormLabel>
                   <Input
@@ -231,10 +247,18 @@ const EmployerPostJob = () => {
                     onChange={handleFormChange("location")}
                   />
                 </FormControl>
-                <FormControl>
-                  <FormLabel>Address</FormLabel>
+                <FormControl isRequired>
+                  <FormLabel>Company address</FormLabel>
                   <Input
-                    placeholder="Street / office address"
+                    placeholder="Company head office address"
+                    value={jobForm.companyAddress}
+                    onChange={handleFormChange("companyAddress")}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Address (job site)</FormLabel>
+                  <Input
+                    placeholder="Workplace / branch address (optional)"
                     value={jobForm.address}
                     onChange={handleFormChange("address")}
                   />
@@ -357,6 +381,14 @@ const EmployerPostJob = () => {
                                 <Badge colorScheme="orange">Pending</Badge>
                               </Flex>
                               <Text fontSize="sm" color={mutedText}>
+                                {job.company || "Company not specified"}
+                              </Text>
+                              {job.companyAddress ? (
+                                <Text fontSize="sm" color={mutedText}>
+                                  {job.companyAddress}
+                                </Text>
+                              ) : null}
+                              <Text fontSize="sm" color={mutedText}>
                                 {job.category || job.department || "General"} - {job.location}
                                 {job.address ? `, ${job.address}` : ""} - {job.type}
                               </Text>
@@ -387,6 +419,14 @@ const EmployerPostJob = () => {
                                 <Badge colorScheme="green">Posted</Badge>
                               </Flex>
                               <Text fontSize="sm" color={mutedText}>
+                                {job.company || "Company not specified"}
+                              </Text>
+                              {job.companyAddress ? (
+                                <Text fontSize="sm" color={mutedText}>
+                                  {job.companyAddress}
+                                </Text>
+                              ) : null}
+                              <Text fontSize="sm" color={mutedText}>
                                 {job.category || job.department || "General"} - {job.location}
                                 {job.address ? `, ${job.address}` : ""} - {job.type}
                               </Text>
@@ -416,6 +456,14 @@ const EmployerPostJob = () => {
                                 <Heading size="sm">{job.title}</Heading>
                                 <Badge colorScheme="red">Rejected</Badge>
                               </Flex>
+                              <Text fontSize="sm" color={mutedText}>
+                                {job.company || "Company not specified"}
+                              </Text>
+                              {job.companyAddress ? (
+                                <Text fontSize="sm" color={mutedText}>
+                                  {job.companyAddress}
+                                </Text>
+                              ) : null}
                               <Text fontSize="sm" color={mutedText}>
                                 {job.category || job.department || "General"} - {job.location}
                                 {job.address ? `, ${job.address}` : ""} - {job.type}

@@ -83,7 +83,7 @@ const JobCard = ({ job, onApply, onFavoriteToggle, isFavorite: initialIsFavorite
               {job.title || 'Untitled Job'}
             </Heading>
             <Text fontSize="sm" color="gray.600" fontWeight="medium">
-              {job.postedByName || 'Unknown Company'}
+              {job.company || job.postedByName || 'Unknown Company'}
             </Text>
           </VStack>
           

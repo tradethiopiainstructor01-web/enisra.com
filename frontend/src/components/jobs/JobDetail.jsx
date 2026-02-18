@@ -133,7 +133,7 @@ const JobDetail = ({ jobId, onBack, onApply }) => {
           <VStack align="flex-start" spacing={2}>
             <Heading size="lg">{job.title}</Heading>
             <Text fontSize="lg" color="gray.600" fontWeight="medium">
-              {job.postedByName || 'Unknown Company'}
+              {job.company || job.postedByName || 'Unknown Company'}
             </Text>
           </VStack>
           

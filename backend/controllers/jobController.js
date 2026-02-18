@@ -34,6 +34,8 @@ const normalizeJobForResponse = (job) => {
   return {
     ...job,
     postedBy: postedById,
+    company: toTrimmedString(job.company || job.companyName || job.postedByName),
+    companyAddress: toTrimmedString(job.companyAddress || job.company_address),
     contactEmail: extractEmail(
       job.contactEmail || job.contact_email || job.email || postedByEmail || job.postedByName
     ),
@@ -83,6 +85,8 @@ exports.listJobs = async (req, res) => {
         { title: qRegex },
         { description: qRegex },
         { department: qRegex },
+        { company: qRegex },
+        { companyAddress: qRegex },
         { category: qRegex },
         { location: qRegex },
         { address: qRegex },
@@ -170,6 +174,8 @@ exports.createJob = async (req, res) => {
     const payload = {
       title: toTrimmedString(req.body.title),
       department: toTrimmedString(req.body.department),
+      company: toTrimmedString(req.body.company || req.body.companyName),
+      companyAddress: toTrimmedString(req.body.companyAddress || req.body.company_address),
       contactEmail: extractEmail(req.body.contactEmail || req.body.contact_email || req.body.email),
       category: toTrimmedString(req.body.category),
       location: toTrimmedString(req.body.location),
@@ -269,6 +275,8 @@ exports.updateJob = async (req, res) => {
     const setPayload = {
       title: toTrimmedString(req.body.title),
       department: toTrimmedString(req.body.department),
+      company: toTrimmedString(req.body.company || req.body.companyName),
+      companyAddress: toTrimmedString(req.body.companyAddress || req.body.company_address),
       contactEmail: extractEmail(req.body.contactEmail || req.body.contact_email || req.body.email),
       category: toTrimmedString(req.body.category),
       location: toTrimmedString(req.body.location),
