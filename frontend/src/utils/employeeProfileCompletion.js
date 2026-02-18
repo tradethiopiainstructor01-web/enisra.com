@@ -36,7 +36,7 @@ const hasAnyFilledLanguage = (languagesSpoken = []) =>
   Array.isArray(languagesSpoken) &&
   languagesSpoken.some((entry) => hasAnyText(entry?.language, entry?.proficiencyLevel));
 
-export const MIN_CV_PROFILE_COMPLETION = 90;
+export const MIN_CV_PROFILE_COMPLETION = 70;
 
 export const getEmployeeProfileCompletion = (profile) => {
   const source = profile || {};
