@@ -104,7 +104,6 @@ const EmployerPostJob = () => {
     if (
       !jobForm.title.trim() ||
       !jobForm.company.trim() ||
-      !jobForm.companyAddress.trim() ||
       !jobForm.category.trim() ||
       !jobForm.location.trim() ||
       !jobForm.type.trim() ||
@@ -112,7 +111,7 @@ const EmployerPostJob = () => {
     ) {
       toast({
         title: "Missing details",
-        description: "Please add company name, company address, job title, category, location, job type, and contact email.",
+        description: "Please add company name, job title, category, location, job type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -247,8 +246,8 @@ const EmployerPostJob = () => {
                     onChange={handleFormChange("location")}
                   />
                 </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Company address</FormLabel>
+                <FormControl>
+                  <FormLabel>Company address (optional)</FormLabel>
                   <Input
                     placeholder="Company head office address"
                     value={jobForm.companyAddress}

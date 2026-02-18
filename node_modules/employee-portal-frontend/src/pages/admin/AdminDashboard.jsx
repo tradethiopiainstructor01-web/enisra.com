@@ -1332,7 +1332,6 @@ const AdminDashboard = () => {
       !selectedJobId ||
       !editJobForm.title.trim() ||
       !editJobForm.company.trim() ||
-      !editJobForm.companyAddress.trim() ||
       !editJobForm.category.trim() ||
       !editJobForm.location.trim() ||
       !editJobForm.type.trim() ||
@@ -1340,7 +1339,7 @@ const AdminDashboard = () => {
     ) {
       toast({
         title: "Missing details",
-        description: "Please add company name, company address, job title, category, location, type, and contact email.",
+        description: "Please add company name, job title, category, location, type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -1548,7 +1547,6 @@ const AdminDashboard = () => {
     if (
       !adminJobForm.title.trim() ||
       !adminJobForm.company.trim() ||
-      !adminJobForm.companyAddress.trim() ||
       !adminJobForm.category.trim() ||
       !adminJobForm.location.trim() ||
       !adminJobForm.type.trim() ||
@@ -1556,7 +1554,7 @@ const AdminDashboard = () => {
     ) {
       toast({
         title: "Missing details",
-        description: "Please add company name, company address, job title, category, location, type, and contact email.",
+        description: "Please add company name, job title, category, location, type, and contact email.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -2270,8 +2268,8 @@ const AdminDashboard = () => {
                       onChange={handleAdminJobChange("company")}
                     />
                   </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>Company address</FormLabel>
+                  <FormControl>
+                    <FormLabel>Company address (optional)</FormLabel>
                     <Input
                       placeholder="Head office address"
                       value={adminJobForm.companyAddress}
@@ -3750,8 +3748,8 @@ const AdminDashboard = () => {
                     placeholder="Company name"
                   />
                 </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Company address</FormLabel>
+                <FormControl>
+                  <FormLabel>Company address (optional)</FormLabel>
                   <Input
                     value={editJobForm.companyAddress}
                     onChange={handleEditJobChange("companyAddress")}
