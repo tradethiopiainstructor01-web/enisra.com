@@ -1,4 +1,5 @@
-const { Client, Storage, InputFile } = require('node-appwrite');
+const { Client, Storage, InputFile: AppwriteInputFile } = require('node-appwrite');
+const { File } = require('node-fetch-native-with-agent');
 
 const requiredKeys = ['APPWRITE_ENDPOINT', 'APPWRITE_PROJECT_ID', 'APPWRITE_API_KEY'];
 
@@ -34,6 +35,12 @@ if (isAppwriteConfigured) {
 module.exports = {
   client,
   storage,
-  InputFile,
+  InputFile:
+    AppwriteInputFile && typeof AppwriteInputFile.fromBuffer === 'function'
+      ? AppwriteInputFile
+      : {
+          fromBuffer: (buffer, fileName, mimeType) =>
+            new File([buffer], fileName, { type: mimeType || 'application/octet-stream' }),
+        },
   isAppwriteConfigured: () => isAppwriteConfigured
 };

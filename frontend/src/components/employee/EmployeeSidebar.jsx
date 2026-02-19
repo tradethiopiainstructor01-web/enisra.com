@@ -59,7 +59,15 @@ const EmployeeSidebar = ({ collapsed, onToggleCollapsed }) => {
   }, [currentUser]);
 
   const triggerFilePick = () => {
+    if (isUploading) return;
     if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleAvatarKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      triggerFilePick();
+    }
   };
 
   const handleAvatarChange = async (event) => {
@@ -86,6 +94,7 @@ const EmployeeSidebar = ({ collapsed, onToggleCollapsed }) => {
         photoUrl: newPhotoUrl,
         token: currentUser.token,
       });
+      window.dispatchEvent(new Event('employee-profile-updated'));
 
       toast({
         title: 'Avatar updated',
@@ -95,9 +104,13 @@ const EmployeeSidebar = ({ collapsed, onToggleCollapsed }) => {
       });
     } catch (error) {
       console.error('Avatar upload failed:', error);
+      const uploadMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Could not update avatar';
       toast({
         title: 'Upload failed',
-        description: error?.message || 'Could not update avatar',
+        description: uploadMessage,
         status: 'error',
         duration: 4000,
         isClosable: true,
@@ -144,12 +157,24 @@ const EmployeeSidebar = ({ collapsed, onToggleCollapsed }) => {
         <Box bgGradient={headerGradient} color="white" px={4} py={4}>
           <HStack justify={collapsed ? 'center' : 'space-between'} align="center">
             <HStack spacing={3} align="center">
-              <Avatar
-                size={collapsed ? 'md' : 'lg'}
-                name={displayName || 'Employee'}
-                src={avatarUrl || undefined}
-                bg="whiteAlpha.300"
-              />
+              <Tooltip label={isUploading ? 'Uploading...' : 'Click avatar to change photo'}>
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  onClick={triggerFilePick}
+                  onKeyDown={handleAvatarKeyDown}
+                  cursor={isUploading ? 'not-allowed' : 'pointer'}
+                  aria-label="Change avatar image"
+                  opacity={isUploading ? 0.7 : 1}
+                >
+                  <Avatar
+                    size={collapsed ? 'md' : 'lg'}
+                    name={displayName || 'Employee'}
+                    src={avatarUrl || undefined}
+                    bg="whiteAlpha.300"
+                  />
+                </Box>
+              </Tooltip>
               {!collapsed && (
                 <Button
                   size="xs"

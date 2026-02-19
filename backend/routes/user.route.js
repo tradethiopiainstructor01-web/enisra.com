@@ -6,6 +6,7 @@ const {
     getuser, 
     updateuser, 
     loginUser, 
+    googleLoginUser,
     getUserCounts, 
     updateUserInfo, // Import the new function
     getMe
@@ -19,6 +20,7 @@ router.get("/health", userHealthCheck);
 
 // User login route
 router.post("/login", loginUser);
+router.post("/google-login", googleLoginUser);
 
 // Create user route
 router.post("/", createuser);

@@ -34,10 +34,11 @@ const normalizeJobForResponse = (job) => {
   return {
     ...job,
     postedBy: postedById,
+    postedByEmail,
     company: toTrimmedString(job.company || job.companyName || job.postedByName),
     companyAddress: toTrimmedString(job.companyAddress || job.company_address),
     contactEmail: extractEmail(
-      job.contactEmail || job.contact_email || job.email || postedByEmail || job.postedByName
+      job.contactEmail || job.contact_email || postedByEmail || job.email || job.postedByName
     ),
   };
 };
