@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Avatar,
   Badge,
@@ -23,7 +23,7 @@ import {
   useColorModeValue,
   useToast,
 } from "@chakra-ui/react";
-import { FiBriefcase, FiMail, FiShield } from "react-icons/fi";
+import { FiBriefcase, FiCamera, FiMail, FiShield } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { useUserStore } from "../../store/user";
 import apiClient from "../../utils/apiClient";
@@ -33,7 +33,9 @@ const isDetailsComplete = (details) =>
 
 const EmployerProfile = () => {
   const currentUser = useUserStore((state) => state.currentUser);
+  const setCurrentUser = useUserStore((state) => state.setCurrentUser);
   const toast = useToast();
+  const avatarInputRef = useRef(null);
   const [employerDetails, setEmployerDetails] = useState({
     employerId: "",
     companyName: "",
@@ -53,6 +55,8 @@ const EmployerProfile = () => {
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [detailsSaving, setDetailsSaving] = useState(false);
   const [showForm, setShowForm] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const pageBg = useColorModeValue("gray.50", "gray.950");
   const panelBg = useColorModeValue("white", "gray.900");
   const heroBg = useColorModeValue("white", "gray.800");
@@ -72,6 +76,64 @@ const EmployerProfile = () => {
     : normalizedStatus.includes("inactive")
     ? "red"
     : "green";
+
+  useEffect(() => {
+    if (currentUser?.photoUrl) {
+      setAvatarUrl(currentUser.photoUrl);
+    } else {
+      setAvatarUrl("");
+    }
+  }, [currentUser]);
+
+  const triggerAvatarPicker = () => {
+    if (avatarUploading) return;
+    if (avatarInputRef.current) avatarInputRef.current.click();
+  };
+
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentUser?._id) return;
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("userId", currentUser._id);
+      formData.append("photo", file);
+
+      const response = await apiClient.post("/upload-info", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const updatedUser = response?.data?.user || {};
+      const newPhotoUrl = updatedUser.photoUrl || avatarUrl;
+      setAvatarUrl(newPhotoUrl);
+
+      setCurrentUser({
+        ...currentUser,
+        photo: updatedUser.photo ?? currentUser.photo,
+        photoUrl: newPhotoUrl || currentUser.photoUrl,
+        token: currentUser.token,
+      });
+
+      toast({
+        title: "Avatar updated",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error?.response?.data?.message || error?.message || "Could not update avatar.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setAvatarUploading(false);
+      event.target.value = "";
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -285,7 +347,45 @@ const EmployerProfile = () => {
               >
                 <CardBody>
                   <HStack spacing={4} align="center">
-                    <Avatar size="md" name={displayName} bg={accent} />
+                    <Box position="relative">
+                      <Box
+                        role="button"
+                        tabIndex={0}
+                        onClick={triggerAvatarPicker}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            triggerAvatarPicker();
+                          }
+                        }}
+                        cursor={avatarUploading ? "not-allowed" : "pointer"}
+                        aria-label="Change profile image"
+                        opacity={avatarUploading ? 0.7 : 1}
+                      >
+                        <Avatar size="md" name={displayName} src={avatarUrl || undefined} bg={accent} />
+                      </Box>
+                      <Box
+                        position="absolute"
+                        right="-1"
+                        bottom="-1"
+                        bg="white"
+                        color="green.500"
+                        borderRadius="full"
+                        borderWidth="1px"
+                        borderColor="green.100"
+                        p={1}
+                        boxShadow="sm"
+                      >
+                        <Icon as={FiCamera} boxSize={3} />
+                      </Box>
+                      <Input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        display="none"
+                      />
+                    </Box>
                     <Box>
                       <Heading size="sm">{displayName}</Heading>
                       <Text fontSize="xs" color={subtleText}>

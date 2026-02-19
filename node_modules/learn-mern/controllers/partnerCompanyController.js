@@ -1,11 +1,81 @@
 const PartnerCompany = require('../models/PartnerCompany');
 const { storage: appwriteStorage, InputFile } = require('../config/appwriteClient');
+const { File } = require('node-fetch-native-with-agent');
+const crypto = require('crypto');
+const axios = require('axios');
 
 const toTrimmedString = (value) => (value || '').toString().trim();
 const normalizeRole = (role) => (role || '').toString().trim().toLowerCase();
 const buildAppwriteFileUrl = (fileId) => {
   if (!fileId) return null;
+  if (typeof fileId === 'string' && /^https?:\/\//i.test(fileId)) return fileId;
   return `https://cloud.appwrite.io/v1/storage/buckets/${process.env.APPWRITE_BUCKET_ID}/files/${fileId}/view?project=${process.env.APPWRITE_PROJECT_ID}`;
+};
+
+const getCloudinaryConfig = () => {
+  let cloudName = process.env.CLOUDINARY_CLOUD_NAME || '';
+  let apiKey = process.env.CLOUDINARY_API_KEY || '';
+  let apiSecret = process.env.CLOUDINARY_API_SECRET || '';
+
+  if ((!cloudName || !apiKey || !apiSecret) && process.env.CLOUDINARY_URL) {
+    const match = process.env.CLOUDINARY_URL.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/i);
+    if (match) {
+      apiKey = apiKey || decodeURIComponent(match[1]);
+      apiSecret = apiSecret || decodeURIComponent(match[2]);
+      cloudName = cloudName || decodeURIComponent(match[3]);
+    }
+  }
+
+  return { cloudName, apiKey, apiSecret };
+};
+
+const isCloudinaryConfigured = () => {
+  const config = getCloudinaryConfig();
+  return Boolean(config.cloudName && config.apiKey && config.apiSecret);
+};
+
+const buildAppwriteInputFile = (buffer, fileName, mimetype) => {
+  if (InputFile && typeof InputFile.fromBuffer === 'function') {
+    return InputFile.fromBuffer(buffer, fileName, mimetype);
+  }
+  return new File([buffer], fileName, { type: mimetype || 'application/octet-stream' });
+};
+
+const uploadImageToCloudinary = async (file, folder = 'partner-logos') => {
+  if (!isCloudinaryConfigured()) {
+    throw new Error('Cloudinary is not configured for image uploads.');
+  }
+  const cloudinary = getCloudinaryConfig();
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signatureBase = `folder=${folder}&timestamp=${timestamp}`;
+  const signature = crypto
+    .createHash('sha1')
+    .update(`${signatureBase}${cloudinary.apiSecret}`)
+    .digest('hex');
+
+  const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudinary.cloudName}/image/upload`;
+  const base64 = file.buffer.toString('base64');
+  const dataUri = `data:${file.mimetype || 'application/octet-stream'};base64,${base64}`;
+
+  const params = new URLSearchParams();
+  params.append('file', dataUri);
+  params.append('api_key', cloudinary.apiKey);
+  params.append('timestamp', String(timestamp));
+  params.append('folder', folder);
+  params.append('signature', signature);
+
+  const response = await axios.post(uploadUrl, params, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    timeout: 20000,
+  });
+
+  const payload = response?.data || {};
+  if (!payload?.secure_url) {
+    throw new Error('Cloudinary upload did not return a secure URL.');
+  }
+
+  return payload;
 };
 
 exports.listApprovedPartners = async (_req, res) => {
@@ -174,6 +244,19 @@ exports.uploadPartnerLogo = async (req, res) => {
       });
     }
 
+    if (isCloudinaryConfigured()) {
+      const uploaded = await uploadImageToCloudinary(file, 'partner-logos');
+      return res.status(201).json({
+        success: true,
+        data: {
+          fileId: uploaded.public_id || uploaded.asset_id || null,
+          logoUrl: uploaded.secure_url,
+          originalName: file.originalname,
+          provider: 'cloudinary',
+        },
+      });
+    }
+
     const missingAppwriteKeys = [
       'APPWRITE_ENDPOINT',
       'APPWRITE_PROJECT_ID',
@@ -184,30 +267,39 @@ exports.uploadPartnerLogo = async (req, res) => {
     if (missingAppwriteKeys.length) {
       return res.status(500).json({
         success: false,
-        message: `Appwrite storage is not configured. Missing: ${missingAppwriteKeys.join(', ')}`,
+        message: `Storage is not configured. Missing: ${missingAppwriteKeys.join(', ')}`,
       });
     }
 
     const fileName = `${Date.now()}-${file.originalname}`;
-    const fileObj = InputFile.fromBuffer(file.buffer, fileName);
+    const fileObj = buildAppwriteInputFile(file.buffer, fileName, file.mimetype);
     const uploaded = await appwriteStorage.createFile({
       bucketId: process.env.APPWRITE_BUCKET_ID,
       fileId: 'unique()',
       file: fileObj,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: {
         fileId: uploaded.$id,
         logoUrl: buildAppwriteFileUrl(uploaded.$id),
         originalName: file.originalname,
+        provider: 'appwrite',
       },
     });
   } catch (error) {
-    res.status(500).json({
+    const upstreamStatus =
+      typeof error?.response?.status === 'number' ? error.response.status : null;
+    const statusCode =
+      upstreamStatus && upstreamStatus >= 400 && upstreamStatus < 600 ? upstreamStatus : 500;
+
+    res.status(statusCode).json({
       success: false,
-      message: 'Failed to upload logo',
+      message:
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        'Failed to upload logo',
       error: error.message,
     });
   }

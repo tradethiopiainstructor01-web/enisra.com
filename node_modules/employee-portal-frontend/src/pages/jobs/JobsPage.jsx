@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   Box,
-  Center,
   Container,
   Heading,
   SimpleGrid,
@@ -484,9 +483,11 @@ const JobsPage = () => {
                       borderRadius="xl"
                       bg={cardBg}
                     >
-                      <Center
-                        boxSize={16}
-                        borderRadius="full"
+                      <Box
+                        w="100%"
+                        h={{ base: '88px', md: '96px' }}
+                        borderRadius="lg"
+                        overflow="hidden"
                         bg="white"
                         boxShadow="sm"
                         mb={3}
@@ -494,11 +495,12 @@ const JobsPage = () => {
                         <Image
                           src={partner.logoUrl || partner.logo}
                           alt={partner.name || 'Partner'}
-                          boxSize={12}
-                          objectFit="cover"
-                          borderRadius="full"
+                          w="100%"
+                          h="100%"
+                          objectFit="contain"
+                          p={3}
                         />
-                      </Center>
+                      </Box>
                       <Text fontWeight="semibold" color={muted} textAlign="center">
                         {partner.name || 'Partner'}
                       </Text>

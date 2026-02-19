@@ -25,6 +25,7 @@ import {
 import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { useUserStore } from '../store/user';
 import { resolveApiBase } from '../utils/apiBase';
+import apiClient from '../utils/apiClient';
 import { MIN_CV_PROFILE_COMPLETION, getEmployeeProfileCompletion } from '../utils/employeeProfileCompletion';
 
 const blankEducation = () => ({
@@ -78,6 +79,8 @@ const EmployeeInfoForm = () => {
   const cardBg = useColorModeValue('gray.50', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const progressTrackBg = useColorModeValue('gray.100', 'gray.700');
+  const completionCardBg = useColorModeValue('white', 'gray.900');
+  const progressThresholdColor = useColorModeValue('red.400', 'red.300');
 
   const currentUser = useUserStore((state) => state.currentUser);
   const updateUserInfo = useUserStore((state) => state.updateUserInfo);
@@ -183,8 +186,7 @@ const EmployeeInfoForm = () => {
   const canCreateCv = profileCompletion.meetsCvRequirement;
 
   useEffect(() => {
-    const userId = currentUser?._id;
-    if (!userId) return;
+    if (!currentUser?.token) return;
 
     const hydrateFromUser = (user) => {
       if (!user) return;
@@ -290,13 +292,12 @@ const EmployeeInfoForm = () => {
     const loadProfile = async () => {
       setIsLoadingProfile(true);
       try {
-        const apiBase = resolveApiBase();
-        const res = await fetch(`${apiBase}/user/${userId}`);
-        const data = await res.json();
-        if (!res.ok || !data?.success || !data?.user) {
-          throw new Error(data?.message || 'Unable to load profile.');
+        const res = await apiClient.get('/users/me');
+        const payload = res?.data;
+        if (!payload?.success || !payload?.data) {
+          throw new Error(payload?.message || 'Unable to load profile.');
         }
-        hydrateFromUser(data.user);
+        hydrateFromUser(payload.data);
       } catch (error) {
         toast({
           title: 'Failed to load profile',
@@ -311,7 +312,7 @@ const EmployeeInfoForm = () => {
     };
 
     loadProfile();
-  }, [currentUser?._id, toast]);
+  }, [currentUser, toast]);
 
   const setField = (field) => (event) => {
     setProfile((prev) => ({ ...prev, [field]: event.target.value }));
@@ -473,7 +474,7 @@ const EmployeeInfoForm = () => {
   };
 
   const handleUploadDocuments = async () => {
-    const userId = currentUser?._id;
+    const userId = currentUser?._id || profile?._id || localStorage.getItem('userId');
     if (!userId) return;
 
     const hasAnyFile =
@@ -578,7 +579,7 @@ const EmployeeInfoForm = () => {
           {isLoadingProfile ? 'Loading your profile...' : 'Fill your employee profile and upload required documents.'}
         </Text>
 
-        <Card bg={useColorModeValue('white', 'gray.900')} borderWidth="1px" borderColor={borderColor} borderRadius="lg">
+        <Card bg={completionCardBg} borderWidth="1px" borderColor={borderColor} borderRadius="lg">
           <CardBody>
             <Stack spacing={3}>
               <Flex justify="space-between" align={{ base: 'flex-start', md: 'center' }} gap={3} flexWrap="wrap">
@@ -610,7 +611,7 @@ const EmployeeInfoForm = () => {
                   top={0}
                   height="100%"
                   width="2px"
-                  bg={useColorModeValue('red.400', 'red.300')}
+                  bg={progressThresholdColor}
                   transform="translateX(-1px)"
                   borderRadius="full"
                 />

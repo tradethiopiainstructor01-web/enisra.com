@@ -905,9 +905,11 @@ const WelcomePage = () => {
                     borderColor={border}
                     p={4}
                   >
-                    <Center
-                      boxSize={16}
-                      borderRadius="full"
+                    <Box
+                      w="100%"
+                      h={{ base: '88px', md: '96px' }}
+                      borderRadius="lg"
+                      overflow="hidden"
                       bg="white"
                       boxShadow="sm"
                       mb={3}
@@ -915,11 +917,12 @@ const WelcomePage = () => {
                       <Image
                         src={company.logoUrl || company.logo}
                         alt={company.name}
-                        boxSize={12}
-                        objectFit="cover"
-                        borderRadius="full"
+                        w="100%"
+                        h="100%"
+                        objectFit="contain"
+                        p={3}
                       />
-                    </Center>
+                    </Box>
                     <Text fontWeight="semibold" color={textPrimary} textAlign="center">
                       {company.name}
                     </Text>

@@ -23,7 +23,7 @@ import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserStore } from '../store/user';
-import { resolveApiBase } from '../utils/apiBase';
+import apiClient from '../utils/apiClient';
 import EmployeeNavDrawer from '../components/employee/EmployeeNavDrawer';
 import EmployeeSidebar from '../components/employee/EmployeeSidebar';
 import {
@@ -71,7 +71,6 @@ const EmployeeCreateCVPage = () => {
   );
 
   const currentUser = useUserStore((state) => state.currentUser);
-  const userId = currentUser?._id || localStorage.getItem('userId');
 
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,17 +82,16 @@ const EmployeeCreateCVPage = () => {
     const loadProfile = async () => {
       setIsLoading(true);
       try {
-        if (!userId) {
+        if (!currentUser?.token) {
           setProfile(null);
           return;
         }
-        const apiBase = resolveApiBase();
-        const res = await fetch(`${apiBase}/user/${userId}`);
-        const data = await res.json();
-        if (!res.ok || !data?.success || !data?.user) {
-          throw new Error(data?.message || 'Unable to load profile.');
+        const res = await apiClient.get('/users/me');
+        const payload = res?.data;
+        if (!payload?.success || !payload?.data) {
+          throw new Error(payload?.message || 'Unable to load profile.');
         }
-        setProfile(data.user);
+        setProfile(payload.data);
       } catch (error) {
         setProfile(null);
         toast({
@@ -109,7 +107,7 @@ const EmployeeCreateCVPage = () => {
     };
 
     loadProfile();
-  }, [userId, toast]);
+  }, [currentUser?.token, toast]);
 
   useEffect(() => {
     localStorage.setItem('employeeSidebarCollapsed', sidebarCollapsed ? '1' : '0');

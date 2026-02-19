@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
   Badge,
@@ -17,6 +17,7 @@ import {
   Skeleton,
   SkeletonCircle,
   SkeletonText,
+  Spinner,
   Stack,
   Tab,
   TabList,
@@ -25,9 +26,11 @@ import {
   Tabs,
   Text,
   useColorModeValue,
+  useToast,
 } from '@chakra-ui/react';
 import {
   FiBriefcase,
+  FiCamera,
   FiDownload,
   FiEdit,
   FiExternalLink,
@@ -81,7 +84,9 @@ const DocLink = ({ label, href }) => (
 const EmployeeProfile = () => {
   const navigate = useNavigate();
   const currentUser = useUserStore((s) => s.currentUser);
-  const userId = currentUser?._id || localStorage.getItem('userId');
+  const setCurrentUser = useUserStore((s) => s.setCurrentUser);
+  const toast = useToast();
+  const avatarInputRef = useRef(null);
 
   const cardBg = useColorModeValue('white', 'gray.800');
   const sectionCardBg = useColorModeValue('gray.50', 'gray.900');
@@ -96,18 +101,20 @@ const EmployeeProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const resolvedUserId = profile?._id || currentUser?._id || localStorage.getItem('userId');
 
   const fetchProfile = useCallback(async (signal) => {
-    if (!userId) return;
     setLoading(true);
     setError('');
     try {
-      const res = await apiClient.get(`/user/${userId}`, { signal });
+      const res = await apiClient.get('/users/me', { signal });
       const payload = res?.data;
-      if (!payload?.success || !payload?.user) {
+      const profileData = payload?.data;
+      if (!payload?.success || !profileData) {
         throw new Error(payload?.message || 'Unable to load profile.');
       }
-      setProfile(payload.user);
+      setProfile(profileData);
     } catch (err) {
       if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
       setError(err?.message || 'Unable to load profile.');
@@ -115,7 +122,7 @@ const EmployeeProfile = () => {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -131,6 +138,72 @@ const EmployeeProfile = () => {
     window.addEventListener('employee-profile-updated', onUpdated);
     return () => window.removeEventListener('employee-profile-updated', onUpdated);
   }, [fetchProfile]);
+
+  const triggerAvatarPicker = () => {
+    if (isAvatarUploading) return;
+    if (avatarInputRef.current) avatarInputRef.current.click();
+  };
+
+  const handleAvatarKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      triggerAvatarPicker();
+    }
+  };
+
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !resolvedUserId) return;
+
+    setIsAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('userId', resolvedUserId);
+      formData.append('photo', file);
+
+      const response = await apiClient.post('/upload-info', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const updatedUser = response?.data?.user || {};
+      const newPhotoUrl = updatedUser.photoUrl || profile?.photoUrl || '';
+
+      setProfile((prev) => ({
+        ...(prev || {}),
+        ...updatedUser,
+        photoUrl: newPhotoUrl,
+      }));
+
+      if (currentUser) {
+        setCurrentUser({
+          ...currentUser,
+          photo: updatedUser.photo ?? currentUser.photo,
+          photoUrl: newPhotoUrl || currentUser.photoUrl,
+          token: currentUser.token,
+        });
+      }
+
+      window.dispatchEvent(new Event('employee-profile-updated'));
+
+      toast({
+        title: 'Profile image updated',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (uploadError) {
+      toast({
+        title: 'Upload failed',
+        description: uploadError?.response?.data?.message || uploadError?.message || 'Could not update profile image.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setIsAvatarUploading(false);
+      event.target.value = '';
+    }
+  };
 
   const fullName = useMemo(() => {
     const parts = [profile?.firstName, profile?.middleName, profile?.lastName]
@@ -189,15 +262,48 @@ const EmployeeProfile = () => {
                   {loading ? (
                     <SkeletonCircle size="12" />
                   ) : (
-                    <Avatar
-                      size="lg"
-                      name={fullName}
-                      src={profile?.photoUrl || undefined}
-                      icon={<FiUser />}
-                      bg="whiteAlpha.300"
-                      borderWidth="2px"
-                      borderColor="whiteAlpha.700"
-                    />
+                    <Box position="relative">
+                      <Box
+                        role="button"
+                        tabIndex={0}
+                        onClick={triggerAvatarPicker}
+                        onKeyDown={handleAvatarKeyDown}
+                        aria-label="Change profile image"
+                        cursor={isAvatarUploading ? 'not-allowed' : 'pointer'}
+                        opacity={isAvatarUploading ? 0.75 : 1}
+                      >
+                        <Avatar
+                          size="lg"
+                          name={fullName}
+                          src={profile?.photoUrl || undefined}
+                          icon={<FiUser />}
+                          bg="whiteAlpha.300"
+                          borderWidth="2px"
+                          borderColor="whiteAlpha.700"
+                        />
+                      </Box>
+                      <Box
+                        position="absolute"
+                        right="-1"
+                        bottom="-1"
+                        bg="white"
+                        color="teal.600"
+                        borderRadius="full"
+                        borderWidth="1px"
+                        borderColor="teal.100"
+                        p={1}
+                        boxShadow="sm"
+                      >
+                        {isAvatarUploading ? <Spinner size="xs" thickness="2px" /> : <Icon as={FiCamera} boxSize={3.5} />}
+                      </Box>
+                      <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleAvatarChange}
+                      />
+                    </Box>
                   )}
                   <Box>
                     <Text fontSize="xs" letterSpacing="0.22em" textTransform="uppercase" opacity={0.9}>
