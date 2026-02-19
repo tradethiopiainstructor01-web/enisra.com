@@ -135,7 +135,8 @@ exports.createPartner = async (req, res) => {
     const logoUrl = toTrimmedString(req.body.logoUrl);
     const website = toTrimmedString(req.body.website);
     const isAdmin = normalizeRole(req.user?.role) === 'admin';
-    const approved = isAdmin ? req.body.approved === true : false;
+    const requestedApproved = req.body.approved === true;
+    const approved = isAdmin && requestedApproved;
 
     if (!name || !logoUrl) {
       return res.status(400).json({
@@ -171,7 +172,10 @@ exports.createPartner = async (req, res) => {
     }
 
     const created = await PartnerCompany.create(payload);
-    res.status(201).json({ success: true, data: created });
+    const message = approved
+      ? 'Partner company created and approved.'
+      : 'Partner company submitted and is pending admin approval.';
+    res.status(201).json({ success: true, message, data: created });
   } catch (error) {
     res.status(500).json({
       success: false,

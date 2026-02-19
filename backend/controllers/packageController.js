@@ -2,15 +2,37 @@ const Package = require("../models/Package");
 const Buyer = require("../models/Buyer");
 const Seller = require("../models/Seller");
 
+const normalizeMarket = (market) =>
+  (market || "Local").toString().toLowerCase() === "international"
+    ? "International"
+    : "Local";
+
+const normalizeEmployeeListVisibility = (value) =>
+  (value || "visible").toString().toLowerCase() === "hidden" ? "hidden" : "visible";
+
 // Create
 const createPackage = async (req, res) => {
   try {
-    const { packageNumber, services, price, description, market } = req.body;
+    const {
+      packageNumber,
+      services,
+      price,
+      description,
+      market,
+      employeeListVisibility,
+    } = req.body;
     if (!packageNumber || !Array.isArray(services) || services.length === 0) {
       return res.status(400).json({ message: "Package number and at least one service are required." });
     }
-    const marketValue = (market || "Local").toString().toLowerCase() === "international" ? "International" : "Local";
-    const pkg = new Package({ packageNumber, services, price, description, market: marketValue });
+    const marketValue = normalizeMarket(market);
+    const pkg = new Package({
+      packageNumber,
+      services,
+      price,
+      description,
+      market: marketValue,
+      employeeListVisibility: normalizeEmployeeListVisibility(employeeListVisibility),
+    });
     const saved = await pkg.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -32,7 +54,7 @@ const listPackages = async (_req, res) => {
 const getPackageByNumber = async (req, res) => {
   try {
     const { packageNumber } = req.params;
-    const marketValue = (req.query.market || "Local").toString().toLowerCase() === "international" ? "International" : "Local";
+    const marketValue = normalizeMarket(req.query.market);
     const parsedNumber = parseInt(packageNumber, 10);
     if (Number.isNaN(parsedNumber)) {
       return res.status(400).json({ message: "Invalid package number" });
@@ -100,7 +122,14 @@ const getPackageAnalytics = async (_req, res) => {
 const updatePackage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { packageNumber, services, price, description, market } = req.body;
+    const {
+      packageNumber,
+      services,
+      price,
+      description,
+      market,
+      employeeListVisibility,
+    } = req.body;
     if (!packageNumber || !Array.isArray(services) || services.length === 0) {
       return res.status(400).json({ message: "Package number and at least one service are required." });
     }
@@ -111,7 +140,8 @@ const updatePackage = async (req, res) => {
         services,
         price,
         description,
-        market: (market || "Local").toString().toLowerCase() === "international" ? "International" : "Local",
+        market: normalizeMarket(market),
+        employeeListVisibility: normalizeEmployeeListVisibility(employeeListVisibility),
       },
       { new: true, runValidators: true }
     );

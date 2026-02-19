@@ -59,26 +59,6 @@ const EmployeeLayout = () => {
         )}
 
         <Box flex="1" minW={0}>
-          <HStack justify="space-between" mb={4} align="center">
-            <HStack spacing={3}>
-              {!isDesktop ? (
-                <IconButton
-                  aria-label="Open menu"
-                  icon={<HamburgerIcon />}
-                  onClick={onOpen}
-                  colorScheme="teal"
-                />
-              ) : null}
-            </HStack>
-
-            <IconButton
-              aria-label="Toggle theme"
-              icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
-              variant="ghost"
-              onClick={toggleColorMode}
-            />
-          </HStack>
-
           <Flex
             align="center"
             justify="space-between"
@@ -115,6 +95,23 @@ const EmployeeLayout = () => {
               >
                 Free Trainings
               </Button>
+            </HStack>
+
+            <HStack spacing={2}>
+              {!isDesktop ? (
+                <IconButton
+                  aria-label="Open menu"
+                  icon={<HamburgerIcon />}
+                  onClick={onOpen}
+                  colorScheme="teal"
+                />
+              ) : null}
+              <IconButton
+                aria-label="Toggle theme"
+                icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+                variant="ghost"
+                onClick={toggleColorMode}
+              />
             </HStack>
           </Flex>
 

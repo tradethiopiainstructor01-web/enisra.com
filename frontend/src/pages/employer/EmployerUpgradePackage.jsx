@@ -12,8 +12,7 @@ import {
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
-import { FiArrowUpRight, FiCheck } from "react-icons/fi";
-import { Link as RouterLink } from "react-router-dom";
+import { FiCheck } from "react-icons/fi";
 
 const PLANS = [
   {
@@ -51,14 +50,6 @@ const EmployerUpgradePackage = () => {
             Choose a plan that matches your hiring cadence.
           </Text>
         </Box>
-        <Button
-          as={RouterLink}
-          to="/requests"
-          colorScheme="green"
-          rightIcon={<FiArrowUpRight />}
-        >
-          Request upgrade
-        </Button>
       </Flex>
 
       <Card bg={panelBg} borderWidth="1px" borderColor={borderColor} mb={8}>

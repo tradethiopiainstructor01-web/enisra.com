@@ -539,9 +539,9 @@ const EmployerProfile = () => {
                     />
                   </FormControl>
                   <FormControl>
-                    <FormLabel>Package Type</FormLabel>
+                    <FormLabel>Package Type (Number)</FormLabel>
                     <Input
-                      placeholder="Premium"
+                      placeholder="e.g. 1"
                       value={employerDetails.packageType}
                       onChange={handleEmployerDetailsChange("packageType")}
                       isDisabled={detailsLoading}

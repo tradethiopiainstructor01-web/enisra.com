@@ -212,6 +212,7 @@ const AdminDashboard = () => {
     market: "Local",
     packageNumber: "",
     price: "",
+    employeeListVisibility: "visible",
     description: "",
     servicesText: "",
   });
@@ -456,6 +457,7 @@ const AdminDashboard = () => {
       market: "Local",
       packageNumber: "",
       price: "",
+      employeeListVisibility: "visible",
       description: "",
       servicesText: "",
     });
@@ -986,6 +988,10 @@ const AdminDashboard = () => {
     const price = packageForm.price === "" ? 0 : Number(packageForm.price);
     const services = parseServicesText(packageForm.servicesText);
     const market = (packageForm.market || "Local").toString().trim();
+    const employeeListVisibility =
+      (packageForm.employeeListVisibility || "visible").toString().toLowerCase() === "hidden"
+        ? "hidden"
+        : "visible";
 
     if (!Number.isFinite(packageNumber) || packageNumber <= 0) {
       toast({
@@ -1028,6 +1034,7 @@ const AdminDashboard = () => {
         price,
         description: packageForm.description?.toString?.().trim?.() || "",
         market,
+        employeeListVisibility,
       });
       toast({
         title: "Package created",
@@ -2835,6 +2842,7 @@ const AdminDashboard = () => {
                     <Tr>
                       <Th>Market</Th>
                       <Th>Package #</Th>
+                      <Th>Employee List</Th>
                       <Th isNumeric>Price</Th>
                       <Th>Services</Th>
                       <Th>Description</Th>
@@ -2854,6 +2862,14 @@ const AdminDashboard = () => {
                           </Td>
                           <Td>
                             <Text fontWeight="semibold">Package {pkg?.packageNumber ?? "-"}</Text>
+                          </Td>
+                          <Td>
+                            <Badge
+                              colorScheme={pkg?.employeeListVisibility === "hidden" ? "red" : "green"}
+                              variant="subtle"
+                            >
+                              {pkg?.employeeListVisibility === "hidden" ? "Hidden" : "Visible"}
+                            </Badge>
                           </Td>
                           <Td isNumeric>
                             <Text fontSize="sm" color={mutedText}>
@@ -3556,7 +3572,11 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Box maxW="7xl" mx="auto" px={{ base: 4, md: 6 }} py={{ base: 4, md: 6 }}>
+    <Box
+      w="100%"
+      px={{ base: 4, md: 6, lg: 0 }}
+      py={{ base: 4, md: 6, lg: 0 }}
+    >
       <Flex direction={{ base: "column", lg: "row" }} gap={6}>
         {isMobile && (
           <Flex justify="flex-end">
@@ -3575,7 +3595,7 @@ const AdminDashboard = () => {
           bg={sidebarBg}
           border="1px solid"
           borderColor={borderColor}
-          borderRadius="xl"
+          borderRadius={{ base: "xl", lg: "0" }}
           p={isCollapsed ? 3 : 4}
           width={{ base: "100%", lg: isCollapsed ? "76px" : "280px" }}
           minW={{ base: "100%", lg: isCollapsed ? "76px" : "280px" }}
@@ -4086,6 +4106,20 @@ const AdminDashboard = () => {
                   value={packageForm.price}
                   onChange={handlePackageFormChange("price")}
                 />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Employee List Visibility</FormLabel>
+                <Select
+                  value={packageForm.employeeListVisibility}
+                  onChange={handlePackageFormChange("employeeListVisibility")}
+                >
+                  <option value="visible">Visible</option>
+                  <option value="hidden">Hidden</option>
+                </Select>
+                <Text fontSize="xs" color={mutedText} mt={2}>
+                  If hidden, employers on this package cannot access Employee List.
+                </Text>
               </FormControl>
 
               <FormControl>
