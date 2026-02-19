@@ -317,6 +317,11 @@ const EmployeeInfoForm = () => {
     setProfile((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const handleNationalIdChange = (event) => {
+    const digitsOnly = (event.target.value || '').replace(/\D/g, '').slice(0, 16);
+    setProfile((prev) => ({ ...prev, nationalIdOrPassportNumber: digitsOnly }));
+  };
+
   const setSalaryField = (field) => (event) => {
     setProfile((prev) => ({
       ...prev,
@@ -668,8 +673,15 @@ const EmployeeInfoForm = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <FormLabel>National ID / Passport Number</FormLabel>
-              <Input value={profile.nationalIdOrPassportNumber} onChange={setField('nationalIdOrPassportNumber')} placeholder="e.g. AB1234567" />
+              <FormLabel>National ID/Passport</FormLabel>
+              <Input
+                type="password"
+                value={profile.nationalIdOrPassportNumber}
+                onChange={handleNationalIdChange}
+                placeholder="16 digit national id"
+                inputMode="numeric"
+                maxLength={16}
+              />
             </FormControl>
           </SimpleGrid>
         </Stack>
@@ -688,15 +700,6 @@ const EmployeeInfoForm = () => {
             <FormControl isRequired>
               <FormLabel>Phone Number</FormLabel>
               <Input type="tel" value={profile.phoneNumber} onChange={setField('phoneNumber')} placeholder="+251 9xx xxx xxx" />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>Emergency Contact Name</FormLabel>
-              <Input value={profile.emergencyContactName} onChange={setField('emergencyContactName')} placeholder="e.g. Family member name" />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Emergency Contact Phone</FormLabel>
-              <Input type="tel" value={profile.emergencyContactPhone} onChange={setField('emergencyContactPhone')} placeholder="+251 9xx xxx xxx" />
             </FormControl>
 
             <FormControl>
@@ -737,23 +740,44 @@ const EmployeeInfoForm = () => {
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <FormControl>
                     <FormLabel>Highest Education Level</FormLabel>
-                    <Input value={item.highestEducationLevel} onChange={updateArrayField('educationBackground', index, 'highestEducationLevel')} />
+                    <Input
+                      value={item.highestEducationLevel}
+                      onChange={updateArrayField('educationBackground', index, 'highestEducationLevel')}
+                      placeholder="e.g. BSc, MSc, PhD"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>Field of Study</FormLabel>
-                    <Input value={item.fieldOfStudy} onChange={updateArrayField('educationBackground', index, 'fieldOfStudy')} />
+                    <Input
+                      value={item.fieldOfStudy}
+                      onChange={updateArrayField('educationBackground', index, 'fieldOfStudy')}
+                      placeholder="e.g. Computer Science"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>Institution Name</FormLabel>
-                    <Input value={item.institutionName} onChange={updateArrayField('educationBackground', index, 'institutionName')} />
+                    <Input
+                      value={item.institutionName}
+                      onChange={updateArrayField('educationBackground', index, 'institutionName')}
+                      placeholder="e.g. Addis Ababa University"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>Graduation Year</FormLabel>
-                    <Input type="number" value={item.graduationYear} onChange={updateArrayField('educationBackground', index, 'graduationYear')} />
+                    <Input
+                      type="number"
+                      value={item.graduationYear}
+                      onChange={updateArrayField('educationBackground', index, 'graduationYear')}
+                      placeholder="e.g. 2024"
+                    />
                   </FormControl>
                   <FormControl gridColumn={{ base: 'auto', md: '1 / -1' }}>
                     <FormLabel>Certifications (Upload or text)</FormLabel>
-                    <Textarea value={item.certifications} onChange={updateArrayField('educationBackground', index, 'certifications')} />
+                    <Textarea
+                      value={item.certifications}
+                      onChange={updateArrayField('educationBackground', index, 'certifications')}
+                      placeholder="e.g. Cisco CCNA, CompTIA A+, AWS Cloud Practitioner"
+                    />
                   </FormControl>
                 </SimpleGrid>
               </Box>
@@ -791,11 +815,19 @@ const EmployeeInfoForm = () => {
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <FormControl>
                     <FormLabel>Previous Company Name</FormLabel>
-                    <Input value={item.previousCompanyName} onChange={updateArrayField('workExperience', index, 'previousCompanyName')} />
+                    <Input
+                      value={item.previousCompanyName}
+                      onChange={updateArrayField('workExperience', index, 'previousCompanyName')}
+                      placeholder="e.g. Ethio Telecom"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>Job Title</FormLabel>
-                    <Input value={item.jobTitle} onChange={updateArrayField('workExperience', index, 'jobTitle')} />
+                    <Input
+                      value={item.jobTitle}
+                      onChange={updateArrayField('workExperience', index, 'jobTitle')}
+                      placeholder="e.g. IT Support Specialist"
+                    />
                   </FormControl>
                   <FormControl>
                     <FormLabel>Start Date</FormLabel>
@@ -807,7 +839,11 @@ const EmployeeInfoForm = () => {
                   </FormControl>
                   <FormControl gridColumn={{ base: 'auto', md: '1 / -1' }}>
                     <FormLabel>Key Responsibilities</FormLabel>
-                    <Textarea value={item.keyResponsibilities} onChange={updateArrayField('workExperience', index, 'keyResponsibilities')} />
+                    <Textarea
+                      value={item.keyResponsibilities}
+                      onChange={updateArrayField('workExperience', index, 'keyResponsibilities')}
+                      placeholder="e.g. Managed helpdesk tickets, configured user accounts, and maintained office network devices."
+                    />
                   </FormControl>
                 </SimpleGrid>
               </Box>

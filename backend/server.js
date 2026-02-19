@@ -46,6 +46,7 @@ const employerProfileRoutes = require('./routes/employerProfileRoutes.js');
 const employerDetailsRoutes = require('./routes/employerDetailsRoutes.js');
 const registrationAnalyticsRoutes = require('./routes/registrationAnalyticsRoutes.js');
 const jobRoutes = require('./routes/jobRoutes.js');
+const telegramRoutes = require('./routes/telegramRoutes.js');
 const partnerCompanyRoutes = require('./routes/partnerCompanyRoutes.js');
 const adminRoutes = require('./routes/adminRoutes.js');
 const employerCategoryRoutes = require('./routes/employerCategoryRoutes.js');
@@ -289,6 +290,7 @@ app.use('/api/employer-details', employerDetailsRoutes);
 app.use('/api/employer-categories', employerCategoryRoutes);
 app.use('/api/analytics/registrations', registrationAnalyticsRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/telegram', telegramRoutes);
 app.use('/api/partners', partnerCompanyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);
@@ -311,43 +313,41 @@ module.exports = app;
 
 // Connect to MongoDB and start the server only when running locally
 if (require.main === module) {
-    const PORT = process.env.PORT || 5000;
+    const PORT = Number(process.env.PORT) || 5000;
     const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces by default
     
     // Connect to database and start server
     connectDB()
       .then(() => {
-        let httpServer;
-        if (server) {
-          server.listen(PORT, HOST, () => {
-            console.log(`Server running on http://${HOST}:${PORT}`);
-          });
-          httpServer = server;
-        } else {
-          httpServer = app.listen(PORT, HOST, () => {
-            console.log(`Server running on http://${HOST}:${PORT}`);
-          });
-        }
-        
-        // Handle EADDRINUSE error gracefully
-        httpServer.on('error', (e) => {
-          if (e.code === 'EADDRINUSE') {
-            console.log(`Port ${PORT} is busy, trying ${PORT + 1}`);
-            setTimeout(() => {
-              httpServer.close();
-              if (server) {
-                server.listen(PORT + 1, HOST, () => {
-                  console.log(`Server running on http://${HOST}:${PORT + 1}`);
-                });
-              } else {
-                app.listen(PORT + 1, HOST, () => {
-                console.log(`Server running on http://${HOST}:${PORT + 1}`);
-                });
-              }
-            }, 1000);
-          }
-        });
-        
+        const httpServer = server || app;
+        const maxAttempts = 50;
+
+        const startListening = (port, attempt = 0) => {
+          const onListening = () => {
+            httpServer.removeListener('error', onError);
+            const address = httpServer.address();
+            const actualPort = typeof address === 'object' && address ? address.port : port;
+            console.log(`Server running on http://${HOST}:${actualPort}`);
+          };
+
+          const onError = (e) => {
+            httpServer.removeListener('listening', onListening);
+            if (e.code === 'EADDRINUSE' && attempt < maxAttempts) {
+              const nextPort = port + 1;
+              console.log(`Port ${port} is busy, trying ${nextPort}`);
+              return setImmediate(() => startListening(nextPort, attempt + 1));
+            }
+            console.error('HTTP server error:', e);
+            process.exit(1);
+          };
+
+          httpServer.once('listening', onListening);
+          httpServer.once('error', onError);
+          httpServer.listen(port, HOST);
+        };
+
+        startListening(PORT);
+
         // Graceful shutdown
         process.on('SIGINT', async () => {
           console.log('Shutting down gracefully...');

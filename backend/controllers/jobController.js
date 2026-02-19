@@ -1,6 +1,7 @@
 const Job = require('../models/Job');
 const Application = require('../models/Application');
 const Notification = require('../models/Notification');
+const { publishNewJob } = require('../services/jobTelegramService');
 
 const toTrimmedString = (value) => (value || '').toString().trim();
 
@@ -210,7 +211,9 @@ exports.createJob = async (req, res) => {
     }
 
     const created = await Job.create(payload);
-    res.status(201).json({ success: true, data: created });
+    const telegramResult = await publishNewJob(created);
+
+    res.status(201).json({ success: true, data: created, telegram: telegramResult });
   } catch (error) {
     res.status(500).json({
       success: false,
