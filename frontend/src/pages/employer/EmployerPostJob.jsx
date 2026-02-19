@@ -45,6 +45,7 @@ const EmployerPostJob = () => {
     address: "",
     type: "",
     salary: "",
+    yearsOfExperience: "",
     deadline: "",
     expirationDate: "",
     description: "",
@@ -130,6 +131,7 @@ const EmployerPostJob = () => {
       address: jobForm.address.trim(),
       type: jobForm.type.trim(),
       salary: jobForm.salary.trim(),
+      yearsOfExperience: jobForm.yearsOfExperience.trim(),
       deadline: jobForm.deadline || undefined,
       expirationDate: jobForm.expirationDate || undefined,
       description: jobForm.description.trim(),
@@ -150,6 +152,7 @@ const EmployerPostJob = () => {
         address: "",
         type: "",
         salary: "",
+        yearsOfExperience: "",
         deadline: "",
         expirationDate: "",
         description: "",
@@ -295,6 +298,14 @@ const EmployerPostJob = () => {
                     onChange={handleFormChange("salary")}
                   />
                 </FormControl>
+                <FormControl>
+                  <FormLabel>Years of Experience</FormLabel>
+                  <Input
+                    placeholder="e.g. 2+ years"
+                    value={jobForm.yearsOfExperience}
+                    onChange={handleFormChange("yearsOfExperience")}
+                  />
+                </FormControl>
               </SimpleGrid>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl>
@@ -314,9 +325,9 @@ const EmployerPostJob = () => {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>Hiring flow</FormLabel>
+                  <FormLabel>Hiring flow (optional)</FormLabel>
                   <Select
-                    placeholder="Select flow"
+                    placeholder="Optional: select flow"
                     value={jobForm.flow}
                     onChange={handleFormChange("flow")}
                   >
@@ -391,6 +402,11 @@ const EmployerPostJob = () => {
                                 {job.category || job.department || "General"} - {job.location}
                                 {job.address ? `, ${job.address}` : ""} - {job.type}
                               </Text>
+                              {job.yearsOfExperience ? (
+                                <Text fontSize="sm" color={mutedText}>
+                                  Experience: {job.yearsOfExperience}
+                                </Text>
+                              ) : null}
                               <Text fontSize="xs" color={mutedText}>
                                 Submitted {formatDate(job.postedAt || job.createdAt)}
                               </Text>
@@ -429,6 +445,11 @@ const EmployerPostJob = () => {
                                 {job.category || job.department || "General"} - {job.location}
                                 {job.address ? `, ${job.address}` : ""} - {job.type}
                               </Text>
+                              {job.yearsOfExperience ? (
+                                <Text fontSize="sm" color={mutedText}>
+                                  Experience: {job.yearsOfExperience}
+                                </Text>
+                              ) : null}
                               <Text fontSize="xs" color={mutedText}>
                                 Approved {formatDate(job.approvedAt || job.updatedAt || job.postedAt)}
                               </Text>
@@ -467,6 +488,11 @@ const EmployerPostJob = () => {
                                 {job.category || job.department || "General"} - {job.location}
                                 {job.address ? `, ${job.address}` : ""} - {job.type}
                               </Text>
+                              {job.yearsOfExperience ? (
+                                <Text fontSize="sm" color={mutedText}>
+                                  Experience: {job.yearsOfExperience}
+                                </Text>
+                              ) : null}
                               <Text fontSize="xs" color={mutedText}>
                                 Rejected {formatDate(job.updatedAt || job.postedAt || job.createdAt)}
                               </Text>

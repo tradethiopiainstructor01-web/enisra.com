@@ -24,22 +24,26 @@ class TelegramService {
   }
 
   formatJobMessage(job) {
-    const company = job.companyName || job.postedByName || process.env.EMPLOYER_NAME || 'N/A';
+    const company = job.company || job.companyName || process.env.EMPLOYER_NAME || 'N/A';
     const title = job.title || 'N/A';
+    const type = job.type || 'N/A';
     const location = job.location || 'N/A';
-    const salary = job.salary || 'N/A';
-    const desc = (job.description || 'No description provided.').slice(0, 600);
+    const requiredExperience = (job.description || 'No description provided.').slice(0, 2500);
+    const yearsOfExperience = job.yearsOfExperience || 'N/A';
 
     return [
-      '🚀 <b>New Job Posted!</b>',
+      `<b>Company:</b> ${escapeHtml(company)}`,
       '',
-      `🏢 <b>Company:</b> ${escapeHtml(company)}`,
-      `💼 <b>Position:</b> ${escapeHtml(title)}`,
-      `📍 <b>Location:</b> ${escapeHtml(location)}`,
-      `💰 <b>Salary:</b> ${escapeHtml(salary)}`,
+      `<b>Job Position:</b> ${escapeHtml(title)}`,
       '',
-      '📝 <b>Description:</b>',
-      escapeHtml(desc),
+      `<b>Job Type:</b>${escapeHtml(type)}`,
+      '',
+      `<b>place of work:</b> ${escapeHtml(location)}`,
+      '',
+      '<b>Required  experience:</b>',
+      escapeHtml(requiredExperience),
+      '',
+      `<b>Year of Experience:</b> ${escapeHtml(yearsOfExperience)}`,
     ].join('\n');
   }
 

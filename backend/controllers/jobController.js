@@ -184,6 +184,7 @@ exports.createJob = async (req, res) => {
       address: toTrimmedString(req.body.address),
       type: toTrimmedString(req.body.type),
       salary: toTrimmedString(req.body.salary),
+      yearsOfExperience: toTrimmedString(req.body.yearsOfExperience),
       description: toTrimmedString(req.body.description),
       flow: toTrimmedString(req.body.flow),
       approved: false,
@@ -199,10 +200,10 @@ exports.createJob = async (req, res) => {
       payload.contactEmail = extractEmail(req.user.email);
     }
 
-    if (!payload.title || !payload.category || !payload.location || !payload.type || !payload.contactEmail) {
+    if (!payload.title || !payload.company || !payload.category || !payload.location || !payload.type || !payload.contactEmail) {
       return res.status(400).json({
         success: false,
-        message: 'Title, category, location, job type, and contact email are required.',
+        message: 'Title, company name, category, location, job type, and contact email are required.',
       });
     }
 
@@ -287,14 +288,15 @@ exports.updateJob = async (req, res) => {
       address: toTrimmedString(req.body.address),
       type: toTrimmedString(req.body.type),
       salary: toTrimmedString(req.body.salary),
+      yearsOfExperience: toTrimmedString(req.body.yearsOfExperience),
       description: toTrimmedString(req.body.description),
       flow: toTrimmedString(req.body.flow),
     };
 
-    if (!setPayload.title || !setPayload.category || !setPayload.location || !setPayload.type || !setPayload.contactEmail) {
+    if (!setPayload.title || !setPayload.company || !setPayload.category || !setPayload.location || !setPayload.type || !setPayload.contactEmail) {
       return res.status(400).json({
         success: false,
-        message: 'Title, category, location, job type, and contact email are required.',
+        message: 'Title, company name, category, location, job type, and contact email are required.',
       });
     }
 
