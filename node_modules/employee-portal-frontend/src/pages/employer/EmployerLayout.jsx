@@ -48,6 +48,13 @@ const NAV_ITEMS = [
   { label: "Employee List", icon: FiUsers, to: "/employer/employees" },
 ];
 
+const resolvePackageKey = (value) => {
+  const raw = (value || "").toString().trim().toLowerCase();
+  if (!raw) return "";
+  const match = raw.match(/\d+/);
+  return match?.[0] || raw;
+};
+
 const defaultEmployerDetails = {
   employerId: "",
   companyName: "",
@@ -71,6 +78,8 @@ const EmployerLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [employerDetails, setEmployerDetails] = useState(() => defaultEmployerDetails);
   const [detailsLoading, setDetailsLoading] = useState(true);
+  const [packages, setPackages] = useState([]);
+  const [packagesLoading, setPackagesLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isDesktop = useBreakpointValue({ base: false, lg: true }) || false;
   const showSidebarLabels = !isSidebarCollapsed;
@@ -96,16 +105,46 @@ const EmployerLayout = () => {
   );
   const accountStatusBg = useColorModeValue("green.50", "gray.700");
 
-  const currentSectionLabel = useMemo(() => {
-    const match = NAV_ITEMS.find((item) => location.pathname.startsWith(item.to));
-    return match?.label || "Dashboard";
-  }, [location.pathname]);
-
   const isEmployerDetailsComplete = useMemo(() => {
     return Object.values(employerDetails).every((value) =>
       String(value ?? "").trim()
     );
   }, [employerDetails]);
+
+  const packageKey = useMemo(
+    () => resolvePackageKey(employerDetails.packageType),
+    [employerDetails.packageType]
+  );
+
+  const matchedPackage = useMemo(() => {
+    if (!packageKey) return null;
+    return (
+      packages.find((pkg) => resolvePackageKey(pkg?.packageNumber) === packageKey) || null
+    );
+  }, [packages, packageKey]);
+
+  const canAccessEmployeeList = useMemo(() => {
+    if (!matchedPackage) return false;
+    return (matchedPackage.employeeListVisibility || "visible") !== "hidden";
+  }, [matchedPackage]);
+
+  const hasResolvedEmployeeListAccess = useMemo(
+    () => !detailsLoading && !packagesLoading && isEmployerDetailsComplete,
+    [detailsLoading, packagesLoading, isEmployerDetailsComplete]
+  );
+
+  const navItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => {
+      if (item.to !== "/employer/employees") return true;
+      if (!hasResolvedEmployeeListAccess) return true;
+      return canAccessEmployeeList;
+    });
+  }, [canAccessEmployeeList, hasResolvedEmployeeListAccess]);
+
+  const currentSectionLabel = useMemo(() => {
+    const match = NAV_ITEMS.find((item) => location.pathname.startsWith(item.to));
+    return match?.label || "Dashboard";
+  }, [location.pathname]);
 
   const fetchEmployerDetails = useCallback(async (signal) => {
     if (!currentUser?.token) {
@@ -143,11 +182,37 @@ const EmployerLayout = () => {
     }
   }, [currentUser?.token, toast]);
 
+  const fetchPackages = useCallback(async (signal) => {
+    try {
+      setPackagesLoading(true);
+      const response = await apiClient.get("/packages", { signal });
+      const payload = response?.data?.data ?? response?.data ?? [];
+      setPackages(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+      toast({
+        title: "Failed to load packages",
+        description: error?.message || "Unable to evaluate package access.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setPackagesLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     const controller = new AbortController();
     fetchEmployerDetails(controller.signal);
     return () => controller.abort();
   }, [fetchEmployerDetails]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchPackages(controller.signal);
+    return () => controller.abort();
+  }, [fetchPackages]);
 
   useEffect(() => {
     const handleRefresh = () => fetchEmployerDetails();
@@ -164,6 +229,21 @@ const EmployerLayout = () => {
       navigate("/employer/profile", { replace: true });
     }
   }, [detailsLoading, isEmployerDetailsComplete, location.pathname, navigate]);
+
+  useEffect(() => {
+    if (!hasResolvedEmployeeListAccess) return;
+    if (!location.pathname.startsWith("/employer/employees")) return;
+    if (canAccessEmployeeList) return;
+
+    toast({
+      title: "Employee list is not included",
+      description: "Your current package does not include Employee List visibility.",
+      status: "warning",
+      duration: 3000,
+      isClosable: true,
+    });
+    navigate("/employer/upgrade", { replace: true });
+  }, [canAccessEmployeeList, hasResolvedEmployeeListAccess, location.pathname, navigate, toast]);
 
 
   const handleLogout = () => {
@@ -231,9 +311,9 @@ const EmployerLayout = () => {
             minH="100vh"
             zIndex="1"
             boxShadow={sidebarShadow}
-            borderRadius="2xl"
-            mx={4}
-            my={6}
+            borderRadius={{ base: "2xl", lg: "0" }}
+            mx={{ base: 4, lg: 0 }}
+            my={{ base: 6, lg: 0 }}
             overflow="hidden"
           >
             <Flex direction="column" minH="100%">
@@ -270,7 +350,7 @@ const EmployerLayout = () => {
               </Box>
 
               <VStack spacing={1} px={3} py={4} align="stretch">
-                {NAV_ITEMS.map((item) => {
+                {navItems.map((item) => {
                   const isActive = location.pathname.startsWith(item.to);
                   const isRestricted = !isEmployerDetailsComplete && item.to !== "/employer/profile";
                   return (
@@ -379,7 +459,7 @@ const EmployerLayout = () => {
           <DrawerHeader>Employer Hub</DrawerHeader>
           <DrawerBody>
             <Stack spacing={2}>
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const isActive = location.pathname.startsWith(item.to);
                 const isRestricted = !isEmployerDetailsComplete && item.to !== "/employer/profile";
                 return (

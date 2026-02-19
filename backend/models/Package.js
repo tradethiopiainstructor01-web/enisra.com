@@ -6,6 +6,11 @@ const packageSchema = new mongoose.Schema(
     services: [{ type: String, required: true }],
     price: { type: Number, required: true, default: 0 },
     description: { type: String, default: "" },
+    employeeListVisibility: {
+      type: String,
+      enum: ["visible", "hidden"],
+      default: "visible",
+    },
     market: {
       type: String,
       enum: ["Local", "International"],

@@ -22,7 +22,7 @@ router.post('/', protect, authorizeRoles('admin', 'employer'), partnerCompanyCon
 router.post(
   '/upload-logo',
   protect,
-  authorizeRoles('admin'),
+  authorizeRoles('admin', 'employer'),
   upload.single('file'),
   partnerCompanyController.uploadPartnerLogo
 );
