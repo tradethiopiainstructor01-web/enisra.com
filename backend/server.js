@@ -109,24 +109,48 @@ app.set('io', io);
 app.set('connectedUsers', connectedUsers);
 
 // CORS configuration
-const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
+const normalizeOrigin = (value) => {
+  if (!value || typeof value !== 'string') return [];
+  const trimmed = value.trim().replace(/\/+$/, '');
+  if (!trimmed) return [];
 
-const allowedOrigins = [
+  if (trimmed.includes('://')) {
+    return [trimmed];
+  }
+
+  // Allow host-only values in env by expanding to both protocols.
+  return [`https://${trimmed}`, `http://${trimmed}`];
+};
+
+const parseOriginsEnv = (...values) =>
+  values
+    .filter((value) => typeof value === 'string' && value.trim().length > 0)
+    .flatMap((value) => value.split(','))
+    .flatMap((value) => normalizeOrigin(value));
+
+const configuredOrigins = parseOriginsEnv(
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGIN,
-  vercelUrl,
-  'https://www.tradeethiopian.com',
-  'https://tradeethiopian.com',
-  'https://main.d21vr1wgzmn1c2.amplifyapp.com',
-  'https://tradethiopia-pied.vercel.app',
-  'https://tradethiopia.vercel.app',
+  process.env.CORS_ORIGINS,
+  process.env.CLIENT_URL,
+  process.env.CLIENT_ORIGIN,
+  process.env.APP_URL,
+  process.env.PUBLIC_URL
+);
+
+const localDevOrigins = [
+  'http://enisra.com',
+  'https://enisra.com',
+  'http://174.129146.82',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3002',
   'http://localhost:3003',
   'http://localhost:3004'
-].filter(Boolean);
+];
+
+const allowedOrigins = [...new Set([...configuredOrigins, ...localDevOrigins])];
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
@@ -134,9 +158,9 @@ const isAllowedOrigin = (origin) => {
   if (allowedOrigins.includes(origin)) return true;
 
   try {
-    const { hostname } = new URL(origin);
+    const { hostname, origin: normalizedOrigin } = new URL(origin);
     if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
-    if (hostname.endsWith('.vercel.app') || hostname.endsWith('.vercel.live')) return true;
+    if (allowedOrigins.includes(normalizedOrigin)) return true;
   } catch (error) {
     return false;
   }

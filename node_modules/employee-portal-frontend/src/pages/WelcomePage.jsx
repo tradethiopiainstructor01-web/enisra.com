@@ -1005,7 +1005,7 @@ const WelcomePage = () => {
         </Container>
 
         <Container ref={jobsSectionRef} maxW="7xl" py={12} order={1}>
-          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
+a          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
             <Box
               bg={cardBg}
               borderRadius="xl"
