@@ -79,22 +79,6 @@ export const resolveJobContactEmail = (job) => {
   return '';
 };
 
-const resolveCurrentUserEmail = () => {
-  if (typeof window === 'undefined') return '';
-
-  const localStorageCandidates = [
-    localStorage.getItem('userEmail'),
-    localStorage.getItem('userName'),
-  ];
-
-  for (const value of localStorageCandidates) {
-    const email = extractEmail(value);
-    if (email) return email;
-  }
-
-  return '';
-};
-
 export const getJobApplyAccess = () => {
   if (typeof window === 'undefined') {
     return { allowed: false, reason: 'not_authenticated' };
@@ -125,24 +109,8 @@ export const buildJobApplicationMailto = (job, bodyText = '') => {
   const recipients = resolveJobContactEmails(job);
   if (!recipients.length) return '';
 
-  const [primaryRecipient, ...additionalRecipients] = recipients;
-  const ccRecipients = [...additionalRecipients];
-
-  const currentUserEmail = resolveCurrentUserEmail();
-  if (currentUserEmail && !recipients.includes(currentUserEmail)) {
-    ccRecipients.push(currentUserEmail);
-  }
-
-  const params = new URLSearchParams();
-  params.set('subject', `Application for ${job?.title || 'job'}`);
-  if (bodyText) {
-    params.set('body', bodyText);
-  }
-  if (ccRecipients.length) {
-    params.set('cc', ccRecipients.join(','));
-  }
-
-  return `mailto:${primaryRecipient}?${params.toString()}`;
+  const [primaryRecipient] = recipients;
+  return `mailto:${primaryRecipient}`;
 };
 
 export const openJobApplicationEmail = (job, bodyText = '') => {

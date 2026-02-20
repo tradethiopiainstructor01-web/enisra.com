@@ -176,6 +176,7 @@ const AdminDashboard = () => {
     address: "",
     type: "",
     salary: "",
+    yearsOfExperience: "",
     deadline: "",
     expirationDate: "",
     description: "",
@@ -193,6 +194,7 @@ const AdminDashboard = () => {
     address: "",
     type: "",
     salary: "",
+    yearsOfExperience: "",
     deadline: "",
     expirationDate: "",
     description: "",
@@ -1301,6 +1303,7 @@ const AdminDashboard = () => {
       address: job.address || "",
       type: job.type || "",
       salary: job.salary || "",
+      yearsOfExperience: job.yearsOfExperience || "",
       deadline: job.deadline ? job.deadline.slice(0, 10) : "",
       expirationDate: job.expirationDate ? job.expirationDate.slice(0, 10) : "",
       description: job.description || "",
@@ -1322,6 +1325,7 @@ const AdminDashboard = () => {
       address: "",
       type: "",
       salary: "",
+      yearsOfExperience: "",
       deadline: "",
       expirationDate: "",
       description: "",
@@ -1365,6 +1369,7 @@ const AdminDashboard = () => {
       address: editJobForm.address.trim(),
       type: editJobForm.type.trim(),
       salary: editJobForm.salary.trim(),
+      yearsOfExperience: editJobForm.yearsOfExperience.trim(),
       deadline: editJobForm.deadline || undefined,
       expirationDate: editJobForm.expirationDate || undefined,
       description: editJobForm.description.trim(),
@@ -1543,6 +1548,7 @@ const AdminDashboard = () => {
       address: "",
       type: "",
       salary: "",
+      yearsOfExperience: "",
       deadline: "",
       expirationDate: "",
       description: "",
@@ -1580,6 +1586,7 @@ const AdminDashboard = () => {
       address: adminJobForm.address.trim(),
       type: adminJobForm.type.trim(),
       salary: adminJobForm.salary.trim(),
+      yearsOfExperience: adminJobForm.yearsOfExperience.trim(),
       deadline: adminJobForm.deadline || undefined,
       expirationDate: adminJobForm.expirationDate || undefined,
       description: adminJobForm.description.trim(),
@@ -2339,6 +2346,14 @@ const AdminDashboard = () => {
                     />
                   </FormControl>
                   <FormControl>
+                    <FormLabel>Years of Experience</FormLabel>
+                    <Input
+                      placeholder="e.g. 2+ years"
+                      value={adminJobForm.yearsOfExperience}
+                      onChange={handleAdminJobChange("yearsOfExperience")}
+                    />
+                  </FormControl>
+                  <FormControl>
                     <FormLabel>Application deadline</FormLabel>
                     <Input
                       type="date"
@@ -2355,9 +2370,9 @@ const AdminDashboard = () => {
                     />
                   </FormControl>
                   <FormControl>
-                    <FormLabel>Hiring flow</FormLabel>
+                    <FormLabel>Hiring flow (optional)</FormLabel>
                     <Select
-                      placeholder="Select flow"
+                      placeholder="Optional: select flow"
                       value={adminJobForm.flow}
                       onChange={handleAdminJobChange("flow")}
                     >
@@ -2423,6 +2438,11 @@ const AdminDashboard = () => {
                     <Text fontSize="sm" color={mutedText}>
                       {job.category} - {job.location} - {job.type}
                     </Text>
+                    {job.yearsOfExperience ? (
+                      <Text fontSize="sm" color={mutedText}>
+                        Experience: {job.yearsOfExperience}
+                      </Text>
+                    ) : null}
                     <Flex gap={2} mt={3} wrap="wrap">
                       <Button size="sm" colorScheme="green" onClick={() => handleApproveJob(job._id)}>
                         Approve
@@ -2478,6 +2498,11 @@ const AdminDashboard = () => {
                         <Text fontSize="sm" color={mutedText}>
                           {job.category} - {job.location} - {job.type}
                         </Text>
+                        {job.yearsOfExperience ? (
+                          <Text fontSize="sm" color={mutedText}>
+                            Experience: {job.yearsOfExperience}
+                          </Text>
+                        ) : null}
                       </Box>
                       <Badge colorScheme="green">Posted</Badge>
                     </Flex>
@@ -3828,6 +3853,14 @@ const AdminDashboard = () => {
                   />
                 </FormControl>
                 <FormControl>
+                  <FormLabel>Years of Experience</FormLabel>
+                  <Input
+                    value={editJobForm.yearsOfExperience}
+                    onChange={handleEditJobChange("yearsOfExperience")}
+                    placeholder="e.g. 2+ years"
+                  />
+                </FormControl>
+                <FormControl>
                   <FormLabel>Application deadline</FormLabel>
                   <Input
                     type="date"
@@ -3844,11 +3877,11 @@ const AdminDashboard = () => {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>Hiring flow</FormLabel>
+                  <FormLabel>Hiring flow (optional)</FormLabel>
                   <Select
                     value={editJobForm.flow}
                     onChange={handleEditJobChange("flow")}
-                    placeholder="Select flow"
+                    placeholder="Optional: select flow"
                   >
                     <option value="Interview only">Interview only</option>
                     <option value="Exam + Interview">Exam + Interview</option>

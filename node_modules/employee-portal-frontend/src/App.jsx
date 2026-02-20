@@ -126,6 +126,7 @@ function App() {
       <Route path="/exam" element={<QuizPage />} />
       <Route path="/WaitingForApproval" element={<WaitingForApproval />} />
       <Route path="/jobs" element={<JobsPage />} />
+      <Route path="/jobs/:jobId" element={<JobsPage />} />
       <Route path="/resource" element={<Navigate to="/resources" replace />} />
       <Route
         path="/employee"

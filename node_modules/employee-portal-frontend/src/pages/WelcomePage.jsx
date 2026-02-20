@@ -132,6 +132,40 @@ const trainingHighlights = [
 const heroImageUrl = '/assets/hero-people.png';
 const contactEmail = 'hello@enisra.com';
 
+const partnerDescriptions = {
+  'trade ethiopia':
+    'Trade Ethiopia connects businesses with market opportunities, partnerships, and practical growth support.',
+};
+
+const normalizeWebsiteUrl = (value = '') => {
+  const trimmed = value.toString().trim();
+  if (!trimmed) return '';
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+const getPartnerWebsite = (company) => {
+  const directWebsite = normalizeWebsiteUrl(company?.website || '');
+  if (directWebsite) return directWebsite;
+
+  const companyName = (company?.name || '').toString().toLowerCase();
+  if (companyName.includes('trade ethiopia')) {
+    return 'https://www.tradeethiopian.com';
+  }
+  return '';
+};
+
+const getPartnerDescription = (company) => {
+  const companyName = (company?.name || '').toString().toLowerCase();
+  const matched = Object.entries(partnerDescriptions).find(([key]) => companyName.includes(key));
+  if (matched) return matched[1];
+  return 'Visit the company website to learn more about their services and opportunities.';
+};
+
+const isMobileInteraction = () => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches;
+};
+
 const WelcomePage = () => {
   const {
     bgMain,
@@ -170,12 +204,18 @@ const WelcomePage = () => {
   const [partnersError, setPartnersError] = useState(null);
   const [partnersRepeatCount, setPartnersRepeatCount] = useState(2);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isPartnerDrawerOpen,
+    onOpen: onPartnerDrawerOpen,
+    onClose: onPartnerDrawerClose,
+  } = useDisclosure();
   const toast = useToast();
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const partnersCarouselRef = useRef(null);
   const partnersCarouselPausedRef = useRef(false);
   const jobsSectionRef = useRef(null);
+  const [hoveredPartner, setHoveredPartner] = useState(null);
 
   const locationOptions = useMemo(() => {
     const values = jobs.map((job) => job.location).filter(Boolean);
@@ -287,6 +327,11 @@ const WelcomePage = () => {
     }
     return items;
   }, [partnerList, partnersRepeatCount]);
+
+  const openPartnerDrawer = (company) => {
+    setHoveredPartner(company);
+    onPartnerDrawerOpen();
+  };
 
 
   useEffect(() => {
@@ -554,6 +599,53 @@ const WelcomePage = () => {
               >
                 Profile
               </Button>
+            </Stack>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer isOpen={isPartnerDrawerOpen} placement="left" onClose={onPartnerDrawerClose} size="sm">
+        <DrawerOverlay />
+        <DrawerContent onMouseLeave={onPartnerDrawerClose}>
+          <DrawerCloseButton />
+          <DrawerHeader>{hoveredPartner?.name || 'Company'}</DrawerHeader>
+          <DrawerBody>
+            <Stack spacing={4}>
+              <Box
+                w="100%"
+                h="120px"
+                borderRadius="lg"
+                overflow="hidden"
+                bg="white"
+                boxShadow="sm"
+                borderWidth="1px"
+                borderColor={border}
+              >
+                <Image
+                  src={hoveredPartner?.logoUrl || hoveredPartner?.logo}
+                  alt={hoveredPartner?.name || 'Company logo'}
+                  w="100%"
+                  h="100%"
+                  objectFit="contain"
+                  p={3}
+                />
+              </Box>
+              <Text color={textSecondary}>{getPartnerDescription(hoveredPartner)}</Text>
+              {getPartnerWebsite(hoveredPartner) ? (
+                <Button
+                  as={ChakraLink}
+                  href={getPartnerWebsite(hoveredPartner)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  colorScheme="green"
+                >
+                  Visit Website
+                </Button>
+              ) : (
+                <Text color={textMuted} fontSize="sm">
+                  Website not available.
+                </Text>
+              )}
             </Stack>
           </DrawerBody>
         </DrawerContent>
@@ -896,14 +988,32 @@ const WelcomePage = () => {
               ) : (
                 partnersCarouselItems.map((company, idx) => (
                   <Box
-                    // Duplicate items for looping, so index is part of the key.
                     key={`${company._id || company.name}-${idx}`}
+                    as={getPartnerWebsite(company) ? ChakraLink : 'div'}
+                    href={getPartnerWebsite(company) || undefined}
+                    target={getPartnerWebsite(company) ? '_blank' : undefined}
+                    rel={getPartnerWebsite(company) ? 'noopener noreferrer' : undefined}
                     minW={{ base: '160px', md: '200px' }}
                     bg={softGreenBg}
                     borderRadius="xl"
                     border="1px solid"
                     borderColor={border}
                     p={4}
+                    display="block"
+                    textDecoration="none"
+                    cursor={getPartnerWebsite(company) ? 'pointer' : 'default'}
+                    transition="transform 0.2s ease, border-color 0.2s ease"
+                    onMouseEnter={() => openPartnerDrawer(company)}
+                    onClick={(event) => {
+                      if (isMobileInteraction()) {
+                        event.preventDefault();
+                        openPartnerDrawer(company);
+                      }
+                    }}
+                    _hover={{
+                      transform: 'translateY(-2px)',
+                      borderColor: primaryGreen,
+                    }}
                   >
                     <Box
                       w="100%"
