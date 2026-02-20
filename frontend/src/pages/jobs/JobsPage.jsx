@@ -29,7 +29,7 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
 import { useLanguage } from '../../context/language.jsx';
@@ -43,6 +43,7 @@ const safeDate = (value) => {
 
 const JobsPage = () => {
   const navigate = useNavigate();
+  const { jobId } = useParams();
   const bg = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
@@ -129,6 +130,15 @@ const JobsPage = () => {
       controller.abort();
     };
   }, [fetchJobs]);
+
+  useEffect(() => {
+    if (!jobId || !Array.isArray(jobs) || jobs.length === 0) return;
+    const matched = jobs.find((j) => String(j?._id) === String(jobId));
+    if (matched) {
+      setSelectedJob(matched);
+      onOpen();
+    }
+  }, [jobId, jobs, onOpen]);
 
   useEffect(() => {
     const controller = new AbortController();

@@ -47,6 +47,10 @@ const JobSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    yearsOfExperience: {
+      type: String,
+      trim: true,
+    },
     deadline: {
       type: Date,
     },
