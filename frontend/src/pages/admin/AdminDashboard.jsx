@@ -42,6 +42,7 @@
   StatHelpText,
   StatLabel,
   StatNumber,
+  Switch,
   Table,
   TableContainer,
   Tbody,
@@ -181,6 +182,7 @@ const AdminDashboard = () => {
     expirationDate: "",
     description: "",
     flow: "",
+    postToTelegram: false,
   });
   const [adminJobSubmitting, setAdminJobSubmitting] = useState(false);
   const [editJobForm, setEditJobForm] = useState({
@@ -1536,6 +1538,10 @@ const AdminDashboard = () => {
     setAdminJobForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const handleAdminTelegramToggle = (event) => {
+    setAdminJobForm((prev) => ({ ...prev, postToTelegram: event.target.checked }));
+  };
+
   const resetAdminJobForm = () => {
     setAdminJobForm({
       title: "",
@@ -1553,6 +1559,7 @@ const AdminDashboard = () => {
       expirationDate: "",
       description: "",
       flow: "",
+      postToTelegram: false,
     });
   };
 
@@ -1591,14 +1598,18 @@ const AdminDashboard = () => {
       expirationDate: adminJobForm.expirationDate || undefined,
       description: adminJobForm.description.trim(),
       flow: adminJobForm.flow.trim(),
+      postToTelegram: Boolean(adminJobForm.postToTelegram),
     };
 
     try {
       setAdminJobSubmitting(true);
-      await apiClient.post("/jobs", payload);
+      const response = await apiClient.post("/jobs", payload);
+      const telegram = response?.data?.telegram;
       toast({
         title: "Job submitted",
-        description: "Job posted by admin. It will appear in pending until approved.",
+        description: telegram?.success
+          ? "Job saved and sent to Telegram. It will appear in pending until approved."
+          : "Job posted by admin. It will appear in pending until approved.",
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -2390,6 +2401,14 @@ const AdminDashboard = () => {
                     value={adminJobForm.description}
                     onChange={handleAdminJobChange("description")}
                     minH="120px"
+                  />
+                </FormControl>
+                <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                  <FormLabel mb="0">Post to Telegram</FormLabel>
+                  <Switch
+                    colorScheme="blue"
+                    isChecked={adminJobForm.postToTelegram}
+                    onChange={handleAdminTelegramToggle}
                   />
                 </FormControl>
 

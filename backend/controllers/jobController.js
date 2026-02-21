@@ -14,6 +14,13 @@ const parseDate = (value) => {
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
+const parseBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  const normalized = toTrimmedString(value).toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on';
+};
+
 const extractEmail = (value) => {
   const candidate = toTrimmedString(value)
     .replace(/^mailto:/i, '')
@@ -173,6 +180,7 @@ exports.listMyJobs = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
+    const postToTelegram = parseBoolean(req.body.postToTelegram);
     const payload = {
       title: toTrimmedString(req.body.title),
       department: toTrimmedString(req.body.department),
@@ -213,7 +221,9 @@ exports.createJob = async (req, res) => {
     }
 
     const created = await Job.create(payload);
-    const telegramResult = await publishNewJob(created);
+    const telegramResult = postToTelegram
+      ? await publishNewJob(created)
+      : { skipped: true, reason: 'Disabled by request' };
 
     res.status(201).json({ success: true, data: created, telegram: telegramResult });
   } catch (error) {
