@@ -122,7 +122,6 @@ const EmployeeSidebar = ({ collapsed, onToggleCollapsed }) => {
   };
 
   const navItems = [
-    { label: 'Dashboard', to: '/employee/dashboard', icon: FiUser },
     { label: 'Profile', to: '/employee/profile', icon: FiUser },
     { label: 'Jobs', to: '/employee/jobs', icon: FiBriefcase },
     { label: 'All Jobs', to: '/employee/all-jobs', icon: FiBriefcase },
