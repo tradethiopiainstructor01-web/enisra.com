@@ -196,6 +196,7 @@ exports.createJob = async (req, res) => {
       description: toTrimmedString(req.body.description),
       flow: toTrimmedString(req.body.flow),
       approved: false,
+      postToTelegram,
     };
 
     const deadline = parseDate(req.body.deadline);
@@ -250,7 +251,10 @@ exports.approveJob = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
-    res.json({ success: true, data: updated });
+    const telegramResult = updated.postToTelegram
+      ? await publishNewJob(updated)
+      : { skipped: true, reason: 'Disabled by request' };
+    res.json({ success: true, data: updated, telegram: telegramResult });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -302,6 +306,9 @@ exports.updateJob = async (req, res) => {
       description: toTrimmedString(req.body.description),
       flow: toTrimmedString(req.body.flow),
     };
+    if (Object.prototype.hasOwnProperty.call(req.body, 'postToTelegram')) {
+      setPayload.postToTelegram = parseBoolean(req.body.postToTelegram);
+    }
 
     if (!setPayload.title || !setPayload.company || !setPayload.category || !setPayload.location || !setPayload.type || !setPayload.contactEmail) {
       return res.status(400).json({
