@@ -8,19 +8,31 @@ const escapeHtml = (v = '') =>
 
 class TelegramService {
   constructor() {
-    this.botToken = process.env.TELEGRAM_BOT_TOKEN;
-    this.channelId = process.env.TELEGRAM_CHANNEL_ID;
-    this.parseMode = (process.env.TELEGRAM_PARSE_MODE || 'HTML').toUpperCase();
     this.maxRetries = 3;
-    this.useSystemProxy = (process.env.TELEGRAM_USE_SYSTEM_PROXY || 'false').toLowerCase() === 'true';
+  }
+
+  getBotToken() {
+    return (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  }
+
+  getChannelId() {
+    return (process.env.TELEGRAM_CHANNEL_ID || '').trim();
+  }
+
+  getParseMode() {
+    return (process.env.TELEGRAM_PARSE_MODE || 'HTML').toUpperCase();
+  }
+
+  getUseSystemProxy() {
+    return (process.env.TELEGRAM_USE_SYSTEM_PROXY || 'false').toLowerCase() === 'true';
   }
 
   isEnabled() {
-    return Boolean(this.botToken && this.channelId);
+    return Boolean(this.getBotToken() && this.getChannelId());
   }
 
   apiUrl(method) {
-    return `${TELEGRAM_API_BASE}/bot${this.botToken}/${method}`;
+    return `${TELEGRAM_API_BASE}/bot${this.getBotToken()}/${method}`;
   }
 
   formatJobMessage(job) {
@@ -52,9 +64,9 @@ class TelegramService {
     if (!ensureHttpsUrl(jobUrl)) throw new Error('Job URL must be HTTPS');
 
     const payload = {
-      chat_id: this.channelId,
+      chat_id: this.getChannelId(),
       text: this.formatJobMessage(job),
-      parse_mode: this.parseMode,
+      parse_mode: this.getParseMode(),
       disable_web_page_preview: true,
       reply_markup: {
         inline_keyboard: [[{ text: 'Apply Now', url: jobUrl }]],
@@ -67,7 +79,7 @@ class TelegramService {
         const res = await axios.post(this.apiUrl('sendMessage'), payload, {
           timeout: 10000,
           headers: { 'Content-Type': 'application/json' },
-          ...(this.useSystemProxy ? {} : { proxy: false }),
+          ...(this.getUseSystemProxy() ? {} : { proxy: false }),
         });
 
         return {
@@ -98,7 +110,7 @@ class TelegramService {
       {
         timeout: 10000,
         headers: { 'Content-Type': 'application/json' },
-        ...(this.useSystemProxy ? {} : { proxy: false }),
+        ...(this.getUseSystemProxy() ? {} : { proxy: false }),
       }
     );
 
