@@ -143,6 +143,10 @@ const normalizeWebsiteUrl = (value = '') => {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 };
 
+const telegramChannelUrl = normalizeWebsiteUrl(
+  import.meta.env.VITE_TELEGRAM_CHANNEL_URL || 'https://t.me/enisrajobmatching'
+);
+
 const getPartnerWebsite = (company) => {
   const directWebsite = normalizeWebsiteUrl(company?.website || '');
   if (directWebsite) return directWebsite;
@@ -1100,7 +1104,7 @@ const WelcomePage = () => {
                 </Center>
                 <Button
                   as={ChakraLink}
-                  href="https://t.me/enisrajobmatching"
+                  href={telegramChannelUrl}
                   bg={primaryBlue}
                   color="white"
                   borderRadius="full"
@@ -1115,7 +1119,7 @@ const WelcomePage = () => {
         </Container>
 
         <Container ref={jobsSectionRef} maxW="7xl" py={12} order={1}>
-a          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
+          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
             <Box
               bg={cardBg}
               borderRadius="xl"
@@ -1332,7 +1336,7 @@ a          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
                 <Heading size="sm" color="whiteAlpha.900">
                   Contact
                 </Heading>
-                <ChakraLink color={primaryBlue} href="https://t.me/enisrajobmatching">
+                <ChakraLink color={primaryBlue} href={telegramChannelUrl}>
                   Telegram
                 </ChakraLink>
                 <ChakraLink color={primaryBlue} href={`mailto:${contactEmail}`}>
