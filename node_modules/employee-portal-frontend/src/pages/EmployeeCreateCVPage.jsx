@@ -462,18 +462,10 @@ const EmployeeCreateCVPage = () => {
                     {addressLine ? <Text fontSize="sm">{addressLine}</Text> : null}
                   </VStack>
 
-                  {profile?.employeeId || profile?.employmentType || profile?.dateOfJoining || profile?.employmentStatus ? (
+                  {profile?.employmentType || profile?.dateOfJoining || profile?.employmentStatus ? (
                     <Box mb={6}>
                       <SectionTitle>Employment</SectionTitle>
                       <VStack align="start" spacing={2}>
-                        {profile?.employeeId ? (
-                          <Text fontSize="sm">
-                            <Text as="span" fontWeight="semibold">
-                              ID:
-                            </Text>{' '}
-                            {profile.employeeId}
-                          </Text>
-                        ) : null}
                         {profile?.employmentType ? (
                           <Text fontSize="sm">
                             <Text as="span" fontWeight="semibold">
