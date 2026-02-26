@@ -145,6 +145,7 @@ const configuredOrigins = parseOriginsEnv(
 const localDevOrigins = [
   'http://enisra.com',
   'https://enisra.com',
+  'https://www.enisra.com',
   'http://174.129146.82',
   'http://localhost:5173',
   'http://localhost:3000',

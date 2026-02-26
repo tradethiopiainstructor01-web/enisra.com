@@ -272,7 +272,7 @@ const JobsPage = () => {
               <Button as={RouterLink} to="/jobs" size="sm" variant="ghost">
                 {t('scholarships')}
               </Button>
-              <Button as={RouterLink} to="/free-trainings" size="sm" variant="ghost">
+              <Button as={RouterLink} to="/" size="sm" variant="ghost">
                 {t('freeTrainings')}
               </Button>
               <Button as={RouterLink} to="/employee/profile" size="sm" variant="ghost">

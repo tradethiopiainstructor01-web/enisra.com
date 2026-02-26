@@ -8,6 +8,7 @@ import {
   Divider,
   Flex,
   FormControl,
+  FormHelperText,
   FormLabel,
   Heading,
   HStack,
@@ -751,53 +752,104 @@ const EmployeeInfoForm = () => {
         </Stack>
 
         <Stack spacing={4}>
-          <Heading size="md">3. Current Employment Details</Heading>
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+          <Heading size="md">3. Employment Details</Heading>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <FormControl>
               <FormLabel>Employee ID</FormLabel>
-              <Input value={profile.employeeId} onChange={setField('employeeId')} placeholder="e.g. EMP-00123" />
+              <Input 
+                value={profile.employeeId} 
+                onChange={setField('employeeId')} 
+                placeholder="e.g. EMP001" 
+                isDisabled={!isHrOrAdmin}
+              />
+              {!isHrOrAdmin && (
+                <FormHelperText>Employee ID is managed by HR/Admin</FormHelperText>
+              )}
             </FormControl>
-            <FormControl>
+            
+            <FormControl isRequired>
               <FormLabel>Job Title</FormLabel>
-              <Input value={profile.jobTitle} onChange={setField('jobTitle')} placeholder="e.g. Software Engineer" />
+              <Input 
+                value={profile.jobTitle} 
+                onChange={setField('jobTitle')} 
+                placeholder="e.g. Software Engineer" 
+              />
             </FormControl>
-            <FormControl>
+            
+            <FormControl isRequired>
               <FormLabel>Department</FormLabel>
-              <Input value={profile.department} onChange={setField('department')} placeholder="e.g. IT" />
+              <Input 
+                value={profile.department} 
+                onChange={setField('department')} 
+                placeholder="e.g. IT Department" 
+              />
             </FormControl>
-
+            
             <FormControl>
-              <FormLabel>Position</FormLabel>
-              <Input value={profile.position} onChange={setField('position')} placeholder="e.g. Senior Staff" />
+              <FormLabel>Role / Position</FormLabel>
+              <Input 
+                value={profile.position} 
+                onChange={setField('position')} 
+                placeholder="e.g. Senior Developer" 
+              />
             </FormControl>
+            
             <FormControl>
               <FormLabel>Employment Type</FormLabel>
-              <Select value={profile.employmentType} onChange={setField('employmentType')} placeholder="Select">
+              <Select 
+                value={profile.employmentType} 
+                onChange={setField('employmentType')}
+                placeholder="Select employment type"
+              >
                 <option value="full-time">Full-time</option>
                 <option value="part-time">Part-time</option>
                 <option value="contract">Contract</option>
-                <option value="internship">Internship</option>
+                <option value="intern">Intern</option>
+                <option value="freelance">Freelance</option>
               </Select>
             </FormControl>
-            <FormControl>
-              <FormLabel>Date of Joining</FormLabel>
-              <Input type="date" value={profile.dateOfJoining} onChange={setField('dateOfJoining')} />
-            </FormControl>
-
+            
             <FormControl>
               <FormLabel>Work Location</FormLabel>
-              <Input value={profile.workLocation} onChange={setField('workLocation')} placeholder="e.g. HQ - Addis Ababa" />
+              <Select 
+                value={profile.workLocation} 
+                onChange={setField('workLocation')}
+                placeholder="Select work location"
+              >
+                <option value="office">Office</option>
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+              </Select>
             </FormControl>
+            
             <FormControl>
               <FormLabel>Reporting Manager</FormLabel>
-              <Input value={profile.reportingManager} onChange={setField('reportingManager')} placeholder="e.g. Team Lead Name" />
+              <Input 
+                value={profile.reportingManager} 
+                onChange={setField('reportingManager')} 
+                placeholder="e.g. John Smith" 
+              />
             </FormControl>
+            
+            <FormControl>
+              <FormLabel>Date of Joining</FormLabel>
+              <Input 
+                type="date" 
+                value={profile.dateOfJoining} 
+                onChange={setField('dateOfJoining')} 
+              />
+            </FormControl>
+            
             <FormControl>
               <FormLabel>Employment Status</FormLabel>
-              <Select value={profile.employmentStatus} onChange={setField('employmentStatus')} placeholder="Select">
+              <Select 
+                value={profile.employmentStatus} 
+                onChange={setField('employmentStatus')}
+                placeholder="Select employment status"
+              >
                 <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="probation">Probation</option>
+                <option value="on-leave">On Leave</option>
+                <option value="suspended">Suspended</option>
                 <option value="terminated">Terminated</option>
               </Select>
             </FormControl>

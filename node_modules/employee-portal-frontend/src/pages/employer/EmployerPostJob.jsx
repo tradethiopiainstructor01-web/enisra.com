@@ -14,6 +14,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Switch,
   Tab,
   TabList,
   TabPanel,
@@ -50,6 +51,7 @@ const EmployerPostJob = () => {
     expirationDate: "",
     description: "",
     flow: "",
+    postToTelegram: false,
   });
 
   const cardBg = useColorModeValue("white", "gray.800");
@@ -100,6 +102,10 @@ const EmployerPostJob = () => {
     setJobForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const handleTelegramToggle = (event) => {
+    setJobForm((prev) => ({ ...prev, postToTelegram: event.target.checked }));
+  };
+
   const handleAddJob = async (event) => {
     event.preventDefault();
     if (
@@ -136,11 +142,12 @@ const EmployerPostJob = () => {
       expirationDate: jobForm.expirationDate || undefined,
       description: jobForm.description.trim(),
       flow: jobForm.flow.trim(),
+      postToTelegram: Boolean(jobForm.postToTelegram),
     };
 
     try {
       setIsPosting(true);
-      await apiClient.post("/jobs", payload);
+      const response = await apiClient.post("/jobs", payload);
       setJobForm({
         title: "",
         department: "",
@@ -157,11 +164,15 @@ const EmployerPostJob = () => {
         expirationDate: "",
         description: "",
         flow: "",
+        postToTelegram: false,
       });
 
+      const telegram = response?.data?.telegram;
       toast({
         title: "Job submitted",
-        description: "Your job is pending admin approval. Once approved, it will move to Posted.",
+        description: telegram?.success
+          ? "Your job was saved and sent to Telegram. It is now pending admin approval."
+          : "Your job is pending admin approval. Once approved, it will move to Posted.",
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -344,6 +355,14 @@ const EmployerPostJob = () => {
                   value={jobForm.description}
                   onChange={handleFormChange("description")}
                   minH="120px"
+                />
+              </FormControl>
+              <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                <FormLabel mb="0">Post to Telegram</FormLabel>
+                <Switch
+                  colorScheme="green"
+                  isChecked={jobForm.postToTelegram}
+                  onChange={handleTelegramToggle}
                 />
               </FormControl>
               <Button leftIcon={<FiPlus />} colorScheme="green" type="submit" isLoading={isPosting}>

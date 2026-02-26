@@ -42,6 +42,7 @@ import {
   FiUser,
 } from 'react-icons/fi';
 import { format } from 'date-fns';
+import { Input, FormControl, FormLabel } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { useUserStore } from '../../store/user';
@@ -148,6 +149,10 @@ const EmployeeProfile = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [isEditingInline, setIsEditingInline] = useState(false);
+  const [editProfile, setEditProfile] = useState(null);
+  const [isSavingInline, setIsSavingInline] = useState(false);
+  const updateUserInfo = useUserStore((s) => s.updateUserInfo);
   const resolvedUserId = profile?._id || currentUser?._id || localStorage.getItem('userId');
 
   const fetchProfile = useCallback(async (signal) => {
@@ -258,6 +263,85 @@ const EmployeeProfile = () => {
     if (parts.length) return parts.join(' ');
     return profile?.fullName || currentUser?.username || currentUser?.email || 'Employee';
   }, [profile, currentUser]);
+
+  useEffect(() => {
+    if (profile) setEditProfile({
+      firstName: profile.firstName || '',
+      middleName: profile.middleName || '',
+      lastName: profile.lastName || '',
+      jobTitle: profile.jobTitle || '',
+      department: profile.department || '',
+      position: profile.position || '',
+      personalEmail: profile.altEmail || profile.personalEmail || '',
+      phone: profile.phone || profile?.altPhone || '',
+      city: profile.city || '',
+      country: profile.country || '',
+      currentAddress: profile.currentAddress || profile.location || '',
+    });
+  }, [profile]);
+
+  const setEditField = (field) => (e) => setEditProfile((p) => ({ ...(p || {}), [field]: e.target.value }));
+
+  const handleStartInlineEdit = () => setIsEditingInline(true);
+
+  const handleCancelInlineEdit = () => {
+    setIsEditingInline(false);
+    if (profile) {
+      setEditProfile({
+        firstName: profile.firstName || '',
+        middleName: profile.middleName || '',
+        lastName: profile.lastName || '',
+        jobTitle: profile.jobTitle || '',
+        department: profile.department || '',
+        position: profile.position || '',
+        phone: profile.phone || profile?.altPhone || '',
+        city: profile.city || '',
+        country: profile.country || '',
+        currentAddress: profile.currentAddress || profile.location || '',
+      });
+    }
+  };
+
+  const handleSaveInline = async () => {
+    if (!profile?._id) return;
+    setIsSavingInline(true);
+    try {
+      const payload = {
+        _id: profile._id,
+        firstName: (editProfile?.firstName || '').trim(),
+        middleName: (editProfile?.middleName || '').trim(),
+        lastName: (editProfile?.lastName || '').trim(),
+        fullName: [editProfile?.firstName, editProfile?.middleName, editProfile?.lastName].filter(Boolean).join(' ').trim(),
+        jobTitle: (editProfile?.jobTitle || '').trim(),
+        department: (editProfile?.department || '').trim(),
+        position: (editProfile?.position || '').trim(),
+        phone: (editProfile?.phone || '').trim(),
+        altPhone: (editProfile?.phone || '').trim(),
+        city: (editProfile?.city || '').trim(),
+        country: (editProfile?.country || '').trim(),
+        currentAddress: (editProfile?.currentAddress || '').trim(),
+      };
+
+      const res = await updateUserInfo(payload);
+      if (!res || !res.success) throw new Error(res?.message || 'Update failed');
+
+      // Refresh local profile from response data when available
+      const updated = res.data || {};
+      setProfile((prev) => ({ ...(prev || {}), ...updated }));
+      // Update currentUser in parent store if needed
+      if (updated && Object.keys(updated).length && setCurrentUser) {
+        setCurrentUser({ ...currentUser, ...updated, token: currentUser?.token });
+      }
+
+      window.dispatchEvent(new Event('employee-profile-updated'));
+      setIsEditingInline(false);
+      toast({ title: 'Profile updated', status: 'success', duration: 3000, isClosable: true });
+    } catch (err) {
+      toast({ title: 'Save failed', description: err?.message || 'Unable to save changes', status: 'error', duration: 4000, isClosable: true });
+    } finally {
+      setIsSavingInline(false);
+    }
+  };
 
   const subtitle = useMemo(() => {
     const pieces = [profile?.jobTitle, profile?.department, profile?.position]
@@ -423,15 +507,32 @@ const EmployeeProfile = () => {
                     >
                       Refresh
                     </Button>
-                    <Button
-                      leftIcon={<Icon as={FiEdit} />}
-                      variant="solid"
-                      colorScheme="blackAlpha"
-                      size="sm"
-                      onClick={() => setActiveTab(1)}
-                    >
-                      Edit profile
-                    </Button>
+                    {!isEditingInline ? (
+                      <Button
+                        leftIcon={<Icon as={FiEdit} />}
+                        variant="solid"
+                        colorScheme="blackAlpha"
+                        size="sm"
+                        onClick={handleStartInlineEdit}
+                      >
+                        Edit profile
+                      </Button>
+                    ) : (
+                      <HStack spacing={2}>
+                        <Button
+                          leftIcon={<Icon as={FiEdit} />}
+                          colorScheme="teal"
+                          size="sm"
+                          onClick={handleSaveInline}
+                          isLoading={isSavingInline}
+                        >
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleCancelInlineEdit}>
+                          Cancel
+                        </Button>
+                      </HStack>
+                    )}
                     <Button
                       leftIcon={<Icon as={FiBriefcase} />}
                       variant="outline"
@@ -491,9 +592,13 @@ const EmployeeProfile = () => {
                             <Text fontSize="sm" fontWeight="semibold" mt={2}>
                               Personal email
                             </Text>
-                            <Text fontSize="sm" color={mutedText}>
-                              {profile?.altEmail || '-'}
-                            </Text>
+                            {isEditingInline ? (
+                              <Input size="sm" value={editProfile?.altEmail || editProfile?.personalEmail || profile?.altEmail || ''} onChange={setEditField('personalEmail')} placeholder="Personal email" />
+                            ) : (
+                              <Text fontSize="sm" color={mutedText}>
+                                {profile?.altEmail || '-'}
+                              </Text>
+                            )}
                           </Box>
                         </HStack>
 
@@ -503,9 +608,13 @@ const EmployeeProfile = () => {
                             <Text fontSize="sm" fontWeight="semibold">
                               Phone
                             </Text>
-                            <Text fontSize="sm" color={mutedText}>
-                              {contactPhone || '-'}
-                            </Text>
+                            {isEditingInline ? (
+                              <Input size="sm" value={editProfile?.phone || profile?.phone || ''} onChange={setEditField('phone')} placeholder="Phone number" />
+                            ) : (
+                              <Text fontSize="sm" color={mutedText}>
+                                {profile?.phone || '-'}
+                              </Text>
+                            )}
                             <Text fontSize="sm" fontWeight="semibold" mt={2}>
                               Emergency contact
                             </Text>
@@ -521,9 +630,19 @@ const EmployeeProfile = () => {
                             <Text fontSize="sm" fontWeight="semibold">
                               Address
                             </Text>
-                            <Text fontSize="sm" color={mutedText}>
-                              {addressLine || '-'}
-                            </Text>
+                            {isEditingInline ? (
+                              <Stack>
+                                <Input size="sm" value={editProfile?.currentAddress || profile?.currentAddress || ''} onChange={setEditField('currentAddress')} placeholder="Address" />
+                                <HStack>
+                                  <Input size="sm" value={editProfile?.city || profile?.city || ''} onChange={setEditField('city')} placeholder="City" />
+                                  <Input size="sm" value={editProfile?.country || profile?.country || ''} onChange={setEditField('country')} placeholder="Country" />
+                                </HStack>
+                              </Stack>
+                            ) : (
+                              <Text fontSize="sm" color={mutedText}>
+                                {addressLine || '-'}
+                              </Text>
+                            )}
                           </Box>
                         </HStack>
                       </Stack>
@@ -537,9 +656,30 @@ const EmployeeProfile = () => {
                       </Heading>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <InfoItem label="Employee ID" value={profile?.employeeId} />
-                        <InfoItem label="Job title" value={profile?.jobTitle} />
-                        <InfoItem label="Department" value={profile?.department} />
-                        <InfoItem label="Role / position" value={profile?.position} />
+                        {isEditingInline ? (
+                          <FormControl>
+                            <FormLabel>Job title</FormLabel>
+                            <Input size="sm" value={editProfile?.jobTitle || ''} onChange={setEditField('jobTitle')} />
+                          </FormControl>
+                        ) : (
+                          <InfoItem label="Job title" value={profile?.jobTitle} />
+                        )}
+                        {isEditingInline ? (
+                          <FormControl>
+                            <FormLabel>Department</FormLabel>
+                            <Input size="sm" value={editProfile?.department || ''} onChange={setEditField('department')} />
+                          </FormControl>
+                        ) : (
+                          <InfoItem label="Department" value={profile?.department} />
+                        )}
+                        {isEditingInline ? (
+                          <FormControl>
+                            <FormLabel>Role / position</FormLabel>
+                            <Input size="sm" value={editProfile?.position || ''} onChange={setEditField('position')} />
+                          </FormControl>
+                        ) : (
+                          <InfoItem label="Role / position" value={profile?.position} />
+                        )}
                         <InfoItem label="Employment type" value={profile?.employmentType} />
                         <InfoItem label="Work location" value={profile?.workLocation} />
                         <InfoItem label="Reporting manager" value={profile?.reportingManager} />
@@ -556,9 +696,30 @@ const EmployeeProfile = () => {
                         Personal
                       </Heading>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <InfoItem label="First name" value={profile?.firstName} />
-                        <InfoItem label="Middle name" value={profile?.middleName} />
-                        <InfoItem label="Last name" value={profile?.lastName} />
+                        {isEditingInline ? (
+                          <FormControl>
+                            <FormLabel>First name</FormLabel>
+                            <Input size="sm" value={editProfile?.firstName || ''} onChange={setEditField('firstName')} />
+                          </FormControl>
+                        ) : (
+                          <InfoItem label="First name" value={profile?.firstName} />
+                        )}
+                        {isEditingInline ? (
+                          <FormControl>
+                            <FormLabel>Middle name</FormLabel>
+                            <Input size="sm" value={editProfile?.middleName || ''} onChange={setEditField('middleName')} />
+                          </FormControl>
+                        ) : (
+                          <InfoItem label="Middle name" value={profile?.middleName} />
+                        )}
+                        {isEditingInline ? (
+                          <FormControl>
+                            <FormLabel>Last name</FormLabel>
+                            <Input size="sm" value={editProfile?.lastName || ''} onChange={setEditField('lastName')} />
+                          </FormControl>
+                        ) : (
+                          <InfoItem label="Last name" value={profile?.lastName} />
+                        )}
                         <InfoItem label="Gender" value={profile?.gender} />
                         <InfoItem label="Date of birth" value={safeFormatDate(profile?.dateOfBirth)} />
                         <InfoItem label="Nationality" value={profile?.nationality} />

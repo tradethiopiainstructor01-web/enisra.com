@@ -1262,6 +1262,7 @@ const WelcomePage = () => {
                   bg={primaryGreen}
                   borderRadius="full"
                   _hover={{ bg: primaryGreenHover }}
+                  onClick={() => navigate('/')}
                 >
                   Start Free Training
                 </Button>
@@ -1328,9 +1329,9 @@ const WelcomePage = () => {
                 <Heading size="sm" color="whiteAlpha.900">
                   Quick Links
                 </Heading>
-                <ChakraLink color={primaryBlue}>Jobs</ChakraLink>
-                <ChakraLink color={primaryBlue}>Trainings</ChakraLink>
-                <ChakraLink color={primaryBlue}>Scholarships</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color={primaryBlue}>Jobs</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color={primaryBlue}>Trainings</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color={primaryBlue}>Scholarships</ChakraLink>
               </VStack>
               <VStack align="flex-start" spacing={2}>
                 <Heading size="sm" color="whiteAlpha.900">

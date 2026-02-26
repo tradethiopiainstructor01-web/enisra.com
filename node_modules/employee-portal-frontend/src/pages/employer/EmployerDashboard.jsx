@@ -19,6 +19,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Switch,
   Table,
   TableContainer,
   Tbody,
@@ -204,6 +205,7 @@ const EmployerDashboard = () => {
     expirationDate: "",
     description: "",
     flow: "",
+    postToTelegram: false,
   });
 
   const bg = useColorModeValue("gray.50", "gray.900");
@@ -357,6 +359,10 @@ const EmployerDashboard = () => {
     setJobForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const handleTelegramToggle = (event) => {
+    setJobForm((prev) => ({ ...prev, postToTelegram: event.target.checked }));
+  };
+
   const handleEmployerFormChange = (field) => (event) => {
     setEmployerDetails((prev) => ({ ...prev, [field]: event.target.value }));
   };
@@ -440,6 +446,7 @@ const EmployerDashboard = () => {
       expirationDate: jobForm.expirationDate || undefined,
       description: jobForm.description.trim(),
       flow: jobForm.flow.trim(),
+      postToTelegram: Boolean(jobForm.postToTelegram),
     };
 
     try {
@@ -466,6 +473,7 @@ const EmployerDashboard = () => {
         expirationDate: "",
         description: "",
         flow: "",
+        postToTelegram: false,
       });
 
       toast({
@@ -980,6 +988,14 @@ const EmployerDashboard = () => {
                       value={jobForm.description}
                       onChange={handleFormChange("description")}
                       minH="120px"
+                    />
+                  </FormControl>
+                  <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                    <FormLabel mb="0">Post to Telegram</FormLabel>
+                    <Switch
+                      colorScheme="green"
+                      isChecked={jobForm.postToTelegram}
+                      onChange={handleTelegramToggle}
                     />
                   </FormControl>
                   <Button leftIcon={<FiPlus />} colorScheme="green" type="submit" isLoading={isPosting}>
