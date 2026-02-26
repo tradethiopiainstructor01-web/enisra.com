@@ -51,6 +51,9 @@ const partnerCompanyRoutes = require('./routes/partnerCompanyRoutes.js');
 const adminRoutes = require('./routes/adminRoutes.js');
 const employerCategoryRoutes = require('./routes/employerCategoryRoutes.js');
 const favoritesRoutes = require('./routes/favoritesRoutes.js');
+const scholarshipAuthRoutes = require('./routes/scholarshipAuthRoutes.js');
+const smsAuthRoutes = require('./routes/smsAuthRoutes.js');
+const { initSmppHandlers } = require('./services/subscriptionService');
 // Load environment variables
 
 // Initialize Express app
@@ -318,6 +321,8 @@ app.use('/telegram', telegramRoutes);
 app.use('/api/partners', partnerCompanyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/scholarship-auth', scholarshipAuthRoutes);
+app.use('/api', smsAuthRoutes);
 
 
 // Global error handler
@@ -343,6 +348,7 @@ if (require.main === module) {
     // Connect to database and start server
     connectDB()
       .then(() => {
+        initSmppHandlers();
         const httpServer = server || app;
         const maxAttempts = 50;
 

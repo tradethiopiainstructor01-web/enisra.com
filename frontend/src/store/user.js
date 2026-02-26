@@ -1,6 +1,7 @@
 // src/store/userStore.js
 import { create } from "zustand";
 import { getDepartmentFromRole, getUserDepartment } from "../utils/department";
+import { resolveApiBase } from "../utils/apiBase";
 
 export const normalizeRole = (value = "") => {
     const text = value ? value.toString() : "";
@@ -173,7 +174,8 @@ export const useUserStore = create((set) => ({
         // Never send _id back in the update payload (immutable field on MongoDB documents)
         const { _id, ...safeBody } = updatedInfo;
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/users/info/${uid}`, {
+            const apiBase = resolveApiBase();
+            const res = await fetch(`${apiBase}/users/info/${uid}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

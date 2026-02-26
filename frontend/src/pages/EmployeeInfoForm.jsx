@@ -74,6 +74,26 @@ const splitCsv = (value = '') =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const resolveContactPhone = (user = {}) => {
+  const nationalId = (user.nationalIdOrPassportNumber || '').toString().trim();
+  const phone = (user.phone || '').toString().trim();
+  const username = (user.username || '').toString().trim();
+
+  if (phone && phone !== nationalId) return phone;
+  if (username && username !== nationalId) return username;
+  return phone || username || '';
+};
+
+const resolveCurrentAddress = (user = {}) => {
+  const nationalId = (user.nationalIdOrPassportNumber || '').toString().trim();
+  const primary = (user.currentAddress || '').toString().trim();
+  const fallback = (user.location || '').toString().trim();
+
+  if (primary && primary !== nationalId) return primary;
+  if (fallback && fallback !== nationalId) return fallback;
+  return primary || fallback || '';
+};
+
 const EmployeeInfoForm = () => {
   const toast = useToast();
   const cardBg = useColorModeValue('gray.50', 'gray.800');
@@ -115,7 +135,7 @@ const EmployeeInfoForm = () => {
     city: '',
     country: '',
 
-    // 3. Employment details
+    // 3. Current Employment Details
     employeeId: '',
     jobTitle: '',
     department: '',
@@ -203,13 +223,13 @@ const EmployeeInfoForm = () => {
         dateOfBirth: toDateInputValue(user.dateOfBirth),
         nationality: user.nationality || '',
         maritalStatus: user.maritalStatus || '',
-        nationalIdOrPassportNumber: user.nationalIdOrPassportNumber || '',
+        nationalIdOrPassportNumber: user.nationalIdOrPassportNumber || user.phone || '',
 
         personalEmail: user.altEmail || '',
-        phoneNumber: user.phone || '',
+        phoneNumber: resolveContactPhone(user),
         emergencyContactName: user.emergencyContactName || '',
         emergencyContactPhone: user.altPhone || '',
-        currentAddress: user.currentAddress || user.location || '',
+        currentAddress: resolveCurrentAddress(user),
         city: user.city || '',
         country: user.country || '',
 
@@ -352,7 +372,17 @@ const EmployeeInfoForm = () => {
 
   const handleSaveProfile = async (event) => {
     event.preventDefault();
-    if (!currentUser?._id) return;
+    const userId = currentUser?._id || localStorage.getItem('userId');
+    if (!userId) {
+      toast({
+        title: 'Missing user ID',
+        description: 'Please log in again and try saving your profile.',
+        status: 'error',
+        duration: 3500,
+        isClosable: true,
+      });
+      return;
+    }
 
     const firstName = profile.firstName.trim();
     const middleName = profile.middleName.trim();
@@ -376,7 +406,7 @@ const EmployeeInfoForm = () => {
     const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ').trim();
 
     const payload = {
-      _id: currentUser._id,
+      _id: userId,
       fullName,
       firstName,
       middleName,
@@ -569,7 +599,9 @@ const EmployeeInfoForm = () => {
     }
   };
 
-  if (!currentUser?._id) {
+  const canEditProfile = Boolean(currentUser?._id || localStorage.getItem('userId'));
+
+  if (!canEditProfile) {
     return (
       <Box p={6} borderWidth="1px" borderColor={borderColor} borderRadius="lg" bg={cardBg}>
         <Text>Please log in to fill your employee profile.</Text>
@@ -635,7 +667,7 @@ const EmployeeInfoForm = () => {
         <Stack spacing={4}>
           <Heading size="md">1. Personal Information</Heading>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>First Name</FormLabel>
               <Input value={profile.firstName} onChange={setField('firstName')} placeholder="e.g. Sara" />
             </FormControl>
@@ -643,23 +675,23 @@ const EmployeeInfoForm = () => {
               <FormLabel>Middle Name</FormLabel>
               <Input value={profile.middleName} onChange={setField('middleName')} placeholder="e.g. Bekele" />
             </FormControl>
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>Last Name</FormLabel>
               <Input value={profile.lastName} onChange={setField('lastName')} placeholder="e.g. Tesfaye" />
             </FormControl>
 
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>Gender</FormLabel>
               <Select value={profile.gender} onChange={setField('gender')} placeholder="Select">
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </Select>
             </FormControl>
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>Date of Birth</FormLabel>
               <Input type="date" value={profile.dateOfBirth} onChange={setField('dateOfBirth')} />
             </FormControl>
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>Nationality</FormLabel>
               <Input value={profile.nationality} onChange={setField('nationality')} placeholder="e.g. Ethiopian" />
             </FormControl>
@@ -674,12 +706,12 @@ const EmployeeInfoForm = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <FormLabel>National ID/Passport</FormLabel>
+              <FormLabel>Fayda Registration Number</FormLabel>
               <Input
-                type="password"
+                type="text"
                 value={profile.nationalIdOrPassportNumber}
                 onChange={handleNationalIdChange}
-                placeholder="16 digit national id"
+                placeholder="16 digit fayda registration number"
                 inputMode="numeric"
                 maxLength={16}
               />
@@ -698,7 +730,7 @@ const EmployeeInfoForm = () => {
               <FormLabel>Work Email</FormLabel>
               <Input type="email" value={currentUser.email || ''} isReadOnly />
             </FormControl>
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>Phone Number</FormLabel>
               <Input type="tel" value={profile.phoneNumber} onChange={setField('phoneNumber')} placeholder="+251 9xx xxx xxx" />
             </FormControl>
@@ -718,10 +750,62 @@ const EmployeeInfoForm = () => {
           </SimpleGrid>
         </Stack>
 
-        {/* Employment details intentionally hidden for employee self-registration */}
+        <Stack spacing={4}>
+          <Heading size="md">3. Current Employment Details</Heading>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+            <FormControl>
+              <FormLabel>Employee ID</FormLabel>
+              <Input value={profile.employeeId} onChange={setField('employeeId')} placeholder="e.g. EMP-00123" />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Job Title</FormLabel>
+              <Input value={profile.jobTitle} onChange={setField('jobTitle')} placeholder="e.g. Software Engineer" />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Department</FormLabel>
+              <Input value={profile.department} onChange={setField('department')} placeholder="e.g. IT" />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>Position</FormLabel>
+              <Input value={profile.position} onChange={setField('position')} placeholder="e.g. Senior Staff" />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Employment Type</FormLabel>
+              <Select value={profile.employmentType} onChange={setField('employmentType')} placeholder="Select">
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="contract">Contract</option>
+                <option value="internship">Internship</option>
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel>Date of Joining</FormLabel>
+              <Input type="date" value={profile.dateOfJoining} onChange={setField('dateOfJoining')} />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>Work Location</FormLabel>
+              <Input value={profile.workLocation} onChange={setField('workLocation')} placeholder="e.g. HQ - Addis Ababa" />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Reporting Manager</FormLabel>
+              <Input value={profile.reportingManager} onChange={setField('reportingManager')} placeholder="e.g. Team Lead Name" />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Employment Status</FormLabel>
+              <Select value={profile.employmentStatus} onChange={setField('employmentStatus')} placeholder="Select">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="probation">Probation</option>
+                <option value="terminated">Terminated</option>
+              </Select>
+            </FormControl>
+          </SimpleGrid>
+        </Stack>
 
         <Stack spacing={4}>
-          <Heading size="md">3. Education Background</Heading>
+          <Heading size="md">4. Education Background</Heading>
           <Stack spacing={4}>
             {profile.educationBackground.map((item, index) => (
               <Box key={`edu-${index}`} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={4}>
@@ -796,7 +880,7 @@ const EmployeeInfoForm = () => {
         </Stack>
 
         <Stack spacing={4}>
-          <Heading size="md">4. Work Experience</Heading>
+          <Heading size="md">5. Work Experience</Heading>
           <Stack spacing={4}>
             {profile.workExperience.map((item, index) => (
               <Box key={`exp-${index}`} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={4}>
@@ -862,7 +946,7 @@ const EmployeeInfoForm = () => {
         </Stack>
 
         <Stack spacing={4}>
-          <Heading size="md">5. Skills & Competencies</Heading>
+          <Heading size="md">6. Skills & Competencies</Heading>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <FormControl>
               <FormLabel>Technical Skills (comma separated)</FormLabel>
@@ -925,7 +1009,7 @@ const EmployeeInfoForm = () => {
 
         {isHrOrAdmin && (
           <Stack spacing={4}>
-            <Heading size="md">6. Salary & Contract Details (HR Only)</Heading>
+            <Heading size="md">7. Salary & Contract Details (HR Only)</Heading>
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
               <FormControl>
                 <FormLabel>Salary Type</FormLabel>
@@ -973,7 +1057,7 @@ const EmployeeInfoForm = () => {
         )}
 
         <Stack spacing={4}>
-          <Heading size="md">7. Documents Upload</Heading>
+          <Heading size="md">8. Documents Upload</Heading>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <FormControl>
               <FormLabel>Profile Photo (Upload)</FormLabel>

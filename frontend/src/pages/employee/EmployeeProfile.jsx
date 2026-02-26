@@ -55,6 +55,52 @@ const safeFormatDate = (value) => {
   return format(date, 'PPP');
 };
 
+const resolveContactPhone = (user = {}) => {
+  const nationalId = (user?.nationalIdOrPassportNumber || '').toString().trim();
+  const phone = (user?.phone || '').toString().trim();
+  const username = (user?.username || '').toString().trim();
+
+  if (phone && phone !== nationalId) return phone;
+  if (username && username !== nationalId) return username;
+  return phone || username || '';
+};
+
+const resolveCurrentAddress = (user = {}) => {
+  const nationalId = (user?.nationalIdOrPassportNumber || '').toString().trim();
+  const primary = (user?.currentAddress || '').toString().trim();
+  const fallback = (user?.location || '').toString().trim();
+
+  if (primary && primary !== nationalId) return primary;
+  if (fallback && fallback !== nationalId) return fallback;
+  return primary || fallback || '';
+};
+
+const toTitleCase = (value = '') =>
+  value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const buildAddressLine = (user = {}) => {
+  const rawParts = [resolveCurrentAddress(user), user?.city, user?.country]
+    .map((value) => (value || '').toString().trim())
+    .filter(Boolean)
+    .flatMap((value) => value.split(',').map((part) => part.trim()).filter(Boolean));
+
+  const seen = new Set();
+  const uniqueParts = [];
+
+  for (const part of rawParts) {
+    const key = part.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueParts.push(toTitleCase(part));
+  }
+
+  return uniqueParts.join(', ');
+};
+
 const InfoItem = ({ label, value }) => (
   <Box>
     <Text fontSize="xs" letterSpacing="0.14em" textTransform="uppercase" color="gray.500">
@@ -227,12 +273,9 @@ const EmployeeProfile = () => {
     return pieces.join(', ');
   }, [profile]);
 
-  const addressLine = useMemo(() => {
-    const pieces = [profile?.currentAddress, profile?.city, profile?.country]
-      .map((v) => (v || '').toString().trim())
-      .filter(Boolean);
-    return pieces.join(', ');
-  }, [profile]);
+  const addressLine = useMemo(() => buildAddressLine(profile), [profile]);
+
+  const contactPhone = useMemo(() => resolveContactPhone(profile), [profile]);
 
   const isInfoComplete = (profile?.infoStatus || '').toString().toLowerCase() === 'completed';
   const profileCompletion = useMemo(() => getEmployeeProfileCompletion(profile), [profile]);
@@ -461,7 +504,7 @@ const EmployeeProfile = () => {
                               Phone
                             </Text>
                             <Text fontSize="sm" color={mutedText}>
-                              {profile?.phone || '-'}
+                              {contactPhone || '-'}
                             </Text>
                             <Text fontSize="sm" fontWeight="semibold" mt={2}>
                               Emergency contact
@@ -490,7 +533,7 @@ const EmployeeProfile = () => {
                   <Card bg={sectionCardBg} borderWidth="1px" borderColor={borderColor} borderRadius="xl">
                     <CardBody>
                       <Heading size="sm" mb={4}>
-                        Employment
+                        Current Employment Details
                       </Heading>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                         <InfoItem label="Employee ID" value={profile?.employeeId} />
@@ -520,7 +563,7 @@ const EmployeeProfile = () => {
                         <InfoItem label="Date of birth" value={safeFormatDate(profile?.dateOfBirth)} />
                         <InfoItem label="Nationality" value={profile?.nationality} />
                         <InfoItem label="Marital status" value={profile?.maritalStatus} />
-                        <InfoItem label="National ID / passport" value={profile?.nationalIdOrPassportNumber} />
+                        <InfoItem label="Fayda Registration Number" value={profile?.nationalIdOrPassportNumber} />
                       </SimpleGrid>
                     </CardBody>
                   </Card>

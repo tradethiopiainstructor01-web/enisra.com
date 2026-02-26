@@ -23,6 +23,10 @@ import TTV from "./pages/ttv.jsx";
 import EmployeeDocumentList from "./components/EmployeeDocument";
 import WaitingForApproval from "./pages/WaitingForApproval";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import ScholarshipLoginPage from "./pages/ScholarshipLoginPage";
+import ScholarshipPortalPage from "./pages/ScholarshipPortalPage";
+import ScholarshipApplicationPage from "./pages/ScholarshipApplicationPage";
+import FreeTrainingCoursesPage from "./pages/FreeTrainingCoursesPage";
 import AdminTrainingUpload from "./pages/AdminTrainingUpload";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import B2BDashboard from "./pages/B2BDashboard";
@@ -35,6 +39,7 @@ import ENISRAEnhancedDashboard from "./components/ENSRA/ENISRAEnhancedDashboard"
 import ENISRANoticeBoard from "./components/ENSRA/ENSRANoticeBoard";
 import ENISRARequestEmbedded from "./components/ENSRA/ENISRARequestEmbedded";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import ScholarshipProtectedRoute from "./routes/ScholarshipProtectedRoute";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import InstructorLayout from "./components/instructor/InstructorLayout";
 import InstructorDashboard from "./pages/instructor/Dashboard";
@@ -93,6 +98,10 @@ function App() {
     "/supervisor/account",
     "/employer",
     "/InfoForm",
+    "/scholarship-login",
+    "/scholarship-portal",
+    "/scholarship-application",
+    "/free-training-courses",
   ].map((path) => path.toLowerCase());
 
   // Hide the navbar and sidebar for legacy/fullscreen pages; root should only match exactly
@@ -118,6 +127,31 @@ function App() {
         <Route path="/" element={<WelcomePage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/scholarship-login" element={<ScholarshipLoginPage />} />
+      <Route
+        path="/scholarship-portal"
+        element={
+          <ScholarshipProtectedRoute>
+            <ScholarshipPortalPage />
+          </ScholarshipProtectedRoute>
+        }
+      />
+      <Route
+        path="/scholarship-application"
+        element={
+          <ScholarshipProtectedRoute>
+            <ScholarshipApplicationPage />
+          </ScholarshipProtectedRoute>
+        }
+      />
+      <Route
+        path="/free-training-courses"
+        element={
+          <ScholarshipProtectedRoute>
+            <FreeTrainingCoursesPage />
+          </ScholarshipProtectedRoute>
+        }
+      />
       <Route path="/InfoForm" element={<InfoForm />} />
       <Route path="/secondpage" element={<SecondPage />} />
       <Route path="/thirdpage" element={<ThirdPage />} />

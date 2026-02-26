@@ -83,7 +83,7 @@ const EmployeeLayout = () => {
               <Button as={RouterLink} to="/employee/jobs" size="sm" variant="ghost">
                 Jobs
               </Button>
-              <Button as={RouterLink} to="/employee/scholarships" size="sm" variant="ghost">
+              <Button as={RouterLink} to="/employee/jobs" size="sm" variant="ghost">
                 Scholarships
               </Button>
               <Button
