@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Alert,
   AlertIcon,
@@ -67,13 +67,17 @@ const ScholarshipPortalPage = () => {
   };
 
   const actionRouteMap = {
-    scholarship: "/scholarship-application",
+    scholarship: "/scholarship-posts",
     "free-training": "/free-training-courses",
   };
 
   const actionIconMap = {
     scholarship: FaGraduationCap,
     "free-training": FaBookOpen,
+  };
+
+  const openAction = (actionId) => {
+    navigate(actionRouteMap[actionId] || "/scholarship-portal");
   };
 
   return (
@@ -153,49 +157,51 @@ const ScholarshipPortalPage = () => {
               <Text color="gray.500">Loading dashboard...</Text>
             </Stack>
           ) : (
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              {actions.map((action) => (
-                <Box
-                  key={action.id}
-                  borderWidth="1px"
-                  borderRadius="2xl"
-                  p={{ base: 5, md: 6 }}
-                  bg={cardBg}
-                  boxShadow="sm"
-                >
-                  <Stack spacing={4}>
-                    <Flex align="center" gap={3}>
-                      <Flex
-                        boxSize="42px"
-                        borderRadius="xl"
-                        align="center"
-                        justify="center"
-                        bg={action.id === "scholarship" ? "blue.50" : "teal.50"}
-                      >
-                        <Icon
-                          as={actionIconMap[action.id] || FaGraduationCap}
-                          color={action.id === "scholarship" ? "blue.600" : "teal.600"}
-                          boxSize={5}
-                        />
+            <Stack spacing={6}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                {actions.map((action) => (
+                  <Box
+                    key={action.id}
+                    borderWidth="1px"
+                    borderRadius="2xl"
+                    p={{ base: 5, md: 6 }}
+                    bg={cardBg}
+                    boxShadow="sm"
+                  >
+                    <Stack spacing={4}>
+                      <Flex align="center" gap={3}>
+                        <Flex
+                          boxSize="42px"
+                          borderRadius="xl"
+                          align="center"
+                          justify="center"
+                          bg={action.id === "scholarship" ? "blue.50" : "teal.50"}
+                        >
+                          <Icon
+                            as={actionIconMap[action.id] || FaGraduationCap}
+                            color={action.id === "scholarship" ? "blue.600" : "teal.600"}
+                            boxSize={5}
+                          />
+                        </Flex>
+                        <Heading size="md">{action.title}</Heading>
                       </Flex>
-                      <Heading size="md">{action.title}</Heading>
-                    </Flex>
 
-                    <Text color="gray.600">{action.description}</Text>
+                      <Text color="gray.600">{action.description}</Text>
 
-                    <Button
-                      as={RouterLink}
-                      to={actionRouteMap[action.id] || "/scholarship-portal"}
-                      rightIcon={<Icon as={FaArrowRight} />}
-                      colorScheme={action.id === "scholarship" ? "blue" : "teal"}
-                      width="fit-content"
-                    >
-                      Open
-                    </Button>
-                  </Stack>
-                </Box>
-              ))}
-            </SimpleGrid>
+                      <Button
+                        rightIcon={<Icon as={FaArrowRight} />}
+                        colorScheme={action.id === "scholarship" ? "blue" : "teal"}
+                        width="fit-content"
+                        onClick={() => openAction(action.id)}
+                      >
+                        Open
+                      </Button>
+                    </Stack>
+                  </Box>
+                ))}
+              </SimpleGrid>
+
+            </Stack>
           )}
         </Stack>
       </Container>

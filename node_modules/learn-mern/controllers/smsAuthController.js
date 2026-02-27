@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const SmsSubscription = require('../models/SmsSubscription');
+const ScholarshipContent = require('../models/ScholarshipContent');
 
 const SHORT_CODE = '9295';
 const BCRYPT_ROUNDS = Number(process.env.SMS_PIN_BCRYPT_ROUNDS || 10);
@@ -200,22 +201,38 @@ const login = async (req, res) => {
 };
 
 const dashboard = async (req, res) => {
-  return res.json({
-    success: true,
-    msisdn: req.smsUser.msisdn,
-    actions: [
-      {
-        id: 'scholarship',
-        title: 'Apply for Scholarship',
-        description: 'Open scholarship application page.'
-      },
-      {
-        id: 'free-training',
-        title: 'Join Free Training',
-        description: 'Open free training courses page.'
-      }
-    ]
-  });
+  try {
+    const items = await ScholarshipContent.find({ isPublished: true })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const scholarshipPosts = items.filter((item) => item.type === 'scholarship');
+    const freeTrainingPosts = items.filter((item) => item.type === 'free-training');
+
+    return res.json({
+      success: true,
+      msisdn: req.smsUser.msisdn,
+      actions: [
+        {
+          id: 'scholarship',
+          title: 'Apply for Scholarship',
+          description: 'Open scholarship application page.'
+        },
+        {
+          id: 'free-training',
+          title: 'Join Free Training',
+          description: 'Open free training courses page.'
+        }
+      ],
+      scholarshipPosts,
+      freeTrainingPosts
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load dashboard.'
+    });
+  }
 };
 
 const createUserWithAccessCode = async (req, res) => {

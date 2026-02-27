@@ -81,6 +81,7 @@ import {
   FiCheckCircle,
   FiClock,
   FiBarChart2,
+  FiBookOpen,
   FiSettings,
 } from "react-icons/fi";
 import { useEffect, useState } from "react";
@@ -232,6 +233,23 @@ const AdminDashboard = () => {
     name: "",
     logoUrl: "",
     website: "",
+  });
+  const [scholarshipPosts, setScholarshipPosts] = useState([]);
+  const [scholarshipPostsLoading, setScholarshipPostsLoading] = useState(false);
+  const [scholarshipPostSubmitting, setScholarshipPostSubmitting] = useState(false);
+  const [scholarshipPostActionId, setScholarshipPostActionId] = useState(null);
+  const [scholarshipEditingId, setScholarshipEditingId] = useState(null);
+  const [scholarshipVideoUploading, setScholarshipVideoUploading] = useState(false);
+  const [scholarshipSlideUploading, setScholarshipSlideUploading] = useState(false);
+  const [scholarshipPostForm, setScholarshipPostForm] = useState({
+    type: "scholarship",
+    title: "",
+    description: "",
+    actionLabel: "Open",
+    actionUrl: "",
+    videoUrls: "",
+    slideUrls: "",
+    isPublished: true,
   });
 
   // Column visibility state for Employee Directory
@@ -568,6 +586,15 @@ const AdminDashboard = () => {
       to: "",
       cta: "Manage categories",
     },
+    {
+      id: "scholarship-content",
+      title: "Scholarship Content",
+      description: "Post scholarship and free training items for SMS dashboard users.",
+      icon: FiBookOpen,
+      tone: "blue",
+      to: "",
+      cta: "Manage scholarship content",
+    },
   ];
   const [activeSectionId, setActiveSectionId] = useState(adminSections[0]?.id || "overview");
 
@@ -730,6 +757,214 @@ const AdminDashboard = () => {
       });
     } finally {
       setPendingCarouselLoading(false);
+    }
+  };
+
+  const loadScholarshipPosts = async () => {
+    setScholarshipPostsLoading(true);
+    try {
+      const response = await apiClient.get("/scholarship-content/admin");
+      const payload = response?.data?.data ?? [];
+      setScholarshipPosts(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load scholarship content",
+        description: error?.response?.data?.message || error?.message || "Unable to load scholarship content.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setScholarshipPostsLoading(false);
+    }
+  };
+
+  const handleScholarshipPostFormChange = (field) => (event) => {
+    const value = field === "isPublished" ? event.target.checked : event.target.value;
+    setScholarshipPostForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetScholarshipPostForm = () => {
+    setScholarshipEditingId(null);
+    setScholarshipPostForm({
+      type: "scholarship",
+      title: "",
+      description: "",
+      actionLabel: "Open",
+      actionUrl: "",
+      videoUrls: "",
+      slideUrls: "",
+      isPublished: true,
+    });
+  };
+
+  const parseMultilineUrls = (value) =>
+    String(value || "")
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+  const serializeUrlList = (value) => {
+    if (!Array.isArray(value)) return "";
+    return value.map((item) => String(item || "").trim()).filter(Boolean).join("\n");
+  };
+
+  const handleScholarshipResourceUpload = async (resourceType, file) => {
+    if (!file) return;
+
+    const isVideo = resourceType === "video";
+    const isSlide = resourceType === "slide";
+    if (!isVideo && !isSlide) return;
+
+    if (isVideo) {
+      setScholarshipVideoUploading(true);
+    } else {
+      setScholarshipSlideUploading(true);
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("resourceType", resourceType);
+
+      const response = await apiClient.post("/scholarship-content/upload-resource", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const fileUrl = response?.data?.data?.fileUrl || "";
+      if (!fileUrl) {
+        throw new Error("Upload completed but file URL is missing.");
+      }
+
+      setScholarshipPostForm((prev) => {
+        const field = isVideo ? "videoUrls" : "slideUrls";
+        const current = String(prev[field] || "").trim();
+        return {
+          ...prev,
+          [field]: current ? `${current}\n${fileUrl}` : fileUrl,
+        };
+      });
+
+      toast({
+        title: `${isVideo ? "Video" : "Slide"} uploaded`,
+        status: "success",
+        duration: 2200,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: `Failed to upload ${isVideo ? "video" : "slide"}`,
+        description: error?.response?.data?.message || error?.message || "Upload failed.",
+        status: "error",
+        duration: 3500,
+        isClosable: true,
+      });
+    } finally {
+      if (isVideo) {
+        setScholarshipVideoUploading(false);
+      } else {
+        setScholarshipSlideUploading(false);
+      }
+    }
+  };
+
+  const handleCreateScholarshipPost = async () => {
+    const title = scholarshipPostForm.title.trim();
+    const description = scholarshipPostForm.description.trim();
+    if (!title || !description) {
+      toast({
+        title: "Missing required fields",
+        description: "Title and description are required.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+    setScholarshipPostSubmitting(true);
+    try {
+      const payload = {
+        type: scholarshipPostForm.type,
+        title,
+        description,
+        actionLabel: scholarshipPostForm.actionLabel.trim() || "Open",
+        actionUrl: scholarshipPostForm.actionUrl.trim(),
+        videoUrls: parseMultilineUrls(scholarshipPostForm.videoUrls),
+        slideUrls: parseMultilineUrls(scholarshipPostForm.slideUrls),
+        isPublished: Boolean(scholarshipPostForm.isPublished),
+      };
+
+      if (scholarshipEditingId) {
+        try {
+          await apiClient.put(`/scholarship-content/${scholarshipEditingId}`, payload);
+        } catch (putError) {
+          try {
+            await apiClient.patch(`/scholarship-content/${scholarshipEditingId}`, payload);
+          } catch (patchError) {
+            await apiClient.post(`/scholarship-content/${scholarshipEditingId}`, payload);
+          }
+        }
+      } else {
+        await apiClient.post("/scholarship-content", payload);
+      }
+      toast({
+        title: scholarshipEditingId ? "Content updated" : "Content posted",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+      resetScholarshipPostForm();
+      loadScholarshipPosts();
+    } catch (error) {
+      toast({
+        title: "Failed to post content",
+        description: error?.response?.data?.message || error?.message || "Unable to create content.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setScholarshipPostSubmitting(false);
+    }
+  };
+
+  const handleEditScholarshipPost = (item) => {
+    if (!item?._id) return;
+    setScholarshipEditingId(item._id);
+    setScholarshipPostForm({
+      type: item.type === "free-training" ? "free-training" : "scholarship",
+      title: String(item.title || ""),
+      description: String(item.description || ""),
+      actionLabel: String(item.actionLabel || "Open"),
+      actionUrl: String(item.actionUrl || ""),
+      videoUrls: serializeUrlList(item.videoUrls),
+      slideUrls: serializeUrlList(item.slideUrls),
+      isPublished: Boolean(item.isPublished),
+    });
+  };
+
+  const handleDeleteScholarshipPost = async (id) => {
+    if (!id) return;
+    setScholarshipPostActionId(id);
+    try {
+      await apiClient.delete(`/scholarship-content/${id}`);
+      setScholarshipPosts((prev) => prev.filter((item) => item._id !== id));
+      toast({
+        title: "Content deleted",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete content",
+        description: error?.response?.data?.message || error?.message || "Unable to delete content.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setScholarshipPostActionId(null);
     }
   };
 
@@ -1207,6 +1442,9 @@ const AdminDashboard = () => {
     if (activeSectionId === "promotions") {
       loadCarouselPartners();
       loadPendingCarouselPartners();
+    }
+    if (activeSectionId === "scholarship-content") {
+      loadScholarshipPosts();
     }
   }, [activeSectionId]);
 
@@ -2551,6 +2789,283 @@ const AdminDashboard = () => {
               )}
             </Box>
           </Stack>
+        </Stack>
+      );
+    }
+
+    if (section.id === "scholarship-content") {
+      const scholarshipOnly = scholarshipPosts.filter((item) => item.type === "scholarship");
+      const freeTrainingOnly = scholarshipPosts.filter((item) => item.type === "free-training");
+
+      return (
+        <Stack spacing={5}>
+          <Text color={mutedText}>
+            Create scholarship and free training posts. Published posts appear on the SMS scholarship dashboard.
+          </Text>
+
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Heading size="sm">{scholarshipEditingId ? "Edit Post" : "Create Post"}</Heading>
+            </CardHeader>
+            <CardBody>
+              <Stack spacing={4}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <FormControl isRequired>
+                    <FormLabel>Type</FormLabel>
+                    <Select value={scholarshipPostForm.type} onChange={handleScholarshipPostFormChange("type")}>
+                      <option value="scholarship">Scholarship</option>
+                      <option value="free-training">Free Training</option>
+                    </Select>
+                  </FormControl>
+                  <FormControl isRequired>
+                    <FormLabel>Title</FormLabel>
+                    <Input
+                      placeholder="e.g. Data Science Scholarship 2026"
+                      value={scholarshipPostForm.title}
+                      onChange={handleScholarshipPostFormChange("title")}
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
+                <FormControl isRequired>
+                  <FormLabel>Description</FormLabel>
+                  <Textarea
+                    minH="110px"
+                    placeholder="Details, eligibility, deadline, and benefits."
+                    value={scholarshipPostForm.description}
+                    onChange={handleScholarshipPostFormChange("description")}
+                  />
+                </FormControl>
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <FormControl>
+                    <FormLabel>Action Label</FormLabel>
+                    <Input
+                      placeholder="Open / Apply / Enroll"
+                      value={scholarshipPostForm.actionLabel}
+                      onChange={handleScholarshipPostFormChange("actionLabel")}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Action URL (optional)</FormLabel>
+                    <Input
+                      placeholder="https://example.com/apply"
+                      value={scholarshipPostForm.actionUrl}
+                      onChange={handleScholarshipPostFormChange("actionUrl")}
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
+                {scholarshipPostForm.type === "free-training" ? (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <FormControl>
+                      <FormLabel>Video Links (one per line)</FormLabel>
+                      <Textarea
+                        minH="100px"
+                        placeholder={"https://youtube.com/...\nhttps://vimeo.com/..."}
+                        value={scholarshipPostForm.videoUrls}
+                        onChange={handleScholarshipPostFormChange("videoUrls")}
+                      />
+                      <Input
+                        mt={2}
+                        type="file"
+                        accept="video/*"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          handleScholarshipResourceUpload("video", file);
+                          event.target.value = "";
+                        }}
+                        isDisabled={scholarshipVideoUploading}
+                        p={1}
+                      />
+                      <Text fontSize="xs" color={mutedText} mt={1}>
+                        {scholarshipVideoUploading
+                          ? "Uploading video..."
+                          : "Upload video file to auto-add link."}
+                      </Text>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Slide Links (one per line)</FormLabel>
+                      <Textarea
+                        minH="100px"
+                        placeholder={"https://drive.google.com/...\nhttps://example.com/slides.pdf"}
+                        value={scholarshipPostForm.slideUrls}
+                        onChange={handleScholarshipPostFormChange("slideUrls")}
+                      />
+                      <Input
+                        mt={2}
+                        type="file"
+                        accept=".pdf,.ppt,.pptx,.key,.odp,.doc,.docx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          handleScholarshipResourceUpload("slide", file);
+                          event.target.value = "";
+                        }}
+                        isDisabled={scholarshipSlideUploading}
+                        p={1}
+                      />
+                      <Text fontSize="xs" color={mutedText} mt={1}>
+                        {scholarshipSlideUploading
+                          ? "Uploading slide..."
+                          : "Upload slide file to auto-add link."}
+                      </Text>
+                    </FormControl>
+                  </SimpleGrid>
+                ) : null}
+
+                <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                  <FormLabel mb="0">Publish now</FormLabel>
+                  <Switch
+                    colorScheme="green"
+                    isChecked={scholarshipPostForm.isPublished}
+                    onChange={handleScholarshipPostFormChange("isPublished")}
+                  />
+                </FormControl>
+
+                <Flex gap={2} wrap="wrap">
+                  <Button
+                    colorScheme="blue"
+                    leftIcon={<Icon as={scholarshipEditingId ? FiEdit : FiPlus} />}
+                    onClick={handleCreateScholarshipPost}
+                    isLoading={scholarshipPostSubmitting}
+                    isDisabled={scholarshipVideoUploading || scholarshipSlideUploading}
+                  >
+                    {scholarshipEditingId ? "Update" : "Post"}
+                  </Button>
+                  {scholarshipEditingId ? (
+                    <Button variant="ghost" onClick={resetScholarshipPostForm}>
+                      Cancel Edit
+                    </Button>
+                  ) : null}
+                  <Button variant="outline" onClick={loadScholarshipPosts} isLoading={scholarshipPostsLoading}>
+                    Refresh
+                  </Button>
+                </Flex>
+              </Stack>
+            </CardBody>
+          </Card>
+
+          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={5}>
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader>
+                <Heading size="sm">Scholarship Posts</Heading>
+              </CardHeader>
+              <CardBody>
+                {scholarshipPostsLoading ? (
+                  <Text color={mutedText}>Loading posts...</Text>
+                ) : scholarshipOnly.length ? (
+                  <Stack spacing={3}>
+                    {scholarshipOnly.map((item) => (
+                      <Box key={item._id} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={3}>
+                        <Flex justify="space-between" align="center" gap={2} mb={2}>
+                          <Text fontWeight="semibold">{item.title}</Text>
+                          <Badge colorScheme={item.isPublished ? "green" : "gray"}>
+                            {item.isPublished ? "Published" : "Draft"}
+                          </Badge>
+                        </Flex>
+                        <Text fontSize="sm" color={mutedText}>{item.description}</Text>
+                        {Array.isArray(item.videoUrls) && item.videoUrls.length ? (
+                          <Text fontSize="xs" color={mutedText} mt={2}>
+                            Videos: {item.videoUrls.length}
+                          </Text>
+                        ) : null}
+                        {Array.isArray(item.slideUrls) && item.slideUrls.length ? (
+                          <Text fontSize="xs" color={mutedText}>
+                            Slides: {item.slideUrls.length}
+                          </Text>
+                        ) : null}
+                        <Flex justify="space-between" align="center" mt={3}>
+                          <Text fontSize="xs" color={mutedText}>{new Date(item.createdAt).toLocaleString()}</Text>
+                          <Flex gap={1}>
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              leftIcon={<Icon as={FiEdit} />}
+                              onClick={() => handleEditScholarshipPost(item)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="xs"
+                              colorScheme="red"
+                              variant="ghost"
+                              leftIcon={<Icon as={FiTrash2} />}
+                              onClick={() => handleDeleteScholarshipPost(item._id)}
+                              isLoading={scholarshipPostActionId === item._id}
+                            >
+                              Delete
+                            </Button>
+                          </Flex>
+                        </Flex>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Text color={mutedText}>No scholarship posts yet.</Text>
+                )}
+              </CardBody>
+            </Card>
+
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader>
+                <Heading size="sm">Free Training Posts</Heading>
+              </CardHeader>
+              <CardBody>
+                {scholarshipPostsLoading ? (
+                  <Text color={mutedText}>Loading posts...</Text>
+                ) : freeTrainingOnly.length ? (
+                  <Stack spacing={3}>
+                    {freeTrainingOnly.map((item) => (
+                      <Box key={item._id} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={3}>
+                        <Flex justify="space-between" align="center" gap={2} mb={2}>
+                          <Text fontWeight="semibold">{item.title}</Text>
+                          <Badge colorScheme={item.isPublished ? "green" : "gray"}>
+                            {item.isPublished ? "Published" : "Draft"}
+                          </Badge>
+                        </Flex>
+                        <Text fontSize="sm" color={mutedText}>{item.description}</Text>
+                        {Array.isArray(item.videoUrls) && item.videoUrls.length ? (
+                          <Text fontSize="xs" color={mutedText} mt={2}>
+                            Videos: {item.videoUrls.length}
+                          </Text>
+                        ) : null}
+                        {Array.isArray(item.slideUrls) && item.slideUrls.length ? (
+                          <Text fontSize="xs" color={mutedText}>
+                            Slides: {item.slideUrls.length}
+                          </Text>
+                        ) : null}
+                        <Flex justify="space-between" align="center" mt={3}>
+                          <Text fontSize="xs" color={mutedText}>{new Date(item.createdAt).toLocaleString()}</Text>
+                          <Flex gap={1}>
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              leftIcon={<Icon as={FiEdit} />}
+                              onClick={() => handleEditScholarshipPost(item)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="xs"
+                              colorScheme="red"
+                              variant="ghost"
+                              leftIcon={<Icon as={FiTrash2} />}
+                              onClick={() => handleDeleteScholarshipPost(item._id)}
+                              isLoading={scholarshipPostActionId === item._id}
+                            >
+                              Delete
+                            </Button>
+                          </Flex>
+                        </Flex>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Text color={mutedText}>No free training posts yet.</Text>
+                )}
+              </CardBody>
+            </Card>
+          </SimpleGrid>
         </Stack>
       );
     }
