@@ -76,7 +76,7 @@ export const getEmployeeProfileCompletion = (profile) => {
     },
     {
       key: 'employment',
-      label: 'Employment details',
+      label: 'Current Employment Details',
       completed: hasAnyText(
         source.employeeId,
         source.employmentType,

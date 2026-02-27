@@ -43,6 +43,39 @@ const safeFormatDate = (value, pattern = 'PPP') => {
   return format(date, pattern);
 };
 
+const normalizeList = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const resolveContactPhone = (profile = {}) => {
+  const nationalId = (profile?.nationalIdOrPassportNumber || '').toString().trim();
+  const phone = (profile?.phone || '').toString().trim();
+  const username = (profile?.username || '').toString().trim();
+  if (phone && phone !== nationalId) return phone;
+  if (username && username !== nationalId) return username;
+  return phone || username || '';
+};
+
+const buildAddressLine = (profile = {}) => {
+  const parts = [profile?.currentAddress, profile?.city, profile?.country]
+    .map((v) => (v || '').toString().trim())
+    .filter(Boolean);
+  return parts.join(', ');
+};
+
+const formatFooterDate = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return format(date, 'MMMM do yyyy');
+};
+
 // Function to filter out placeholder/dummy content
 const isPlaceholderContent = (text) => {
   if (!text) return true;
@@ -61,8 +94,6 @@ const isPlaceholderContent = (text) => {
     'sample text',
     'dummy text',
     'test data',
-    'office', // As you specifically mentioned
-    /^[\w\s\|]+$/, // Pattern matching your example format
   ];
   
   // Check if text matches any placeholder pattern
@@ -158,6 +189,7 @@ const EmployeeCreateCV = () => {
   const contactEmail = useMemo(() => {
     return profile?.workEmail || profile?.altEmail || profile?.email || currentUser?.email || '';
   }, [profile, currentUser]);
+  const contactPhone = useMemo(() => resolveContactPhone(profile), [profile]);
 
   const companyWebsite = 'www.enisra.com';
 
@@ -169,8 +201,8 @@ const EmployeeCreateCV = () => {
     ? profile.workExperience.filter((w) => w && (w.previousCompanyName || w.jobTitle) && !isPlaceholderContent(w.previousCompanyName) && !isPlaceholderContent(w.jobTitle))
     : [];
 
-  const technicalSkills = Array.isArray(profile?.technicalSkills) ? profile.technicalSkills.filter(skill => skill && !isPlaceholderContent(skill)) : [];
-  const softSkills = Array.isArray(profile?.softSkills) ? profile.softSkills.filter(skill => skill && !isPlaceholderContent(skill)) : [];
+  const technicalSkills = normalizeList(profile?.technicalSkills).filter((skill) => !isPlaceholderContent(skill));
+  const softSkills = normalizeList(profile?.softSkills).filter((skill) => !isPlaceholderContent(skill));
   const languages = Array.isArray(profile?.languagesSpoken) ? profile.languagesSpoken.filter((l) => l && l.language && !isPlaceholderContent(l.language)) : [];
 
   const headerBadges = [
@@ -193,12 +225,19 @@ const EmployeeCreateCV = () => {
     .filter(Boolean)
     .join(', ');
 
-  const addressLine = [profile?.currentAddress, profile?.city, profile?.country]
-    .map((v) => (v || '').toString().trim())
-    .filter(Boolean)
-    .join(', ');
+  const addressLine = buildAddressLine(profile);
 
   const joinedLabel = safeFormatDate(profile?.hireDate);
+  const currentEmploymentRows = [
+    { label: 'Job Title', value: profile?.jobTitle },
+    { label: 'Department', value: profile?.department },
+    { label: 'Position', value: profile?.position },
+    { label: 'Employment Type', value: profile?.employmentType },
+    { label: 'Employment Status', value: profile?.employmentStatus },
+    { label: 'Date of Joining', value: joinedLabel },
+    { label: 'Work Location', value: profile?.workLocation },
+    { label: 'Reporting Manager', value: profile?.reportingManager },
+  ].filter((item) => (item.value || '').toString().trim());
   const profileCompletion = useMemo(() => getEmployeeProfileCompletion(profile), [profile]);
   const canCreateCv = profileCompletion.meetsCvRequirement;
   const missingForCv = profileCompletion.missing.slice(0, 6);
@@ -242,6 +281,20 @@ const EmployeeCreateCV = () => {
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
+      }
+
+      // Add a real PDF footer on every page.
+      const footerText = `Generated on ${formatFooterDate(new Date())} | Professional CV created with ENISRA`;
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i += 1) {
+        pdf.setPage(i);
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, pdfHeight - 24, pdfWidth, 24, 'F');
+        pdf.setDrawColor(220, 226, 234);
+        pdf.line(24, pdfHeight - 24, pdfWidth - 24, pdfHeight - 24);
+        pdf.setTextColor(90, 104, 121);
+        pdf.setFontSize(8);
+        pdf.text(footerText, pdfWidth / 2, pdfHeight - 9, { align: 'center' });
       }
 
       const blob = pdf.output('blob');
@@ -387,53 +440,63 @@ const EmployeeCreateCV = () => {
                 <Box boxSize="80px" borderRadius="full" bg="white" />
               </Box>
               
-              <Flex justify="space-between" align="flex-start" gap={8} flexWrap="wrap">
-                <Box flex="1" minW={{ base: '100%', md: '400px' }}>
-                  <Text 
-                    fontSize="sm" 
-                    letterSpacing="0.3em" 
-                    textTransform="uppercase" 
-                    opacity={0.9}
-                    fontWeight="medium"
-                  >
-                    Professional Profile
-                  </Text>
-                  <Heading 
-                    size="xl" 
-                    mt={3} 
-                    fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                    fontWeight="700"
-                    lineHeight="1.2"
-                  >
-                    <SafeText fallback="Employee Name">
-                      {fullName}
-                    </SafeText>
-                  </Heading>
-                  <Text 
-                    mt={3} 
-                    fontSize="lg" 
-                    opacity={0.95}
-                    fontWeight="500"
-                  >
-                    <SafeText fallback="Professional">
-                      {jobLine || 'Professional'}
-                    </SafeText>
-                  </Text>
-                  
-                  {profile?.professionalSummary && !isPlaceholderContent(profile.professionalSummary) && (
-                    <Text 
-                      mt={4} 
-                      fontSize="md" 
-                      opacity={0.9}
-                      maxW="600px"
-                      lineHeight="1.6"
-                    >
+              <Flex justify="space-between" align="center" gap={8} flexWrap="nowrap">
+                <Box flex="1" minW={0}>
+                  <HStack align="flex-start" spacing={4}>
+                    {profile?.photoUrl ? (
+                      <Box
+                        boxSize="94px"
+                        borderRadius="md"
+                        overflow="hidden"
+                        borderWidth="3px"
+                        borderColor="white"
+                        boxShadow="0 10px 25px rgba(0,0,0,0.2)"
+                        flexShrink={0}
+                      >
+                        <Image
+                          src={profile.photoUrl}
+                          alt="Profile"
+                          width="100%"
+                          height="100%"
+                          objectFit="cover"
+                          crossOrigin="anonymous"
+                        />
+                      </Box>
+                    ) : null}
+
+                    <Box minW={0}>
+                      <Text
+                        fontSize="sm"
+                        letterSpacing="0.3em"
+                        textTransform="uppercase"
+                        opacity={0.9}
+                        fontWeight="medium"
+                      >
+                        Professional Profile
+                      </Text>
+                      <Heading
+                        size="xl"
+                        mt={2}
+                        fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        fontWeight="700"
+                        lineHeight="1.3"
+                      >
+                        <SafeText fallback="Employee Name">{fullName}</SafeText>
+                      </Heading>
+                      <Text mt={2} fontSize="lg" opacity={0.95} fontWeight="500" lineHeight="1.35">
+                        <SafeText fallback="Professional">{jobLine || 'Professional'}</SafeText>
+                      </Text>
+                    </Box>
+                  </HStack>
+
+                  {profile?.professionalSummary && !isPlaceholderContent(profile.professionalSummary) ? (
+                    <Text mt={4} fontSize="md" opacity={0.9} maxW="600px" lineHeight="1.6">
                       {profile.professionalSummary}
                     </Text>
-                  )}
+                  ) : null}
 
                   {headerBadges.length ? (
-                    <HStack mt={5} spacing={3} flexWrap="wrap">
+                    <HStack mt={6} spacing={3} flexWrap="wrap" justify="center">
                       {headerBadges.map((label) => (
                         <Badge
                           key={label}
@@ -454,65 +517,19 @@ const EmployeeCreateCV = () => {
                   ) : null}
                 </Box>
 
-                <HStack align="flex-start" spacing={8}>
-                  <VStack align="flex-end" spacing={2}>
-                    <Text fontSize="lg" fontWeight="bold">
-                      ENISRA
-                    </Text>
-                    <Text fontSize="sm" opacity={0.95}>
-                      Transforming Business Through Innovation
-                    </Text>
-                    {contactEmail ? (
-                      <Text fontSize="sm" opacity={0.92}>
-                        📧 {contactEmail}
-                      </Text>
-                    ) : null}
-                    {profile?.phone ? (
-                      <Text fontSize="sm" opacity={0.92}>
-                        📞 {profile.phone}
-                      </Text>
-                    ) : null}
-                    {locationLine ? (
-                      <Text fontSize="sm" opacity={0.92}>
-                        📍 {locationLine}
-                      </Text>
-                    ) : null}
-                    {profile?.website || profile?.linkedin ? (
-                      <HStack spacing={3} mt={2}>
-                        {profile.website && (
-                          <Text fontSize="sm" opacity={0.92}>
-                            💻 {profile.website}
-                          </Text>
-                        )}
-                        {profile.linkedin && (
-                          <Text fontSize="sm" opacity={0.92}>
-                            🔗 LinkedIn
-                          </Text>
-                        )}
-                      </HStack>
-                    ) : null}
-                  </VStack>
-
-                  {!isExporting && profile?.photoUrl ? (
-                    <Box
-                      boxSize="120px"
-                      borderRadius="xl"
-                      overflow="hidden"
-                      borderWidth="3px"
-                      borderColor="white"
-                      boxShadow="0 10px 25px rgba(0,0,0,0.2)"
-                    >
-                      <Image
-                        src={profile.photoUrl}
-                        alt="Profile"
-                        width="100%"
-                        height="100%"
-                        objectFit="cover"
-                        crossOrigin="anonymous"
-                      />
-                    </Box>
+                <VStack align="flex-end" spacing={2} flexShrink={0} minW="340px">
+                  <Text fontSize="lg" fontWeight="bold">ENISRA</Text>
+                  <Text fontSize="sm" opacity={0.95}>Transforming Business Through Innovation</Text>
+                  {contactEmail ? <Text fontSize="sm" opacity={0.92}>{contactEmail}</Text> : null}
+                  {contactPhone ? <Text fontSize="sm" opacity={0.92}>Phone: {contactPhone}</Text> : null}
+                  {locationLine ? <Text fontSize="sm" opacity={0.92}>Location: {locationLine}</Text> : null}
+                  {profile?.website || profile?.linkedin ? (
+                    <HStack spacing={3} mt={2}>
+                      {profile.website ? <Text fontSize="sm" opacity={0.92}>{profile.website}</Text> : null}
+                      {profile.linkedin ? <Text fontSize="sm" opacity={0.92}>LinkedIn</Text> : null}
+                    </HStack>
                   ) : null}
-                </HStack>
+                </VStack>
               </Flex>
             </Box>
 
@@ -535,10 +552,10 @@ const EmployeeCreateCV = () => {
                       <Text fontSize="sm" fontWeight="500">{contactEmail}</Text>
                     </Flex>
                   )}
-                  {profile?.phone && (
+                  {contactPhone && (
                     <Flex align="center" gap={3}>
                       <Box boxSize="8px" borderRadius="full" bg="teal.500" />
-                      <Text fontSize="sm" fontWeight="500">{profile.phone}</Text>
+                      <Text fontSize="sm" fontWeight="500">{contactPhone}</Text>
                     </Flex>
                   )}
                   {addressLine && (
@@ -567,9 +584,9 @@ const EmployeeCreateCV = () => {
                     {technicalSkills.length > 0 && (
                       <Box mb={4}>
                         <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={2}>TECHNICAL</Text>
-                        <HStack spacing={2} flexWrap="wrap">
+                        <HStack spacing={2} flexWrap="wrap" justify="flex-start" pl={2}>
                           {technicalSkills.map((skill) => (
-                            <Badge 
+                            <Badge
                               key={skill} 
                               colorScheme="teal" 
                               variant="solid"
@@ -587,11 +604,11 @@ const EmployeeCreateCV = () => {
                     )}
                     
                     {softSkills.length > 0 && (
-                      <Box>
+                      <Box minW={0}>
                         <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={2}>SOFT SKILLS</Text>
-                        <HStack spacing={2} flexWrap="wrap">
+                        <HStack spacing={2} flexWrap="wrap" justify="flex-start" pl={2}>
                           {softSkills.map((skill) => (
-                            <Badge 
+                            <Badge
                               key={skill} 
                               colorScheme="purple" 
                               variant="solid"
@@ -664,9 +681,12 @@ const EmployeeCreateCV = () => {
                     <SectionTitle color="gray.800" fontSize="sm" withDivider>WORK EXPERIENCE</SectionTitle>
                     <VStack align="start" spacing={6}>
                       {experience.map((item, idx) => {
-                        const dateLabel = [formatMonthYear(item.startDate), formatMonthYear(item.endDate)]
-                          .filter(Boolean)
-                          .join(' - ') || 'Present';
+                        const startLabel = formatMonthYear(item.startDate);
+                        const endLabel =
+                          item.currentlyEmployed === true || item.currentlyEmployed === 'yes'
+                            ? 'Present'
+                            : formatMonthYear(item.endDate);
+                        const dateLabel = [startLabel, endLabel].filter(Boolean).join(' - ') || 'Present';
                         return (
                           <Box key={`${item.previousCompanyName || 'exp'}-${idx}`} width="full" position="relative" pl={6}>
                             {/* Timeline indicator */}
@@ -687,7 +707,7 @@ const EmployeeCreateCV = () => {
                               bg="teal.200" 
                             />
                             
-                            <Box>
+                            <Box minW={0}>
                               <Text fontWeight="bold" fontSize="lg" color="gray.800">
                                 <SafeText fallback="Role">
                                   {item.jobTitle || 'Role'}
@@ -722,6 +742,20 @@ const EmployeeCreateCV = () => {
                   </Box>
                 )}
 
+                {/* Current Employment Detail */}
+                {currentEmploymentRows.length > 0 && (
+                  <Box mb={10}>
+                    <SectionTitle color="gray.800" fontSize="sm" withDivider>CURRENT EMPLOYMENT DETAIL</SectionTitle>
+                    <VStack align="start" spacing={2} w="full">
+                      {currentEmploymentRows.map((row) => (
+                        <Text key={row.label} fontSize="sm" color="gray.700">
+                          <Text as="span" fontWeight="semibold">{row.label}:</Text> {row.value}
+                        </Text>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
+
                 {/* Education */}
                 {education.length > 0 && (
                   <Box mb={10}>
@@ -739,7 +773,7 @@ const EmployeeCreateCV = () => {
                             bg="blue.500" 
                           />
                           
-                          <Box>
+                          <Box minW={0}>
                             <Text fontWeight="bold" fontSize="lg" color="gray.800">
                               <SafeText fallback="Education">
                                 {[item.highestEducationLevel, item.fieldOfStudy].filter(Boolean).join(' - ') || 'Education'}
@@ -816,12 +850,7 @@ const EmployeeCreateCV = () => {
                   </Box>
                 )}
 
-                {/* Footer */}
-                <Box mt={12} pt={6} borderTop="1px" borderColor="gray.200">
-                  <Text fontSize="xs" color="gray.500" textAlign="center">
-                    Generated on {format(new Date(), 'PPP')} | Professional CV created with ENISRA
-                  </Text>
-                </Box>
+                {/* Footer text is stamped directly into the PDF at export time. */}
               </Box>
             </Flex>
           </Box>

@@ -65,6 +65,7 @@ import EmployerUpgradePackage from "./pages/employer/EmployerUpgradePackage";
 import EmployeeLayout from "./pages/employee/EmployeeLayout";
 import EmployeeProfile from "./pages/employee/EmployeeProfile";
 import EmployeeJobs from "./pages/employee/EmployeeJobs";
+import EmployeeFavorites from "./pages/employee/EmployeeFavorites";
 import EmployeeCreateCV from "./pages/employee/EmployeeCreateCV";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 import JobsPage from "./pages/jobs/JobsPage.jsx";
@@ -201,6 +202,7 @@ function App() {
         <Route index element={<Navigate to="profile" replace />} />
         <Route path="profile" element={<EmployeeProfile />} />
         <Route path="jobs" element={<EmployeeJobs />} />
+        <Route path="favorites" element={<EmployeeFavorites />} />
         <Route path="create-cv" element={<EmployeeCreateCV />} />
         <Route path="dashboard" element={<EmployeeDashboard />} />
         <Route path="all-jobs" element={<JobsPage />} />

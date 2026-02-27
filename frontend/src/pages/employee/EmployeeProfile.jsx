@@ -32,7 +32,6 @@ import {
   FiBriefcase,
   FiCamera,
   FiDownload,
-  FiEdit,
   FiExternalLink,
   FiFileText,
   FiMail,
@@ -149,10 +148,8 @@ const EmployeeProfile = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-  const [isEditingInline, setIsEditingInline] = useState(false);
+  const isEditingInline = false;
   const [editProfile, setEditProfile] = useState(null);
-  const [isSavingInline, setIsSavingInline] = useState(false);
-  const updateUserInfo = useUserStore((s) => s.updateUserInfo);
   const resolvedUserId = profile?._id || currentUser?._id || localStorage.getItem('userId');
 
   const fetchProfile = useCallback(async (signal) => {
@@ -281,67 +278,6 @@ const EmployeeProfile = () => {
   }, [profile]);
 
   const setEditField = (field) => (e) => setEditProfile((p) => ({ ...(p || {}), [field]: e.target.value }));
-
-  const handleStartInlineEdit = () => setIsEditingInline(true);
-
-  const handleCancelInlineEdit = () => {
-    setIsEditingInline(false);
-    if (profile) {
-      setEditProfile({
-        firstName: profile.firstName || '',
-        middleName: profile.middleName || '',
-        lastName: profile.lastName || '',
-        jobTitle: profile.jobTitle || '',
-        department: profile.department || '',
-        position: profile.position || '',
-        phone: profile.phone || profile?.altPhone || '',
-        city: profile.city || '',
-        country: profile.country || '',
-        currentAddress: profile.currentAddress || profile.location || '',
-      });
-    }
-  };
-
-  const handleSaveInline = async () => {
-    if (!profile?._id) return;
-    setIsSavingInline(true);
-    try {
-      const payload = {
-        _id: profile._id,
-        firstName: (editProfile?.firstName || '').trim(),
-        middleName: (editProfile?.middleName || '').trim(),
-        lastName: (editProfile?.lastName || '').trim(),
-        fullName: [editProfile?.firstName, editProfile?.middleName, editProfile?.lastName].filter(Boolean).join(' ').trim(),
-        jobTitle: (editProfile?.jobTitle || '').trim(),
-        department: (editProfile?.department || '').trim(),
-        position: (editProfile?.position || '').trim(),
-        phone: (editProfile?.phone || '').trim(),
-        altPhone: (editProfile?.phone || '').trim(),
-        city: (editProfile?.city || '').trim(),
-        country: (editProfile?.country || '').trim(),
-        currentAddress: (editProfile?.currentAddress || '').trim(),
-      };
-
-      const res = await updateUserInfo(payload);
-      if (!res || !res.success) throw new Error(res?.message || 'Update failed');
-
-      // Refresh local profile from response data when available
-      const updated = res.data || {};
-      setProfile((prev) => ({ ...(prev || {}), ...updated }));
-      // Update currentUser in parent store if needed
-      if (updated && Object.keys(updated).length && setCurrentUser) {
-        setCurrentUser({ ...currentUser, ...updated, token: currentUser?.token });
-      }
-
-      window.dispatchEvent(new Event('employee-profile-updated'));
-      setIsEditingInline(false);
-      toast({ title: 'Profile updated', status: 'success', duration: 3000, isClosable: true });
-    } catch (err) {
-      toast({ title: 'Save failed', description: err?.message || 'Unable to save changes', status: 'error', duration: 4000, isClosable: true });
-    } finally {
-      setIsSavingInline(false);
-    }
-  };
 
   const subtitle = useMemo(() => {
     const pieces = [profile?.jobTitle, profile?.department, profile?.position]
@@ -507,32 +443,6 @@ const EmployeeProfile = () => {
                     >
                       Refresh
                     </Button>
-                    {!isEditingInline ? (
-                      <Button
-                        leftIcon={<Icon as={FiEdit} />}
-                        variant="solid"
-                        colorScheme="blackAlpha"
-                        size="sm"
-                        onClick={handleStartInlineEdit}
-                      >
-                        Edit profile
-                      </Button>
-                    ) : (
-                      <HStack spacing={2}>
-                        <Button
-                          leftIcon={<Icon as={FiEdit} />}
-                          colorScheme="teal"
-                          size="sm"
-                          onClick={handleSaveInline}
-                          isLoading={isSavingInline}
-                        >
-                          Save
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={handleCancelInlineEdit}>
-                          Cancel
-                        </Button>
-                      </HStack>
-                    )}
                     <Button
                       leftIcon={<Icon as={FiBriefcase} />}
                       variant="outline"

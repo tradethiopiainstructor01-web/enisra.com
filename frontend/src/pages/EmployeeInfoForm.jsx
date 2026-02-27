@@ -732,7 +732,7 @@ const EmployeeInfoForm = () => {
               <FormLabel>Personal Email</FormLabel>
               <Input type="email" value={profile.personalEmail} onChange={setField('personalEmail')} placeholder="e.g. name@example.com" />
             </FormControl>
-            <FormControl isRequired>
+            <FormControl>
               <FormLabel>Work Email</FormLabel>
               <Input type="email" value={currentUser.email || ''} isReadOnly />
             </FormControl>
@@ -808,7 +808,7 @@ const EmployeeInfoForm = () => {
                       placeholder="e.g. 2024"
                     />
                   </FormControl>
-                  <FormControl isRequired gridColumn={{ base: 'auto', md: '1 / -1' }}>
+                  <FormControl gridColumn={{ base: 'auto', md: '1 / -1' }}>
                     <FormLabel>Certifications (Upload or text)</FormLabel>
                     <Textarea
                       value={item.certifications}
@@ -1113,11 +1113,11 @@ const EmployeeInfoForm = () => {
 
         <Divider />
 
-        <HStack justify="flex-end" spacing={3}>
+        <Box width="100%" textAlign="left">
           <Button type="submit" colorScheme="teal" isLoading={isSavingProfile}>
             Save profile
           </Button>
-        </HStack>
+        </Box>
       </Stack>
     </Box>
   );
