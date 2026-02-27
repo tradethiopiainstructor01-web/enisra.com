@@ -20,6 +20,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiFileText,
+  FiHeart,
   FiLogOut,
   FiUser,
   FiCamera,
@@ -124,6 +125,7 @@ const EmployeeSidebar = ({ collapsed, onToggleCollapsed }) => {
   const navItems = [
     { label: 'Profile', to: '/employee/profile', icon: FiUser },
     { label: 'Jobs', to: '/employee/jobs', icon: FiBriefcase },
+    { label: 'Favorites', to: '/employee/favorites', icon: FiHeart },
     { label: 'All Jobs', to: '/employee/all-jobs', icon: FiBriefcase },
     { label: 'Create CV', to: '/employee/create-cv', icon: FiFileText },
   ];

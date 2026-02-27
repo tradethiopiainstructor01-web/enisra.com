@@ -37,7 +37,6 @@ import {
   FiCheckCircle,
   FiBarChart2,
   FiRefreshCw,
-  FiEdit,
   FiCamera,
 } from 'react-icons/fi';
 import { format } from 'date-fns';
@@ -348,15 +347,6 @@ const EmployeeDashboard = () => {
                       isLoading={loading}
                     >
                       Refresh
-                    </Button>
-                    <Button
-                      leftIcon={<Icon as={FiEdit} />}
-                      variant="solid"
-                      colorScheme="blackAlpha"
-                      size="sm"
-                      onClick={() => navigate('/employee/profile')}
-                    >
-                      Edit profile
                     </Button>
                     <Button
                       leftIcon={<Icon as={FiBriefcase} />}

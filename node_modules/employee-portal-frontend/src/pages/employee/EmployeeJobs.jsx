@@ -7,6 +7,7 @@ import {
   Flex,
   Heading,
   HStack,
+  IconButton,
   Input,
   InputGroup,
   InputLeftElement,
@@ -14,11 +15,14 @@ import {
   SimpleGrid,
   Spinner,
   Text,
+  Tooltip,
   useColorModeValue,
+  useToast,
 } from '@chakra-ui/react';
 import { RepeatIcon, SearchIcon } from '@chakra-ui/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
+import { FiHeart } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
@@ -32,6 +36,7 @@ const safeDateLabel = (value) => {
 
 const EmployeeJobs = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const mutedText = useColorModeValue('gray.600', 'gray.300');
@@ -52,6 +57,8 @@ const EmployeeJobs = () => {
   const [partners, setPartners] = useState([]);
   const [partnersLoading, setPartnersLoading] = useState(false);
   const [partnersError, setPartnersError] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const [favoriteJobId, setFavoriteJobId] = useState('');
 
   const totalPages = useMemo(
     () => Math.max(Math.ceil((total || 0) / limit), 1),
@@ -118,6 +125,74 @@ const EmployeeJobs = () => {
       controller.abort();
     };
   }, [fetchJobs]);
+
+  const fetchFavorites = useCallback(async (signal) => {
+    try {
+      const response = await apiClient.get('/favorites', { signal });
+      const favorites = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const ids = new Set(
+        favorites
+          .map((favorite) => favorite?.jobId?._id || favorite?.jobId)
+          .filter(Boolean)
+          .map((id) => String(id))
+      );
+      setFavoriteIds(ids);
+    } catch (err) {
+      if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
+      setFavoriteIds(new Set());
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchFavorites(controller.signal);
+    return () => controller.abort();
+  }, [fetchFavorites]);
+
+  const handleFavoriteToggle = async (jobId) => {
+    if (!jobId || favoriteJobId === jobId) return;
+
+    const isFavorite = favoriteIds.has(jobId);
+    setFavoriteJobId(jobId);
+
+    try {
+      if (isFavorite) {
+        await apiClient.delete(`/favorites/${jobId}`);
+      } else {
+        await apiClient.post(`/favorites/${jobId}`);
+      }
+
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        if (isFavorite) {
+          next.delete(jobId);
+        } else {
+          next.add(jobId);
+        }
+        return next;
+      });
+    } catch (err) {
+      if (err?.status === 409) {
+        setFavoriteIds((prev) => new Set([...prev, jobId]));
+      } else if (err?.status === 404) {
+        setFavoriteIds((prev) => {
+          const next = new Set(prev);
+          next.delete(jobId);
+          return next;
+        });
+      } else {
+        toast({
+          title: 'Unable to update favorite',
+          description: err?.message || 'Please try again.',
+          status: 'error',
+          duration: 2500,
+          isClosable: true,
+        });
+      }
+    } finally {
+      setFavoriteJobId('');
+    }
+  };
 
   const onSearchChange = (e) => {
     setSearch(e.target.value);
@@ -236,84 +311,104 @@ const EmployeeJobs = () => {
           <Text color={mutedText}>No jobs found.</Text>
         ) : (
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            {jobs.map((job) => (
-              <Box
-                key={job._id}
-                p={5}
-                borderWidth="1px"
-                borderColor={borderColor}
-                borderRadius="lg"
-                bg={jobCardBg}
-              >
-                <Heading size="sm">{job.title || 'Untitled job'}</Heading>
+            {jobs.map((job) => {
+              const jobId = String(job?._id || job?.id || '');
+              const isFavorite = jobId ? favoriteIds.has(jobId) : false;
 
-                <HStack mt={2} spacing={2} flexWrap="wrap">
-                  {job.category ? <Badge colorScheme="purple">{job.category}</Badge> : null}
-                  {job.type ? <Badge colorScheme="blue">{job.type}</Badge> : null}
-                  {job.location ? <Badge colorScheme="green">{job.location}</Badge> : null}
-                </HStack>
-
-                {job.department ? (
-                  <Text mt={3} fontSize="sm">
-                    <Text as="span" fontWeight="semibold">
-                      Department:
-                    </Text>{' '}
-                    {job.department}
-                  </Text>
-                ) : null}
-
-                {job.salary ? (
-                  <Text mt={1} fontSize="sm">
-                    <Text as="span" fontWeight="semibold">
-                      Salary:
-                    </Text>{' '}
-                    {job.salary}
-                  </Text>
-                ) : null}
-
-                {job.deadline ? (
-                  <Text mt={1} fontSize="sm">
-                    <Text as="span" fontWeight="semibold">
-                      Deadline:
-                    </Text>{' '}
-                    {safeDateLabel(job.deadline)}
-                  </Text>
-                ) : null}
-
-                {job.description ? (
-                  <Text mt={3} fontSize="sm" noOfLines={5}>
-                    {job.description}
-                  </Text>
-                ) : null}
-
-                <Button
-                  mt={4}
-                  size="sm"
-                  colorScheme="teal"
-                  onClick={() => {
-                    const applyAccess = getJobApplyAccess();
-                    if (!applyAccess.allowed) {
-                      window.alert(getJobApplyAccessMessage(applyAccess.reason));
-                      if (applyAccess.reason === 'not_authenticated') {
-                        navigate('/login');
-                      }
-                      return;
-                    }
-
-                    const didOpenMailClient = openJobApplicationEmail(
-                      job,
-                      'Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.'
-                    );
-                    if (!didOpenMailClient) {
-                      window.alert('No contact email provided for this job.');
-                      return;
-                    }
-                  }}
+              return (
+                <Box
+                  key={job._id || job.id || job.title}
+                  p={5}
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                  borderRadius="lg"
+                  bg={jobCardBg}
                 >
-                  Apply
-                </Button>
-              </Box>
-            ))}
+                  <Flex justify="space-between" align="flex-start" gap={3}>
+                    <Heading size="sm">{job.title || 'Untitled job'}</Heading>
+                    {jobId ? (
+                      <Tooltip label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
+                        <IconButton
+                          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                          icon={<FiHeart />}
+                          size="sm"
+                          variant={isFavorite ? 'solid' : 'ghost'}
+                          colorScheme={isFavorite ? 'red' : 'gray'}
+                          isLoading={favoriteJobId === jobId}
+                          onClick={() => handleFavoriteToggle(jobId)}
+                        />
+                      </Tooltip>
+                    ) : null}
+                  </Flex>
+
+                  <HStack mt={2} spacing={2} flexWrap="wrap">
+                    {job.category ? <Badge colorScheme="purple">{job.category}</Badge> : null}
+                    {job.type ? <Badge colorScheme="blue">{job.type}</Badge> : null}
+                    {job.location ? <Badge colorScheme="green">{job.location}</Badge> : null}
+                  </HStack>
+
+                  {job.department ? (
+                    <Text mt={3} fontSize="sm">
+                      <Text as="span" fontWeight="semibold">
+                        Department:
+                      </Text>{' '}
+                      {job.department}
+                    </Text>
+                  ) : null}
+
+                  {job.salary ? (
+                    <Text mt={1} fontSize="sm">
+                      <Text as="span" fontWeight="semibold">
+                        Salary:
+                      </Text>{' '}
+                      {job.salary}
+                    </Text>
+                  ) : null}
+
+                  {job.deadline ? (
+                    <Text mt={1} fontSize="sm">
+                      <Text as="span" fontWeight="semibold">
+                        Deadline:
+                      </Text>{' '}
+                      {safeDateLabel(job.deadline)}
+                    </Text>
+                  ) : null}
+
+                  {job.description ? (
+                    <Text mt={3} fontSize="sm" noOfLines={5}>
+                      {job.description}
+                    </Text>
+                  ) : null}
+
+                  <Button
+                    mt={4}
+                    size="sm"
+                    colorScheme="teal"
+                    onClick={() => {
+                      const applyAccess = getJobApplyAccess();
+                      if (!applyAccess.allowed) {
+                        window.alert(getJobApplyAccessMessage(applyAccess.reason));
+                        if (applyAccess.reason === 'not_authenticated') {
+                          navigate('/login');
+                        }
+                        return;
+                      }
+
+                      const didOpenMailClient = openJobApplicationEmail(
+                        job,
+                        'Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.'
+                      );
+                      if (!didOpenMailClient) {
+                        window.alert('No contact email provided for this job.');
+                        return;
+                      }
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </Box>
+              );
+            })}
           </SimpleGrid>
         )}
 

@@ -17,7 +17,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
-import { FiBriefcase, FiFileText, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiHeart, FiLogOut, FiUser } from 'react-icons/fi';
 import { useUserStore } from '../../store/user';
 
 const EmployeeNavDrawer = ({ isOpen, onClose }) => {
@@ -32,6 +32,7 @@ const EmployeeNavDrawer = ({ isOpen, onClose }) => {
   const navItems = [
     { label: 'Profile', to: '/employee/profile', icon: FiUser },
     { label: 'Jobs', to: '/employee/jobs', icon: FiBriefcase },
+    { label: 'Favorites', to: '/employee/favorites', icon: FiHeart },
     { label: 'Create CV', to: '/employee/create-cv', icon: FiFileText },
   ];
 
