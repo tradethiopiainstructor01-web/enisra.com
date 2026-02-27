@@ -53,6 +53,7 @@ const employerCategoryRoutes = require('./routes/employerCategoryRoutes.js');
 const favoritesRoutes = require('./routes/favoritesRoutes.js');
 const scholarshipAuthRoutes = require('./routes/scholarshipAuthRoutes.js');
 const smsAuthRoutes = require('./routes/smsAuthRoutes.js');
+const scholarshipContentRoutes = require('./routes/scholarshipContentRoutes.js');
 const { initSmppHandlers } = require('./services/subscriptionService');
 // Load environment variables
 
@@ -324,6 +325,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/scholarship-auth', scholarshipAuthRoutes);
 app.use('/api', smsAuthRoutes);
+app.use('/api/scholarship-content', scholarshipContentRoutes);
 
 
 // Global error handler
