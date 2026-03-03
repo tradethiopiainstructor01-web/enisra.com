@@ -129,7 +129,7 @@ const trainingHighlights = [
   'International Job Readiness',
 ];
 
-const heroImageUrl = '/assets/hero-people.png';
+const heroImageUrl = '/assets/new-hero.png';
 const contactEmail = 'hello@enisra.com';
 
 const partnerDescriptions = {
