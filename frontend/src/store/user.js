@@ -185,9 +185,29 @@ export const useUserStore = create((set) => ({
                 },
                 body: JSON.stringify(safeBody),
             });
-    
-            const data = await res.json();
-            if (!data.success) return { success: false, message: data.message };
+
+            const isJson = (res.headers.get("content-type") || "").includes("application/json");
+            const data = isJson ? await res.json() : null;
+
+            if (!res.ok || !data?.success) {
+                const fieldDetails = Array.isArray(data?.fields)
+                    ? data.fields
+                          .map((item) => {
+                              const field = item?.field ? `${item.field}: ` : "";
+                              return `${field}${item?.message || "Invalid value"}`;
+                          })
+                          .join("; ")
+                    : "";
+
+                return {
+                    success: false,
+                    message:
+                        (fieldDetails
+                            ? `${data?.message || "Invalid profile data"} - ${fieldDetails}`
+                            : data?.message) ||
+                        `Request failed with status ${res.status}`,
+                };
+            }
     
             // Update currentUser in the store
             set((state) => ({

@@ -8,6 +8,7 @@ const {
     loginUser, 
     googleLoginUser,
     getUserCounts, 
+    getUserInfoById,
     updateUserInfo, // Import the new function
     getMe
 } = require('../controllers/user.controller.js');
@@ -33,6 +34,9 @@ router.get("/count", getUserCounts);
 
 // Get current user profile
 router.get("/me", protect, getMe);
+
+// Get user information by ID (self, admin, or HR)
+router.get("/info/:id", protect, getUserInfoById);
 
 // Update user by ID route
 router.put("/:id", updateuser);

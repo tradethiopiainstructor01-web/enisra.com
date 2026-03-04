@@ -373,10 +373,10 @@ const EmployeeProfile = () => {
                       www.enisra.com
                     </Text>
                     <Heading size="lg" mt={1} fontFamily="Georgia, serif">
-                      {loading ? <Skeleton height="28px" width="240px" /> : fullName}
+                      {loading ? <Skeleton as="span" display="inline-block" height="28px" width="240px" /> : fullName}
                     </Heading>
                     <Text mt={2} opacity={0.92}>
-                      {loading ? <Skeleton height="18px" width="320px" /> : subtitle}
+                      {loading ? <Skeleton as="span" display="inline-block" height="18px" width="320px" /> : subtitle}
                     </Text>
                     <HStack spacing={2} mt={3} flexWrap="wrap">
                       <Badge bg="whiteAlpha.200" borderWidth="1px" borderColor="whiteAlpha.300" borderRadius="full">

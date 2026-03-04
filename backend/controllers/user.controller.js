@@ -94,6 +94,29 @@ const buildAuthResponse = (user, message = 'Login successful') => {
     };
 };
 
+const normalizeRoleName = (role = '') =>
+    role
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+const toSafeUserResponse = (user) => {
+    const userObj = user.toObject ? user.toObject() : { ...user };
+    delete userObj.password;
+
+    return {
+        ...userObj,
+        photoUrl: buildAppwriteUrl(userObj.photo),
+        guarantorFileUrl: buildAppwriteUrl(userObj.guarantorFile),
+        cvResumeUrl: buildAppwriteUrl(userObj.cvResume),
+        educationCertificateUrls: buildAppwriteUrls(userObj.educationCertificates),
+        idPassportUrl: buildAppwriteUrl(userObj.idPassport),
+        contractDocumentUrl: buildAppwriteUrl(userObj.contractDocument),
+        otherSupportingFileUrls: buildAppwriteUrls(userObj.otherSupportingFiles),
+    };
+};
+
 const getConfiguredGoogleClientIds = () => {
     const configuredValues = [
         process.env.GOOGLE_CLIENT_ID,
@@ -540,10 +563,56 @@ const getUserCounts = async (req, res) => {
     }
 };
 
+// Get user profile information by ID
+const getUserInfoById = async (req, res) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(404).json({ success: false, message: "Invalid user ID" });
+    }
+
+    try {
+        if (!mongoose.connection.readyState) {
+            return res.status(500).json({ success: false, message: "Database connection error" });
+        }
+
+        if (!req.user?._id) {
+            return res.status(401).json({ success: false, message: "Not authorized" });
+        }
+
+        const requestorRole = normalizeRoleName(req.user.role);
+        const isPrivileged = ['admin', 'hr'].includes(requestorRole);
+        const isSelfRequest = req.user._id.toString() === id;
+
+        if (!isPrivileged && !isSelfRequest) {
+            return res.status(403).json({ success: false, message: "Not authorized to access this profile" });
+        }
+
+        const user = await User.findById(id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: toSafeUserResponse(user),
+        });
+    } catch (error) {
+        console.error("Error fetching user information by id:", {
+            userId: id,
+            errorName: error?.name,
+            errorMessage: error?.message,
+        });
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 // Update user information based on user input
 const updateUserInfo = async (req, res) => {
     const { id } = req.params;
     const userUpdates = { ...(req.body || {}) };
+    let sanitizedUpdates = {};
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(404).json({ success: false, message: "Invalid user ID" });
@@ -562,11 +631,77 @@ const updateUserInfo = async (req, res) => {
         delete userUpdates.points;
         delete userUpdates.rating;
         delete userUpdates.requiresApproval;
+
+        const normalizeEnum = (value, allowedValues) => {
+            if (typeof value !== 'string') return undefined;
+            const normalized = value.trim().toLowerCase();
+            if (!normalized) return undefined;
+            return allowedValues.includes(normalized) ? normalized : undefined;
+        };
+
+        const stripUndefinedDeep = (value) => {
+            if (Array.isArray(value)) {
+                return value.map(stripUndefinedDeep).filter((item) => item !== undefined);
+            }
+
+            if (value && typeof value === 'object' && !(value instanceof Date)) {
+                return Object.entries(value).reduce((acc, [key, nestedValue]) => {
+                    const cleaned = stripUndefinedDeep(nestedValue);
+                    if (cleaned !== undefined) {
+                        acc[key] = cleaned;
+                    }
+                    return acc;
+                }, {});
+            }
+
+            return value === undefined ? undefined : value;
+        };
+
+        // Normalize commonly mismatched enum fields from legacy profile values.
+        if (Object.prototype.hasOwnProperty.call(userUpdates, 'gender')) {
+            userUpdates.gender = normalizeEnum(userUpdates.gender, ['male', 'female']);
+        }
+        if (Object.prototype.hasOwnProperty.call(userUpdates, 'employmentType')) {
+            const rawEmploymentType = typeof userUpdates.employmentType === 'string'
+                ? userUpdates.employmentType.trim().toLowerCase()
+                : '';
+            const mappedEmploymentType =
+                rawEmploymentType === 'fulltime' ? 'full-time' :
+                rawEmploymentType === 'parttime' ? 'part-time' :
+                rawEmploymentType;
+
+            userUpdates.employmentType = normalizeEnum(
+                mappedEmploymentType,
+                ['full-time', 'part-time', 'remote', 'contract', 'intern']
+            );
+        }
+
+        // Avoid Date cast errors from empty string values.
+        if (userUpdates.dateOfBirth === '') delete userUpdates.dateOfBirth;
+        if (userUpdates.hireDate === '') delete userUpdates.hireDate;
+
+        if (Array.isArray(userUpdates.workExperience)) {
+            userUpdates.workExperience = userUpdates.workExperience.map((item) => {
+                const nextItem = { ...(item || {}) };
+                if (nextItem.startDate === '') delete nextItem.startDate;
+                if (nextItem.endDate === '') delete nextItem.endDate;
+                return nextItem;
+            });
+        }
+
+        if (userUpdates.salaryDetails && typeof userUpdates.salaryDetails === 'object') {
+            const salaryDetails = { ...userUpdates.salaryDetails };
+            if (salaryDetails.contractStartDate === '') delete salaryDetails.contractStartDate;
+            if (salaryDetails.contractEndDate === '') delete salaryDetails.contractEndDate;
+            userUpdates.salaryDetails = salaryDetails;
+        }
+
+        sanitizedUpdates = stripUndefinedDeep(userUpdates);
         
         // Update user based on new information
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { $set: userUpdates },
+            { $set: sanitizedUpdates },
             { new: true, runValidators: true }
         );
 
@@ -579,7 +714,63 @@ const updateUserInfo = async (req, res) => {
 
         res.status(200).json({ success: true, message: "User information updated successfully!", data: userObj });
     } catch (error) {
-        console.error("Error updating user information:", error.message);
+        if (error instanceof mongoose.Error.ValidationError) {
+            const fieldErrors = Object.entries(error.errors || {}).map(([field, item]) => ({
+                field,
+                kind: item?.kind || 'validation',
+                message: item?.message || 'Invalid value',
+            }));
+
+            console.error("Validation error updating user information:", {
+                userId: id,
+                fields: fieldErrors,
+                payloadKeys: Object.keys(sanitizedUpdates || {}),
+            });
+
+            return res.status(400).json({
+                success: false,
+                message: "Invalid profile data",
+                errors: fieldErrors.map((item) => item.message),
+                fields: fieldErrors,
+            });
+        }
+
+        if (error instanceof mongoose.Error.CastError) {
+            console.error("Cast error updating user information:", {
+                userId: id,
+                field: error.path,
+                valueType: typeof error.value,
+                payloadKeys: Object.keys(sanitizedUpdates || {}),
+                message: error.message,
+            });
+
+            return res.status(400).json({
+                success: false,
+                message: `Invalid value for field: ${error.path}`,
+                field: error.path,
+                error: error.message,
+            });
+        }
+
+        if (error?.code === 11000) {
+            const duplicateField = Object.keys(error.keyPattern || {})[0] || 'field';
+            console.error("Duplicate key error updating user information:", {
+                userId: id,
+                duplicateField,
+                payloadKeys: Object.keys(sanitizedUpdates || {}),
+            });
+            return res.status(409).json({
+                success: false,
+                message: `Duplicate value for ${duplicateField}`,
+            });
+        }
+
+        console.error("Unexpected error updating user information:", {
+            userId: id,
+            errorName: error?.name,
+            errorMessage: error?.message,
+            payloadKeys: Object.keys(sanitizedUpdates || {}),
+        });
         res.status(500).json({ success: false, message: "Failed to update user information", error: error.message });
     }
 };
@@ -591,19 +782,9 @@ const getMe = async (req, res) => {
             return res.status(401).json({ success: false, message: "Not authorized" });
         }
 
-        const userObj = req.user.toObject ? req.user.toObject() : req.user;
-        delete userObj.password;
-
         res.status(200).json({
             success: true,
-            data: {
-                ...userObj,
-                photoUrl: buildAppwriteUrl(userObj.photo),
-                guarantorFileUrl: buildAppwriteUrl(userObj.guarantorFile),
-                cvResumeUrl: buildAppwriteUrl(userObj.cvResume),
-                idPassportUrl: buildAppwriteUrl(userObj.idPassport),
-                contractDocumentUrl: buildAppwriteUrl(userObj.contractDocument),
-            }
+            data: toSafeUserResponse(req.user)
         });
     } catch (error) {
         console.error("Error fetching current user:", error.message);
@@ -620,6 +801,7 @@ module.exports = {
     updateuser,
     deleteuser,
     getUserCounts,
+    getUserInfoById,
     updateUserInfo,
     getMe
 };

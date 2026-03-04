@@ -140,7 +140,10 @@ const configuredOrigins = parseOriginsEnv(
   process.env.CLIENT_URL,
   process.env.CLIENT_ORIGIN,
   process.env.APP_URL,
-  process.env.PUBLIC_URL
+  process.env.PUBLIC_URL,
+  process.env.VERCEL_URL,
+  process.env.VERCEL_BRANCH_URL,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL
 );
 
 const localDevOrigins = [
