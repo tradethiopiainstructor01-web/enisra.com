@@ -38,8 +38,15 @@ const ScholarshipLoginPage = () => {
 
   const normalizedMsisdn = useMemo(() => msisdn.replace(/\s+/g, ""), [msisdn]);
   const cardBg = useColorModeValue("white", "gray.800");
-  const pageBg = useColorModeValue("#f4f8ff", "gray.900");
+  const pageBg = useColorModeValue(
+    "radial-gradient(circle at 15% 20%, #dbeafe 0%, #f0f9ff 35%, #f8fafc 100%)",
+    "gray.900"
+  );
   const leftPanelBg = useColorModeValue("linear-gradient(135deg, #0f766e 0%, #0e7490 100%)", "teal.700");
+  const cardBorder = useColorModeValue("whiteAlpha.700", "whiteAlpha.200");
+  const inputBg = useColorModeValue("white", "gray.700");
+  const inputBorder = useColorModeValue("blue.100", "gray.600");
+  const inputHoverBorder = useColorModeValue("blue.300", "gray.500");
 
   useEffect(() => {
     if (localStorage.getItem("scholarshipToken")) {
@@ -74,13 +81,41 @@ const ScholarshipLoginPage = () => {
   };
 
   return (
-    <Box minH="100vh" bg={pageBg} py={{ base: 6, md: 12 }}>
+    <Box minH="100vh" bg={pageBg} py={{ base: 6, md: 12 }} position="relative" overflow="hidden">
+      <Box
+        position="absolute"
+        top="-80px"
+        right="-120px"
+        w="340px"
+        h="340px"
+        borderRadius="full"
+        bg="blue.200"
+        filter="blur(80px)"
+        opacity={0.35}
+        pointerEvents="none"
+      />
+      <Box
+        position="absolute"
+        bottom="-100px"
+        left="-140px"
+        w="360px"
+        h="360px"
+        borderRadius="full"
+        bg="teal.200"
+        filter="blur(90px)"
+        opacity={0.35}
+        pointerEvents="none"
+      />
       <Container maxW="5xl">
         <Box
           borderRadius="3xl"
           overflow="hidden"
-          boxShadow="0 20px 60px rgba(15, 23, 42, 0.18)"
+          boxShadow="0 24px 80px rgba(15, 23, 42, 0.22)"
           bg={cardBg}
+          border="1px solid"
+          borderColor={cardBorder}
+          backdropFilter="saturate(160%) blur(2px)"
+          position="relative"
         >
           <Flex direction={{ base: "column", md: "row" }}>
             <Box
@@ -92,22 +127,54 @@ const ScholarshipLoginPage = () => {
             >
               <VStack align="start" spacing={5}>
                 <HStack spacing={3}>
-                  <Icon as={FaGraduationCap} boxSize={7} />
+                  <Flex
+                    align="center"
+                    justify="center"
+                    w="46px"
+                    h="46px"
+                    borderRadius="xl"
+                    bg="whiteAlpha.260"
+                    border="1px solid"
+                    borderColor="whiteAlpha.400"
+                  >
+                    <Icon as={FaGraduationCap} boxSize={6} />
+                  </Flex>
                   <Heading size="md">Scholarship Access</Heading>
                 </HStack>
-                <Text opacity={0.95}>
+                <Text opacity={0.95} fontSize={{ base: "sm", md: "md" }}>
                   Subscribe by SMS first. Send OK to short code 9295, then login using your phone number and PIN.
                 </Text>
                 <VStack align="start" spacing={3} pt={2}>
-                  <HStack>
+                  <HStack
+                    bg="whiteAlpha.170"
+                    px={3}
+                    py={2}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="whiteAlpha.280"
+                  >
                     <Icon as={FaMobileAlt} />
                     <Text fontSize="sm">SMS subscribe short code: 9295</Text>
                   </HStack>
-                  <HStack>
+                  <HStack
+                    bg="whiteAlpha.170"
+                    px={3}
+                    py={2}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="whiteAlpha.280"
+                  >
                     <Icon as={FaLock} />
                     <Text fontSize="sm">Secure 6-digit PIN login</Text>
                   </HStack>
-                  <HStack>
+                  <HStack
+                    bg="whiteAlpha.170"
+                    px={3}
+                    py={2}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="whiteAlpha.280"
+                  >
                     <Icon as={FaCheckCircle} />
                     <Text fontSize="sm">Fast and mobile-friendly process</Text>
                   </HStack>
@@ -117,8 +184,10 @@ const ScholarshipLoginPage = () => {
 
             <Box flex="1.1" px={{ base: 6, md: 8 }} py={{ base: 8, md: 10 }}>
               <Stack spacing={5}>
-                <Heading size="lg">Login</Heading>
-                <Text color="gray.600">
+                <Heading size="lg" letterSpacing="-0.02em">
+                  Login
+                </Heading>
+                <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
                   Enter your subscribed phone number and PIN from SMS.
                 </Text>
 
@@ -143,6 +212,13 @@ const ScholarshipLoginPage = () => {
                           placeholder="09XXXXXXXX or 251XXXXXXXXX"
                           value={msisdn}
                           onChange={(event) => setMsisdn(event.target.value)}
+                          bg={inputBg}
+                          borderColor={inputBorder}
+                          _hover={{ borderColor: inputHoverBorder }}
+                          _focusVisible={{
+                            borderColor: "blue.400",
+                            boxShadow: "0 0 0 1px var(--chakra-colors-blue-400)",
+                          }}
                         />
                       </InputGroup>
                       <FormHelperText>
@@ -160,14 +236,24 @@ const ScholarshipLoginPage = () => {
                         placeholder="Enter 6-digit PIN"
                         value={pin}
                         onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                        bg={inputBg}
+                        borderColor={inputBorder}
+                        _hover={{ borderColor: inputHoverBorder }}
+                        _focusVisible={{
+                          borderColor: "blue.400",
+                          boxShadow: "0 0 0 1px var(--chakra-colors-blue-400)",
+                        }}
                       />
                     </FormControl>
 
                     <Button
                       type="submit"
                       size="lg"
-                      colorScheme="green"
+                      bgGradient="linear(to-r, teal.500, blue.500)"
+                      color="white"
+                      _hover={{ bgGradient: "linear(to-r, teal.600, blue.600)" }}
                       isLoading={isSubmitting}
+                      boxShadow="0 8px 24px rgba(14, 116, 144, 0.35)"
                     >
                       Login
                     </Button>
