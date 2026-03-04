@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
   Alert,
   AlertIcon,
@@ -266,6 +266,10 @@ const ScholarshipLoginPage = () => {
                     <Text fontSize="sm">{errorMessage}</Text>
                   </Alert>
                 ) : null}
+
+                <Button as={RouterLink} to="/" variant="ghost" size="sm" alignSelf="flex-start">
+                  Back to Home
+                </Button>
               </Stack>
             </Box>
           </Flex>
