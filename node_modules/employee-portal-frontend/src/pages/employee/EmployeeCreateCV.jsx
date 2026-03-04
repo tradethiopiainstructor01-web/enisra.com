@@ -15,19 +15,11 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserStore } from '../../store/user';
 import { MIN_CV_PROFILE_COMPLETION, getEmployeeProfileCompletion } from '../../utils/employeeProfileCompletion';
 import apiClient from '../../utils/apiClient';
-import {
-  downloadBlob,
-  isLikelyMobileBrowser,
-  openPreparingWindow,
-  tryShareBlobAsFile,
-} from '../../utils/fileDownload';
 
 const formatMonthYear = (value) => {
   if (!value) return '';
@@ -108,15 +100,21 @@ const waitForElementImages = async (element) => {
 };
 
 const waitForCvAssets = async (element) => {
-  if (typeof document !== 'undefined' && document.fonts?.ready) {
+  const ownerDocument = element?.ownerDocument || document;
+  if (ownerDocument?.fonts?.ready) {
     try {
-      await document.fonts.ready;
+      await ownerDocument.fonts.ready;
     } catch (error) {
       // Ignore font readiness errors and continue with best effort.
     }
   }
   await waitForElementImages(element);
 };
+
+const collectDocumentStyles = () =>
+  Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+    .map((node) => node.outerHTML)
+    .join('\n');
 
 // Function to filter out placeholder/dummy content
 const isPlaceholderContent = (text) => {
@@ -314,126 +312,73 @@ const EmployeeCreateCV = () => {
     if (!cvRef.current || !canCreateCv) return;
 
     const filename = `CV_${fullName.replace(/\s+/g, '_')}.pdf`;
-    const isMobile = isLikelyMobileBrowser();
-    const preparingWindow = isMobile
-      ? openPreparingWindow(filename, 'Preparing your CV PDF...')
-      : null;
 
     setIsExporting(true);
+    let printWindow = null;
     try {
       await new Promise((r) => setTimeout(r, 50));
 
       const sourceElement = cvRef.current;
       await waitForCvAssets(sourceElement);
-      const captureScale = isMobile ? 2 : 3;
       const sourceRect = sourceElement.getBoundingClientRect();
       const sourceWidth = Math.max(sourceElement.scrollWidth, Math.ceil(sourceRect.width));
-      const sourceHeight = Math.max(sourceElement.scrollHeight, Math.ceil(sourceRect.height));
-
-      const canvas = await html2canvas(sourceElement, {
-        scale: captureScale,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: '#ffffff',
-        logging: false,
-        imageTimeout: 15000,
-        width: sourceWidth,
-        height: sourceHeight,
-        windowWidth: sourceWidth,
-        windowHeight: sourceHeight,
-        scrollX: 0,
-        scrollY: 0,
-      });
-
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'pt',
-        format: 'a4',
-        compress: false,
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
-      const pixelPerPoint = canvas.width / imgWidth;
-      const pageSliceHeightPx = Math.max(1, Math.floor(pdfHeight * pixelPerPoint));
-
-      let yOffsetPx = 0;
-      let pageNumber = 0;
-
-      while (yOffsetPx < canvas.height) {
-        const sliceHeightPx = Math.min(pageSliceHeightPx, canvas.height - yOffsetPx);
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sliceHeightPx;
-        const pageContext = pageCanvas.getContext('2d');
-        if (!pageContext) {
-          throw new Error('Failed to prepare PDF page context.');
-        }
-        pageContext.fillStyle = '#ffffff';
-        pageContext.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-        pageContext.drawImage(
-          canvas,
-          0,
-          yOffsetPx,
-          canvas.width,
-          sliceHeightPx,
-          0,
-          0,
-          pageCanvas.width,
-          pageCanvas.height,
-        );
-
-        const pageImgData = pageCanvas.toDataURL('image/png');
-        const renderHeightPt = sliceHeightPx / pixelPerPoint;
-
-        if (pageNumber > 0) {
-          pdf.addPage();
-        }
-        pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, renderHeightPt);
-
-        yOffsetPx += sliceHeightPx;
-        pageNumber += 1;
+      printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1200,height=900');
+      if (!printWindow) {
+        throw new Error('Pop-up blocked. Please allow pop-ups to download as PDF.');
       }
 
-      const blob = pdf.output('blob');
+      const stylesMarkup = collectDocumentStyles();
+      printWindow.document.open();
+      printWindow.document.write(`
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <base href="${window.location.origin}/" />
+  <title>${filename}</title>
+  ${stylesMarkup}
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    #print-root {
+      width: ${sourceWidth}px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="print-root"></div>
+</body>
+</html>`);
+      printWindow.document.close();
 
-      if (isMobile) {
-        const shared = await tryShareBlobAsFile(blob, filename, {
-          title: filename,
-        });
-        if (shared) {
-          if (preparingWindow && !preparingWindow.closed) preparingWindow.close();
-          return;
-        }
-
-        // Mobile browsers often block programmatic "downloads". Navigating to the PDF is more reliable.
-        const url = URL.createObjectURL(blob);
-        setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000);
-        if (preparingWindow && !preparingWindow.closed) {
-          try {
-            preparingWindow.location.href = url;
-            if (typeof preparingWindow.focus === 'function') preparingWindow.focus();
-            return;
-          } catch (error) {
-            // Fall through to regular window.open / navigation fallback.
-          }
-        }
-
-        const opened = window.open(url, '_blank');
-        if (!opened) window.location.assign(url);
-        return;
+      const mountNode = printWindow.document.getElementById('print-root');
+      if (!mountNode) {
+        throw new Error('Unable to prepare print window.');
       }
 
-      downloadBlob(blob, filename);
+      const clonedCv = printWindow.document.importNode(sourceElement, true);
+      mountNode.appendChild(clonedCv);
+
+      await waitForCvAssets(mountNode);
+      await new Promise((r) => setTimeout(r, 120));
+
+      printWindow.focus();
+      printWindow.print();
+      setTimeout(() => {
+        if (printWindow && !printWindow.closed) printWindow.close();
+      }, 1200);
     } catch (error) {
-      if (preparingWindow && !preparingWindow.closed) {
-        try {
-          preparingWindow.close();
-        } catch (closeError) {
-          // ignore
-        }
-      }
       toast({
         title: 'Export failed',
         description: error?.message || 'Unable to export CV PDF.',
@@ -441,6 +386,13 @@ const EmployeeCreateCV = () => {
         duration: 4000,
         isClosable: true,
       });
+      if (printWindow && !printWindow.closed) {
+        try {
+          printWindow.close();
+        } catch (closeError) {
+          // ignore
+        }
+      }
     } finally {
       setIsExporting(false);
     }
