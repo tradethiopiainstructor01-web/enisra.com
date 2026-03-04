@@ -728,12 +728,8 @@ const EmployeeInfoForm = () => {
         <Stack spacing={4}>
           <Heading size="md">2. Contact Information</Heading>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Personal Email</FormLabel>
-              <Input type="email" value={profile.personalEmail} onChange={setField('personalEmail')} placeholder="e.g. name@example.com" />
-            </FormControl>
             <FormControl>
-              <FormLabel>Work Email</FormLabel>
+              <FormLabel>Email</FormLabel>
               <Input type="email" value={currentUser.email || ''} isReadOnly />
             </FormControl>
             <FormControl isRequired>
@@ -776,7 +772,7 @@ const EmployeeInfoForm = () => {
                 </HStack>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <FormControl>
-                    <FormLabel>Highest Education Level</FormLabel>
+                    <FormLabel>Highest Education Level *</FormLabel>
                     <Input
                       value={item.highestEducationLevel}
                       onChange={updateArrayField('educationBackground', index, 'highestEducationLevel')}
@@ -784,7 +780,7 @@ const EmployeeInfoForm = () => {
                     />
                   </FormControl>
                   <FormControl>
-                    <FormLabel>Field of Study</FormLabel>
+                    <FormLabel>Field of Study *</FormLabel>
                     <Input
                       value={item.fieldOfStudy}
                       onChange={updateArrayField('educationBackground', index, 'fieldOfStudy')}
@@ -792,7 +788,7 @@ const EmployeeInfoForm = () => {
                     />
                   </FormControl>
                   <FormControl>
-                    <FormLabel>Institution Name</FormLabel>
+                    <FormLabel>Institution Name *</FormLabel>
                     <Input
                       value={item.institutionName}
                       onChange={updateArrayField('educationBackground', index, 'institutionName')}

@@ -399,16 +399,10 @@ const EmployeeDashboard = () => {
                           <Icon as={FiMail} color={mutedText} mt={0.5} />
                           <Box>
                             <Text fontSize="sm" fontWeight="semibold">
-                              Work email
+                              Email
                             </Text>
                             <Text fontSize="sm" color={mutedText}>
                               {profile?.email || '-'}
-                            </Text>
-                            <Text fontSize="sm" fontWeight="semibold" mt={2}>
-                              Personal email
-                            </Text>
-                            <Text fontSize="sm" color={mutedText}>
-                              {profile?.altEmail || '-'}
                             </Text>
                           </Box>
                         </HStack>
