@@ -357,7 +357,12 @@ const JobsPage = () => {
               <Button as={RouterLink} to="/" size="sm" variant="ghost">
                 {t('home')}
               </Button>
-              <Button as={RouterLink} to="/jobs" size="sm" variant="ghost">
+              <Button
+                as="a"
+                href="http://localhost:3002/scholarship-login"
+                size="sm"
+                variant="ghost"
+              >
                 {t('scholarships')}
               </Button>
               <Button as={RouterLink} to="/" size="sm" variant="ghost">

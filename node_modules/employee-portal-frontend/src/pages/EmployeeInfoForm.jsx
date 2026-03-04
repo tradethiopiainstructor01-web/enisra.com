@@ -775,7 +775,7 @@ const EmployeeInfoForm = () => {
                   </Button>
                 </HStack>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Highest Education Level</FormLabel>
                     <Input
                       value={item.highestEducationLevel}
@@ -783,7 +783,7 @@ const EmployeeInfoForm = () => {
                       placeholder="e.g. BSc, MSc, PhD"
                     />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Field of Study</FormLabel>
                     <Input
                       value={item.fieldOfStudy}
@@ -791,7 +791,7 @@ const EmployeeInfoForm = () => {
                       placeholder="e.g. Computer Science"
                     />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Institution Name</FormLabel>
                     <Input
                       value={item.institutionName}
@@ -799,7 +799,7 @@ const EmployeeInfoForm = () => {
                       placeholder="e.g. Addis Ababa University"
                     />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Graduation Year</FormLabel>
                     <Input
                       type="number"
@@ -850,7 +850,7 @@ const EmployeeInfoForm = () => {
                   </Button>
                 </HStack>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Previous Company Name</FormLabel>
                     <Input
                       value={item.previousCompanyName}
@@ -858,7 +858,7 @@ const EmployeeInfoForm = () => {
                       placeholder="e.g. Ethio Telecom"
                     />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Job Title</FormLabel>
                     <Input
                       value={item.jobTitle}
@@ -866,11 +866,11 @@ const EmployeeInfoForm = () => {
                       placeholder="e.g. IT Support Specialist"
                     />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Start Date</FormLabel>
                     <Input type="date" value={item.startDate} onChange={updateArrayField('workExperience', index, 'startDate')} />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>End Date</FormLabel>
                     <Input
                       type="date"
@@ -879,7 +879,7 @@ const EmployeeInfoForm = () => {
                       isDisabled={item.currentlyEmployed === 'yes'}
                     />
                   </FormControl>
-                  <FormControl isRequired>
+                  <FormControl>
                     <FormLabel>Currently Employed</FormLabel>
                     <Select
                       value={item.currentlyEmployed}
@@ -901,7 +901,7 @@ const EmployeeInfoForm = () => {
                       <option value="no">No</option>
                     </Select>
                   </FormControl>
-                  <FormControl isRequired gridColumn={{ base: 'auto', md: '1 / -1' }}>
+                  <FormControl gridColumn={{ base: 'auto', md: '1 / -1' }}>
                     <FormLabel>Key Responsibilities</FormLabel>
                     <Textarea
                       value={item.keyResponsibilities}
