@@ -152,14 +152,29 @@ const EmployeeCreateCVPage = () => {
       // Allow the UI to hide any external images before capture.
       await new Promise((r) => setTimeout(r, 50));
 
-      const canvas = await html2canvas(cvRef.current, {
-        scale: isMobile ? 1.5 : 2,
+      const sourceElement = cvRef.current;
+      const deviceScale = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+      const baseScale = isMobile ? 2 : 3;
+      const captureScale = Math.min(Math.max(baseScale, deviceScale), 4);
+
+      const canvas = await html2canvas(sourceElement, {
+        scale: captureScale,
         useCORS: true,
         backgroundColor: '#ffffff',
+        logging: false,
+        width: sourceElement.scrollWidth,
+        height: sourceElement.scrollHeight,
+        windowWidth: sourceElement.scrollWidth,
+        windowHeight: sourceElement.scrollHeight,
       });
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'pt',
+        format: 'a4',
+        compress: false,
+      });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
