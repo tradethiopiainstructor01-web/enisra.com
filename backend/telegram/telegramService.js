@@ -20,7 +20,10 @@ class TelegramService {
   }
 
   getParseMode() {
-    return (process.env.TELEGRAM_PARSE_MODE || 'HTML').toUpperCase();
+    const raw = (process.env.TELEGRAM_PARSE_MODE || 'HTML').trim().toLowerCase();
+    if (raw === 'markdownv2') return 'MarkdownV2';
+    if (raw === 'markdown') return 'Markdown';
+    return 'HTML';
   }
 
   getUseSystemProxy() {
@@ -48,14 +51,14 @@ class TelegramService {
       '',
       `<b>Job Position:</b> ${escapeHtml(title)}`,
       '',
-      `<b>Job Type:</b>${escapeHtml(type)}`,
+      `<b>Job Type:</b> ${escapeHtml(type)}`,
       '',
-      `<b>place of work:</b> ${escapeHtml(location)}`,
+      `<b>Place of Work:</b> ${escapeHtml(location)}`,
       '',
-      '<b>Required  experience:</b>',
+      '<b>Required Experience:</b>',
       escapeHtml(requiredExperience),
       '',
-      `<b>Year of Experience:</b> ${escapeHtml(yearsOfExperience)}`,
+      `<b>Years of Experience:</b> ${escapeHtml(yearsOfExperience)}`,
     ].join('\n');
   }
 

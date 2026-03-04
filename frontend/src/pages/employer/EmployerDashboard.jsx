@@ -452,6 +452,9 @@ const EmployerDashboard = () => {
     try {
       setIsPosting(true);
       const response = await apiClient.post('/jobs', payload);
+      const telegram = response?.data?.telegram;
+      const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
+      const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       const savedJob = response?.data?.data ?? response?.data ?? payload;
       const normalizedJob = {
         ...payload,
@@ -477,10 +480,14 @@ const EmployerDashboard = () => {
       });
 
       toast({
-        title: "Job posted",
-        description: "Your job posting is now visible in the pipeline.",
-        status: "success",
-        duration: 3000,
+        title: telegramFailed ? "Job posted with warning" : "Job posted",
+        description: telegram?.success
+          ? "Your job posting is now visible in the pipeline and sent to Telegram."
+          : telegramFailed
+            ? `Your job posting is visible, but Telegram posting failed${telegramError}.`
+            : "Your job posting is now visible in the pipeline.",
+        status: telegramFailed ? "warning" : "success",
+        duration: telegramFailed ? 5500 : 3000,
         isClosable: true,
       });
     } catch (error) {

@@ -168,13 +168,17 @@ const EmployerPostJob = () => {
       });
 
       const telegram = response?.data?.telegram;
+      const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
+      const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       toast({
-        title: "Job submitted",
+        title: telegramFailed ? "Job submitted with warning" : "Job submitted",
         description: telegram?.success
           ? "Your job was saved and sent to Telegram. It is now pending admin approval."
-          : "Your job is pending admin approval. Once approved, it will move to Posted.",
-        status: "success",
-        duration: 3000,
+          : telegramFailed
+            ? `Your job was saved, but Telegram posting failed${telegramError}. It remains pending admin approval.`
+            : "Your job is pending admin approval. Once approved, it will move to Posted.",
+        status: telegramFailed ? "warning" : "success",
+        duration: telegramFailed ? 5500 : 3000,
         isClosable: true,
       });
       setShowJobForm(false);

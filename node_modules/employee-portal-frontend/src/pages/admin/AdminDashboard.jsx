@@ -1843,13 +1843,17 @@ const AdminDashboard = () => {
       setAdminJobSubmitting(true);
       const response = await apiClient.post("/jobs", payload);
       const telegram = response?.data?.telegram;
+      const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
+      const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       toast({
-        title: "Job submitted",
+        title: telegramFailed ? "Job submitted with warning" : "Job submitted",
         description: telegram?.success
           ? "Job saved and sent to Telegram. It will appear in pending until approved."
-          : "Job posted by admin. It will appear in pending until approved.",
-        status: "success",
-        duration: 3000,
+          : telegramFailed
+            ? `Job saved, but Telegram posting failed${telegramError}. It will appear in pending until approved.`
+            : "Job posted by admin. It will appear in pending until approved.",
+        status: telegramFailed ? "warning" : "success",
+        duration: telegramFailed ? 5500 : 3000,
         isClosable: true,
       });
       resetAdminJobForm();

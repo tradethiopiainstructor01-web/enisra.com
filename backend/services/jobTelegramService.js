@@ -3,14 +3,33 @@ const telegramService = require('../telegram/telegramService');
 
 const shortErr = (e) => e?.response?.data?.description || e?.message || 'Unknown error';
 
+const normalizePublicUrl = (value = '') => {
+  const raw = (value || '').toString().trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw.replace(/\/+$/, '');
+  return `https://${raw.replace(/^\/+/, '').replace(/\/+$/, '')}`;
+};
+
 const buildApplyUrl = (jobId) => {
-  if (process.env.TELEGRAM_APPLY_URL) return process.env.TELEGRAM_APPLY_URL;
-  if (process.env.TELEGRAM_JOB_URL_TEMPLATE?.includes('{jobId}')) {
-    return process.env.TELEGRAM_JOB_URL_TEMPLATE.replace('{jobId}', String(jobId));
+  const directApplyUrl = normalizePublicUrl(process.env.TELEGRAM_APPLY_URL);
+  if (directApplyUrl) {
+    return directApplyUrl.includes('{jobId}')
+      ? directApplyUrl.replace('{jobId}', String(jobId))
+      : directApplyUrl;
   }
+
+  if (process.env.TELEGRAM_JOB_URL_TEMPLATE?.includes('{jobId}')) {
+    return normalizePublicUrl(process.env.TELEGRAM_JOB_URL_TEMPLATE.replace('{jobId}', String(jobId)));
+  }
+
   const base = process.env.JOB_PUBLIC_BASE_URL || process.env.FRONTEND_URL;
   if (!base) throw new Error('Set TELEGRAM_APPLY_URL or JOB_PUBLIC_BASE_URL');
-  return `${base.replace(/\/$/, '')}/jobs/${jobId}`;
+
+  const normalizedBase = normalizePublicUrl(base);
+  if (!normalizedBase) throw new Error('Invalid JOB_PUBLIC_BASE_URL/FRONTEND_URL');
+
+  const url = new URL(`/jobs/${jobId}`, `${normalizedBase}/`);
+  return url.toString();
 };
 
 exports.publishNewJob = async (job) => {
