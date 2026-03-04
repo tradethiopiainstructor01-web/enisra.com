@@ -78,12 +78,6 @@ const buildAddressLine = (profile = {}) => {
   return parts.join(', ');
 };
 
-const formatFooterDate = (value = new Date()) => {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return format(date, 'MMMM do yyyy');
-};
-
 const waitForElementImages = async (element) => {
   if (!element) return;
   const images = Array.from(element.querySelectorAll('img'));
@@ -360,15 +354,12 @@ const EmployeeCreateCV = () => {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const footerHeight = 24;
-      const contentHeight = pdfHeight - footerHeight;
       const imgWidth = pdfWidth;
       const pixelPerPoint = canvas.width / imgWidth;
-      const pageSliceHeightPx = Math.max(1, Math.floor(contentHeight * pixelPerPoint));
+      const pageSliceHeightPx = Math.max(1, Math.floor(pdfHeight * pixelPerPoint));
 
       let yOffsetPx = 0;
       let pageNumber = 0;
-      const footerText = `Generated on ${formatFooterDate(new Date())} | Professional CV created with ENISRA`;
 
       while (yOffsetPx < canvas.height) {
         const sliceHeightPx = Math.min(pageSliceHeightPx, canvas.height - yOffsetPx);
@@ -400,14 +391,6 @@ const EmployeeCreateCV = () => {
           pdf.addPage();
         }
         pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, renderHeightPt);
-
-        pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, pdfHeight - footerHeight, pdfWidth, footerHeight, 'F');
-        pdf.setDrawColor(220, 226, 234);
-        pdf.line(24, pdfHeight - footerHeight, pdfWidth - 24, pdfHeight - footerHeight);
-        pdf.setTextColor(90, 104, 121);
-        pdf.setFontSize(8);
-        pdf.text(footerText, pdfWidth / 2, pdfHeight - 9, { align: 'center' });
 
         yOffsetPx += sliceHeightPx;
         pageNumber += 1;
