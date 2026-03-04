@@ -156,7 +156,12 @@ const localDevOrigins = [
   'http://localhost:3004'
 ];
 
-const allowedOrigins = [...new Set([...configuredOrigins, ...localDevOrigins])];
+const allowedOrigins = [
+  ...new Set([
+    ...expandOriginAliases(configuredOrigins),
+    ...expandOriginAliases(localDevOrigins),
+  ]),
+];
 
 const isAllowedOrigin = (origin) => {
   if (!origin) return true;
@@ -166,6 +171,7 @@ const isAllowedOrigin = (origin) => {
   try {
     const { hostname, origin: normalizedOrigin } = new URL(origin);
     if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    if (hostname === 'enisra.com' || hostname === 'www.enisra.com') return true;
     if (allowedOrigins.includes(normalizedOrigin)) return true;
   } catch (error) {
     return false;
@@ -177,10 +183,13 @@ const isAllowedOrigin = (origin) => {
 const corsOptions = {
   origin: (origin, callback) => {
     console.log('CORS check - Origin:', origin);
-    console.log('Allowed origins:', allowedOrigins);
 
     if (isAllowedOrigin(origin)) {
-      return callback(null, true);
+      if (!origin) {
+        return callback(null, true);
+      }
+      // Echo the requesting origin to avoid apex/www mismatch responses.
+      return callback(null, origin);
     }
 
     console.warn('CORS blocked origin:', origin);
