@@ -494,21 +494,11 @@ const EmployeeProfile = () => {
                           <Icon as={FiMail} color={mutedText} mt={0.5} />
                           <Box>
                             <Text fontSize="sm" fontWeight="semibold">
-                              Work email
+                              Email
                             </Text>
                             <Text fontSize="sm" color={mutedText}>
                               {profile?.email || '-'}
                             </Text>
-                            <Text fontSize="sm" fontWeight="semibold" mt={2}>
-                              Personal email
-                            </Text>
-                            {isEditingInline ? (
-                              <Input size="sm" value={editProfile?.altEmail || editProfile?.personalEmail || profile?.altEmail || ''} onChange={setEditField('personalEmail')} placeholder="Personal email" />
-                            ) : (
-                              <Text fontSize="sm" color={mutedText}>
-                                {profile?.altEmail || '-'}
-                              </Text>
-                            )}
                           </Box>
                         </HStack>
 
