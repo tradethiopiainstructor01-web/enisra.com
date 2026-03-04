@@ -91,7 +91,7 @@ const EmployeeLayout = () => {
               >
                 Scholarships
               </Button>
-              <Button as={RouterLink} to="/" size="sm" colorScheme="teal" variant="solid">
+              <Button as={RouterLink} to="/scholarship-login" size="sm" colorScheme="teal" variant="solid">
                 Free Trainings
               </Button>
             </HStack>
