@@ -133,6 +133,27 @@ const parseOriginsEnv = (...values) =>
     .flatMap((value) => value.split(','))
     .flatMap((value) => normalizeOrigin(value));
 
+const expandOriginAliases = (origins) => {
+  const expanded = new Set(origins);
+
+  for (const entry of origins) {
+    try {
+      const parsed = new URL(entry);
+      const { protocol, hostname } = parsed;
+
+      if (hostname === 'enisra.com') {
+        expanded.add(`${protocol}//www.enisra.com`);
+      } else if (hostname === 'www.enisra.com') {
+        expanded.add(`${protocol}//enisra.com`);
+      }
+    } catch (error) {
+      // Ignore malformed values from env inputs.
+    }
+  }
+
+  return [...expanded];
+};
+
 const configuredOrigins = parseOriginsEnv(
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGIN,
