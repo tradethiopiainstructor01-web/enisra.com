@@ -728,12 +728,8 @@ const EmployeeInfoForm = () => {
         <Stack spacing={4}>
           <Heading size="md">2. Contact Information</Heading>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-            <FormControl isRequired>
-              <FormLabel>Personal Email</FormLabel>
-              <Input type="email" value={profile.personalEmail} onChange={setField('personalEmail')} placeholder="e.g. name@example.com" />
-            </FormControl>
             <FormControl>
-              <FormLabel>Work Email</FormLabel>
+              <FormLabel>Email</FormLabel>
               <Input type="email" value={currentUser.email || ''} isReadOnly />
             </FormControl>
             <FormControl isRequired>
