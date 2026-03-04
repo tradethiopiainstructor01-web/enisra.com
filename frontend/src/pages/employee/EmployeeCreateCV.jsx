@@ -54,10 +54,18 @@ const normalizeList = (value) => {
   return [];
 };
 
+const normalizeWhitespace = (value) => {
+  if (value === null || value === undefined) return '';
+  return value
+    .toString()
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 const resolveContactPhone = (profile = {}) => {
-  const nationalId = (profile?.nationalIdOrPassportNumber || '').toString().trim();
-  const phone = (profile?.phone || '').toString().trim();
-  const username = (profile?.username || '').toString().trim();
+  const nationalId = normalizeWhitespace(profile?.nationalIdOrPassportNumber);
+  const phone = normalizeWhitespace(profile?.phone);
+  const username = normalizeWhitespace(profile?.username);
   if (phone && phone !== nationalId) return phone;
   if (username && username !== nationalId) return username;
   return phone || username || '';
@@ -65,7 +73,7 @@ const resolveContactPhone = (profile = {}) => {
 
 const buildAddressLine = (profile = {}) => {
   const parts = [profile?.currentAddress, profile?.city, profile?.country]
-    .map((v) => (v || '').toString().trim())
+    .map((v) => normalizeWhitespace(v))
     .filter(Boolean);
   return parts.join(', ');
 };
@@ -74,6 +82,46 @@ const formatFooterDate = (value = new Date()) => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   return format(date, 'MMMM do yyyy');
+};
+
+const waitForElementImages = async (element) => {
+  if (!element) return;
+  const images = Array.from(element.querySelectorAll('img'));
+  if (!images.length) return;
+
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete && img.naturalWidth > 0) {
+            resolve();
+            return;
+          }
+
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+          };
+
+          img.addEventListener('load', finish, { once: true });
+          img.addEventListener('error', finish, { once: true });
+          setTimeout(finish, 3000);
+        }),
+    ),
+  );
+};
+
+const waitForCvAssets = async (element) => {
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (error) {
+      // Ignore font readiness errors and continue with best effort.
+    }
+  }
+  await waitForElementImages(element);
 };
 
 // Function to filter out placeholder/dummy content
@@ -180,18 +228,25 @@ const EmployeeCreateCV = () => {
 
   const fullName = useMemo(() => {
     const parts = [profile?.firstName, profile?.middleName, profile?.lastName]
-      .map((v) => (v || '').toString().trim())
+      .map((v) => normalizeWhitespace(v))
       .filter(Boolean);
     if (parts.length) return parts.join(' ');
-    return profile?.fullName || currentUser?.username || currentUser?.email || 'Employee';
+    return normalizeWhitespace(
+      profile?.fullName || currentUser?.username || currentUser?.email || 'Employee',
+    );
   }, [profile, currentUser]);
 
   const contactEmail = useMemo(() => {
-    return profile?.workEmail || profile?.altEmail || profile?.email || currentUser?.email || '';
+    return normalizeWhitespace(profile?.workEmail || profile?.altEmail || profile?.email || currentUser?.email || '');
   }, [profile, currentUser]);
   const contactPhone = useMemo(() => resolveContactPhone(profile), [profile]);
 
   const companyWebsite = 'www.enisra.com';
+  const professionalSummary = normalizeWhitespace(profile?.professionalSummary);
+  const websiteLine = normalizeWhitespace(profile?.website);
+  const linkedinLine = normalizeWhitespace(profile?.linkedin);
+  const nationalityLine = normalizeWhitespace(profile?.nationality);
+  const maritalStatusLine = normalizeWhitespace(profile?.maritalStatus);
 
   const education = Array.isArray(profile?.educationBackground)
     ? profile.educationBackground.filter((e) => e && (e.institutionName || e.fieldOfStudy || e.highestEducationLevel) && !isPlaceholderContent(e.institutionName) && !isPlaceholderContent(e.fieldOfStudy))
@@ -201,9 +256,23 @@ const EmployeeCreateCV = () => {
     ? profile.workExperience.filter((w) => w && (w.previousCompanyName || w.jobTitle) && !isPlaceholderContent(w.previousCompanyName) && !isPlaceholderContent(w.jobTitle))
     : [];
 
-  const technicalSkills = normalizeList(profile?.technicalSkills).filter((skill) => !isPlaceholderContent(skill));
-  const softSkills = normalizeList(profile?.softSkills).filter((skill) => !isPlaceholderContent(skill));
-  const languages = Array.isArray(profile?.languagesSpoken) ? profile.languagesSpoken.filter((l) => l && l.language && !isPlaceholderContent(l.language)) : [];
+  const technicalSkills = normalizeList(profile?.technicalSkills)
+    .map((skill) => normalizeWhitespace(skill))
+    .filter(Boolean)
+    .filter((skill) => !isPlaceholderContent(skill));
+  const softSkills = normalizeList(profile?.softSkills)
+    .map((skill) => normalizeWhitespace(skill))
+    .filter(Boolean)
+    .filter((skill) => !isPlaceholderContent(skill));
+  const languages = Array.isArray(profile?.languagesSpoken)
+    ? profile.languagesSpoken
+        .map((lang) => ({
+          ...lang,
+          language: normalizeWhitespace(lang?.language),
+          proficiencyLevel: normalizeWhitespace(lang?.proficiencyLevel),
+        }))
+        .filter((l) => l && l.language && !isPlaceholderContent(l.language))
+    : [];
 
   const headerBadges = [
     profile?.jobTitle,
@@ -211,17 +280,17 @@ const EmployeeCreateCV = () => {
     profile?.position,
     profile?.workLocation,
   ]
-    .map((v) => (v || '').toString().trim())
+    .map((v) => normalizeWhitespace(v))
     .filter(Boolean)
     .filter(label => !isPlaceholderContent(label));
 
   const jobLine = [profile?.jobTitle, profile?.department, profile?.position]
-    .map((v) => (v || '').toString().trim())
+    .map((v) => normalizeWhitespace(v))
     .filter(Boolean)
     .join(' | ');
 
   const locationLine = [profile?.city, profile?.country]
-    .map((v) => (v || '').toString().trim())
+    .map((v) => normalizeWhitespace(v))
     .filter(Boolean)
     .join(', ');
 
@@ -237,7 +306,12 @@ const EmployeeCreateCV = () => {
     { label: 'Date of Joining', value: joinedLabel },
     { label: 'Work Location', value: profile?.workLocation },
     { label: 'Reporting Manager', value: profile?.reportingManager },
-  ].filter((item) => (item.value || '').toString().trim());
+  ]
+    .map((item) => ({
+      ...item,
+      value: normalizeWhitespace(item.value),
+    }))
+    .filter((item) => item.value);
   const profileCompletion = useMemo(() => getEmployeeProfileCompletion(profile), [profile]);
   const canCreateCv = profileCompletion.meetsCvRequirement;
   const missingForCv = profileCompletion.missing.slice(0, 6);
@@ -256,22 +330,27 @@ const EmployeeCreateCV = () => {
       await new Promise((r) => setTimeout(r, 50));
 
       const sourceElement = cvRef.current;
-      const deviceScale = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-      const baseScale = isMobile ? 2 : 3;
-      const captureScale = Math.min(Math.max(baseScale, deviceScale), 4);
+      await waitForCvAssets(sourceElement);
+      const captureScale = isMobile ? 2 : 3;
+      const sourceRect = sourceElement.getBoundingClientRect();
+      const sourceWidth = Math.max(sourceElement.scrollWidth, Math.ceil(sourceRect.width));
+      const sourceHeight = Math.max(sourceElement.scrollHeight, Math.ceil(sourceRect.height));
 
       const canvas = await html2canvas(sourceElement, {
         scale: captureScale,
         useCORS: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
-        width: sourceElement.scrollWidth,
-        height: sourceElement.scrollHeight,
-        windowWidth: sourceElement.scrollWidth,
-        windowHeight: sourceElement.scrollHeight,
+        imageTimeout: 15000,
+        width: sourceWidth,
+        height: sourceHeight,
+        windowWidth: sourceWidth,
+        windowHeight: sourceHeight,
+        scrollX: 0,
+        scrollY: 0,
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'pt',
@@ -281,35 +360,57 @@ const EmployeeCreateCV = () => {
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-
+      const footerHeight = 24;
+      const contentHeight = pdfHeight - footerHeight;
       const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pixelPerPoint = canvas.width / imgWidth;
+      const pageSliceHeightPx = Math.max(1, Math.floor(contentHeight * pixelPerPoint));
 
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position -= pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      // Add a real PDF footer on every page.
+      let yOffsetPx = 0;
+      let pageNumber = 0;
       const footerText = `Generated on ${formatFooterDate(new Date())} | Professional CV created with ENISRA`;
-      const totalPages = pdf.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i += 1) {
-        pdf.setPage(i);
+
+      while (yOffsetPx < canvas.height) {
+        const sliceHeightPx = Math.min(pageSliceHeightPx, canvas.height - yOffsetPx);
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sliceHeightPx;
+        const pageContext = pageCanvas.getContext('2d');
+        if (!pageContext) {
+          throw new Error('Failed to prepare PDF page context.');
+        }
+        pageContext.fillStyle = '#ffffff';
+        pageContext.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        pageContext.drawImage(
+          canvas,
+          0,
+          yOffsetPx,
+          canvas.width,
+          sliceHeightPx,
+          0,
+          0,
+          pageCanvas.width,
+          pageCanvas.height,
+        );
+
+        const pageImgData = pageCanvas.toDataURL('image/png');
+        const renderHeightPt = sliceHeightPx / pixelPerPoint;
+
+        if (pageNumber > 0) {
+          pdf.addPage();
+        }
+        pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, renderHeightPt);
+
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(0, pdfHeight - 24, pdfWidth, 24, 'F');
+        pdf.rect(0, pdfHeight - footerHeight, pdfWidth, footerHeight, 'F');
         pdf.setDrawColor(220, 226, 234);
-        pdf.line(24, pdfHeight - 24, pdfWidth - 24, pdfHeight - 24);
+        pdf.line(24, pdfHeight - footerHeight, pdfWidth - 24, pdfHeight - footerHeight);
         pdf.setTextColor(90, 104, 121);
         pdf.setFontSize(8);
         pdf.text(footerText, pdfWidth / 2, pdfHeight - 9, { align: 'center' });
+
+        yOffsetPx += sliceHeightPx;
+        pageNumber += 1;
       }
 
       const blob = pdf.output('blob');
@@ -504,9 +605,9 @@ const EmployeeCreateCV = () => {
                     </Box>
                   </HStack>
 
-                  {profile?.professionalSummary && !isPlaceholderContent(profile.professionalSummary) ? (
+                  {professionalSummary && !isPlaceholderContent(professionalSummary) ? (
                     <Text mt={4} fontSize="md" opacity={0.9} maxW="600px" lineHeight="1.6">
-                      {profile.professionalSummary}
+                      {professionalSummary}
                     </Text>
                   ) : null}
 
@@ -532,24 +633,29 @@ const EmployeeCreateCV = () => {
                   ) : null}
                 </Box>
 
-                <VStack align="flex-end" spacing={2} flexShrink={0} minW="340px">
-                  <Text fontSize="lg" fontWeight="bold">ENISRA</Text>
+                <VStack align="flex-end" spacing={1} flexShrink={0} minW="340px" textAlign="right">
+                  <Text fontSize="lg" fontWeight="bold" lineHeight="1">ENISRA</Text>
                   <Text
                     fontSize="sm"
+                    lineHeight="1.2"
                     opacity={0.95}
                     fontFamily="'Palatino Linotype', 'Book Antiqua', Palatino, serif"
                     fontStyle="italic"
-                    letterSpacing="0.04em"
+                    letterSpacing="0.03em"
                   >
                     Transforming Business Through Innovation
                   </Text>
                   {contactEmail ? <Text fontSize="sm" opacity={0.92}>{contactEmail}</Text> : null}
                   {contactPhone ? <Text fontSize="sm" opacity={0.92}>Phone: {contactPhone}</Text> : null}
-                  {locationLine ? <Text fontSize="sm" opacity={0.92}>Location: {locationLine}</Text> : null}
-                  {profile?.website || profile?.linkedin ? (
+                  {locationLine ? (
+                    <Text fontSize="sm" opacity={0.92}>
+                      <Text as="span" fontWeight="semibold">Location:</Text> {locationLine}
+                    </Text>
+                  ) : null}
+                  {websiteLine || linkedinLine ? (
                     <HStack spacing={3} mt={2}>
-                      {profile.website ? <Text fontSize="sm" opacity={0.92}>{profile.website}</Text> : null}
-                      {profile.linkedin ? <Text fontSize="sm" opacity={0.92}>LinkedIn</Text> : null}
+                      {websiteLine ? <Text fontSize="sm" opacity={0.92}>{websiteLine}</Text> : null}
+                      {linkedinLine ? <Text fontSize="sm" opacity={0.92}>LinkedIn</Text> : null}
                     </HStack>
                   ) : null}
                 </VStack>
@@ -590,11 +696,11 @@ const EmployeeCreateCV = () => {
                 </VStack>
 
                 {/* Professional Summary */}
-                {profile?.professionalSummary && (
+                {professionalSummary && !isPlaceholderContent(professionalSummary) && (
                   <Box mb={8}>
                     <SectionTitle>PROFESSIONAL SUMMARY</SectionTitle>
                     <Text fontSize="sm" lineHeight="1.6" color="gray.700">
-                      {profile.professionalSummary}
+                      {professionalSummary}
                     </Text>
                   </Box>
                 )}
@@ -605,9 +711,19 @@ const EmployeeCreateCV = () => {
                     <SectionTitle withDivider>SKILLS</SectionTitle>
                     
                     {technicalSkills.length > 0 && (
-                      <Box mb={4}>
-                        <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={2}>TECHNICAL</Text>
-                        <HStack spacing={2} flexWrap="wrap" justify="flex-start" pl={2}>
+                      <Box
+                        mb={4}
+                        bg="teal.50"
+                        borderWidth="1px"
+                        borderColor="teal.100"
+                        borderRadius="md"
+                        px={3}
+                        py={3}
+                      >
+                        <Text fontSize="xs" fontWeight="bold" color="teal.800" mb={2}>
+                          TECHNICAL SKILLS
+                        </Text>
+                        <Flex wrap="wrap" gap={2}>
                           {technicalSkills.map((skill) => (
                             <Badge
                               key={skill} 
@@ -622,18 +738,28 @@ const EmployeeCreateCV = () => {
                               {skill}
                             </Badge>
                           ))}
-                        </HStack>
+                        </Flex>
                       </Box>
                     )}
                     
                     {softSkills.length > 0 && (
-                      <Box minW={0}>
-                        <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={2}>SOFT SKILLS</Text>
-                        <HStack spacing={2} flexWrap="wrap" justify="flex-start" pl={2}>
+                      <Box
+                        minW={0}
+                        bg="orange.50"
+                        borderWidth="1px"
+                        borderColor="orange.100"
+                        borderRadius="md"
+                        px={3}
+                        py={3}
+                      >
+                        <Text fontSize="xs" fontWeight="bold" color="orange.800" mb={2}>
+                          SOFT SKILLS
+                        </Text>
+                        <Flex wrap="wrap" gap={2}>
                           {softSkills.map((skill) => (
                             <Badge
                               key={skill} 
-                              colorScheme="purple" 
+                              colorScheme="orange" 
                               variant="solid"
                               borderRadius="full"
                               px={3}
@@ -644,7 +770,7 @@ const EmployeeCreateCV = () => {
                               {skill}
                             </Badge>
                           ))}
-                        </HStack>
+                        </Flex>
                       </Box>
                     )}
                   </Box>
@@ -672,13 +798,13 @@ const EmployeeCreateCV = () => {
                 )}
 
                 {/* Additional Information */}
-                {(profile?.nationality || profile?.dateOfBirth || profile?.maritalStatus) && (
+                {(nationalityLine || profile?.dateOfBirth || maritalStatusLine) && (
                   <Box>
                     <SectionTitle withDivider>PERSONAL</SectionTitle>
                     <VStack align="start" spacing={2}>
-                      {profile?.nationality && (
+                      {nationalityLine && (
                         <Text fontSize="sm">
-                          <Text as="span" fontWeight="semibold">Nationality:</Text> {profile.nationality}
+                          <Text as="span" fontWeight="semibold">Nationality:</Text> {nationalityLine}
                         </Text>
                       )}
                       {profile?.dateOfBirth && (
@@ -686,9 +812,9 @@ const EmployeeCreateCV = () => {
                           <Text as="span" fontWeight="semibold">Date of Birth:</Text> {safeFormatDate(profile.dateOfBirth)}
                         </Text>
                       )}
-                      {profile?.maritalStatus && (
+                      {maritalStatusLine && (
                         <Text fontSize="sm">
-                          <Text as="span" fontWeight="semibold">Marital Status:</Text> {profile.maritalStatus}
+                          <Text as="span" fontWeight="semibold">Marital Status:</Text> {maritalStatusLine}
                         </Text>
                       )}
                     </VStack>
@@ -710,8 +836,12 @@ const EmployeeCreateCV = () => {
                             ? 'Present'
                             : formatMonthYear(item.endDate);
                         const dateLabel = [startLabel, endLabel].filter(Boolean).join(' - ') || 'Present';
+                        const roleTitle = normalizeWhitespace(item.jobTitle) || 'Role';
+                        const companyName = normalizeWhitespace(item.previousCompanyName);
+                        const responsibilityText = normalizeWhitespace(item.keyResponsibilities);
+                        const achievementsText = normalizeWhitespace(item.achievements);
                         return (
-                          <Box key={`${item.previousCompanyName || 'exp'}-${idx}`} width="full" position="relative" pl={6}>
+                          <Box key={`${companyName || 'exp'}-${idx}`} width="full" position="relative" pl={6}>
                             {/* Timeline indicator */}
                             <Box 
                               position="absolute" 
@@ -733,27 +863,27 @@ const EmployeeCreateCV = () => {
                             <Box minW={0}>
                               <Text fontWeight="bold" fontSize="lg" color="gray.800">
                                 <SafeText fallback="Role">
-                                  {item.jobTitle || 'Role'}
+                                  {roleTitle}
                                 </SafeText>
-                                {item.previousCompanyName && !isPlaceholderContent(item.previousCompanyName) && (
-                                  <Text as="span" fontWeight="normal" color="gray.600"> @ {item.previousCompanyName}</Text>
+                                {companyName && !isPlaceholderContent(companyName) && (
+                                  <Text as="span" fontWeight="normal" color="gray.600"> @ {companyName}</Text>
                                 )}
                               </Text>
                               <Text fontSize="sm" color="teal.600" fontWeight="500" mt={1}>
                                 {dateLabel}
                               </Text>
-                              {item.keyResponsibilities && !isPlaceholderContent(item.keyResponsibilities) && (
+                              {responsibilityText && !isPlaceholderContent(responsibilityText) && (
                                 <Text fontSize="sm" mt={3} lineHeight="1.6" color="gray.700">
-                                  {item.keyResponsibilities}
+                                  {responsibilityText}
                                 </Text>
                               )}
-                              {item.achievements && !isPlaceholderContent(item.achievements) && (
+                              {achievementsText && !isPlaceholderContent(achievementsText) && (
                                 <Box mt={3}>
                                   <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
                                     KEY ACHIEVEMENTS:
                                   </Text>
                                   <Text fontSize="sm" lineHeight="1.5" color="gray.700">
-                                    {item.achievements}
+                                    {achievementsText}
                                   </Text>
                                 </Box>
                               )}
@@ -784,52 +914,62 @@ const EmployeeCreateCV = () => {
                   <Box mb={10}>
                     <SectionTitle color="gray.800" fontSize="sm" withDivider>EDUCATION</SectionTitle>
                     <VStack align="start" spacing={5}>
-                      {education.map((item, idx) => (
-                        <Box key={`${item.institutionName || 'edu'}-${idx}`} width="full" position="relative" pl={6}>
-                          {/* Education indicator */}
-                          <Box 
-                            position="absolute" 
-                            left="0" 
-                            top="8px" 
-                            boxSize="12px" 
-                            borderRadius="full" 
-                            bg="blue.500" 
-                          />
-                          
-                          <Box minW={0}>
-                            <Text fontWeight="bold" fontSize="lg" color="gray.800">
-                              <SafeText fallback="Education">
-                                {[item.highestEducationLevel, item.fieldOfStudy].filter(Boolean).join(' - ') || 'Education'}
-                              </SafeText>
-                            </Text>
-                            {item.institutionName && !isPlaceholderContent(item.institutionName) && (
-                              <Text fontSize="md" color="blue.600" fontWeight="500" mt={1}>
-                                {item.institutionName}
+                      {education.map((item, idx) => {
+                        const educationLevel = normalizeWhitespace(item.highestEducationLevel);
+                        const fieldOfStudy = normalizeWhitespace(item.fieldOfStudy);
+                        const institutionName = normalizeWhitespace(item.institutionName);
+                        const graduationYear = normalizeWhitespace(item.graduationYear);
+                        const gpa = normalizeWhitespace(item.gpa);
+                        const certificationsText = normalizeWhitespace(item.certifications);
+                        const educationHeading = [educationLevel, fieldOfStudy].filter(Boolean).join(' - ') || 'Education';
+
+                        return (
+                          <Box key={`${institutionName || 'edu'}-${idx}`} width="full" position="relative" pl={6}>
+                            {/* Education indicator */}
+                            <Box 
+                              position="absolute" 
+                              left="0" 
+                              top="8px" 
+                              boxSize="12px" 
+                              borderRadius="full" 
+                              bg="blue.500" 
+                            />
+                            
+                            <Box minW={0}>
+                              <Text fontWeight="bold" fontSize="lg" color="gray.800">
+                                <SafeText fallback="Education">
+                                  {educationHeading}
+                                </SafeText>
                               </Text>
-                            )}
-                            {item.graduationYear && (
-                              <Text fontSize="sm" color="gray.600" mt={1}>
-                                Graduated: {item.graduationYear}
-                              </Text>
-                            )}
-                            {item.gpa && (
-                              <Text fontSize="sm" color="gray.600">
-                                GPA: {item.gpa}
-                              </Text>
-                            )}
-                            {item.certifications && !isPlaceholderContent(item.certifications) && (
-                              <Box mt={3}>
-                                <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
-                                  CERTIFICATIONS:
+                              {institutionName && !isPlaceholderContent(institutionName) && (
+                                <Text fontSize="md" color="blue.600" fontWeight="500" mt={1}>
+                                  {institutionName}
                                 </Text>
-                                <Text fontSize="sm" lineHeight="1.5" color="gray.700">
-                                  {item.certifications}
+                              )}
+                              {graduationYear && (
+                                <Text fontSize="sm" color="gray.600" mt={1}>
+                                  Graduated: {graduationYear}
                                 </Text>
-                              </Box>
-                            )}
+                              )}
+                              {gpa && (
+                                <Text fontSize="sm" color="gray.600">
+                                  GPA: {gpa}
+                                </Text>
+                              )}
+                              {certificationsText && !isPlaceholderContent(certificationsText) && (
+                                <Box mt={3}>
+                                  <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
+                                    CERTIFICATIONS:
+                                  </Text>
+                                  <Text fontSize="sm" lineHeight="1.5" color="gray.700">
+                                    {certificationsText}
+                                  </Text>
+                                </Box>
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      ))}
+                        );
+                      })}
                     </VStack>
                   </Box>
                 )}
@@ -839,23 +979,31 @@ const EmployeeCreateCV = () => {
                   <Box mb={10}>
                     <SectionTitle color="gray.800" fontSize="sm" withDivider>PROJECTS</SectionTitle>
                     <VStack align="start" spacing={4}>
-                      {profile.projects.map((project, idx) => (
-                        <Box key={`project-${idx}`} width="full">
-                          <Text fontWeight="bold" fontSize="md" color="gray.800">
-                            <SafeText fallback={`Project ${idx + 1}`}>
-                              {project.name}
-                            </SafeText>
-                          </Text>
-                          {project.description && !isPlaceholderContent(project.description) && (
-                            <Text fontSize="sm" mt={2} lineHeight="1.5" color="gray.700">
-                              {project.description}
+                      {profile.projects.map((project, idx) => {
+                        const projectName = normalizeWhitespace(project?.name);
+                        const projectDescription = normalizeWhitespace(project?.description);
+                        const technologies = Array.isArray(project?.technologies)
+                          ? project.technologies
+                              .map((tech) => normalizeWhitespace(tech))
+                              .filter(Boolean)
+                              .filter((tech) => !isPlaceholderContent(tech))
+                          : [];
+
+                        return (
+                          <Box key={`project-${idx}`} width="full">
+                            <Text fontWeight="bold" fontSize="md" color="gray.800">
+                              <SafeText fallback={`Project ${idx + 1}`}>
+                                {projectName}
+                              </SafeText>
                             </Text>
-                          )}
-                          {project.technologies && project.technologies.length > 0 && (
-                            <HStack spacing={2} mt={2} flexWrap="wrap">
-                              {project.technologies
-                                .filter(tech => !isPlaceholderContent(tech))
-                                .map((tech, techIdx) => (
+                            {projectDescription && !isPlaceholderContent(projectDescription) && (
+                              <Text fontSize="sm" mt={2} lineHeight="1.5" color="gray.700">
+                                {projectDescription}
+                              </Text>
+                            )}
+                            {technologies.length > 0 && (
+                              <HStack spacing={2} mt={2} flexWrap="wrap">
+                                {technologies.map((tech, techIdx) => (
                                   <Badge 
                                     key={`tech-${techIdx}`} 
                                     colorScheme="green" 
@@ -865,10 +1013,11 @@ const EmployeeCreateCV = () => {
                                     {tech}
                                   </Badge>
                                 ))}
-                            </HStack>
-                          )}
-                        </Box>
-                      ))}
+                              </HStack>
+                            )}
+                          </Box>
+                        );
+                      })}
                     </VStack>
                   </Box>
                 )}
