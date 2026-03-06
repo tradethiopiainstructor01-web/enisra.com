@@ -21,12 +21,6 @@ const parseBoolean = (value) => {
   return normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on';
 };
 
-const buildQueuedTelegramResult = () => ({
-  skipped: true,
-  queued: true,
-  reason: 'Pending admin approval',
-});
-
 const extractEmail = (value) => {
   const candidate = toTrimmedString(value)
     .replace(/^mailto:/i, '')
@@ -229,9 +223,7 @@ exports.createJob = async (req, res) => {
 
     const created = await Job.create(payload);
     const telegramResult = postToTelegram
-      ? created.approved
-        ? await publishNewJob(created)
-        : buildQueuedTelegramResult()
+      ? await publishNewJob(created)
       : { skipped: true, reason: 'Disabled by request' };
 
     res.status(201).json({ success: true, data: created, telegram: telegramResult });

@@ -1858,13 +1858,10 @@ const AdminDashboard = () => {
       const response = await apiClient.post("/jobs", payload);
       const telegram = response?.data?.telegram;
       const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
-      const telegramQueued = Boolean(payload.postToTelegram && telegram?.queued);
       const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       toast({
         title: telegramFailed ? "Job submitted with warning" : "Job submitted",
-        description: telegramQueued
-          ? "Job saved and will be sent to Telegram after approval."
-          : telegram?.success
+        description: telegram?.success
           ? "Job saved and sent to Telegram."
           : telegramFailed
             ? `Job saved, but Telegram posting failed${telegramError}. It will appear in pending until approved.`

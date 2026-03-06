@@ -169,13 +169,10 @@ const EmployerPostJob = () => {
 
       const telegram = response?.data?.telegram;
       const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
-      const telegramQueued = Boolean(payload.postToTelegram && telegram?.queued);
       const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       toast({
         title: telegramFailed ? "Job submitted with warning" : "Job submitted",
-        description: telegramQueued
-          ? "Your job was saved and will be sent to Telegram after admin approval."
-          : telegram?.success
+        description: telegram?.success
           ? "Your job was saved and sent to Telegram."
           : telegramFailed
             ? `Your job was saved, but Telegram posting failed${telegramError}. It remains pending admin approval.`
