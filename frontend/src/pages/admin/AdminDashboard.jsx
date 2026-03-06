@@ -393,25 +393,28 @@ const AdminDashboard = () => {
   // This makes "Manage Employee Accounts" work even when users have roles like HR/IT/Sales/etc.
   const EXCLUDED_STAFF_ROLES = new Set(["admin", "employer", "employers"]);
   const getEmployeePhone = (user) => user?.phone || user?.username || "";
+  const formatPercent = (value, total) =>
+    total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
 
   // Calculate statistics
+  const approvedEmployerCount = allEmployers.filter((e) => e.status === "approved" || e.status === "active").length;
+  const rejectedEmployerCount = allEmployers.filter((e) => e.status === "rejected" || e.status === "inactive").length;
+  const activeEmployeeCount = employees.filter((e) => e.status === "active").length;
+  const inactiveEmployeeCount = employees.filter((e) => e.status === "inactive").length;
+
   const employerStats = {
     total: allEmployers.length,
     pending: pendingEmployers.length,
-    approved: allEmployers.filter((e) => e.status === "approved" || e.status === "active").length,
-    rejected: allEmployers.filter((e) => e.status === "rejected" || e.status === "inactive").length,
-    approvalRate: allEmployers.length > 0 
-      ? ((allEmployers.filter((e) => e.status === "approved" || e.status === "active").length / allEmployers.length) * 100).toFixed(1)
-      : 0,
+    approved: approvedEmployerCount,
+    rejected: rejectedEmployerCount,
+    approvalRate: formatPercent(approvedEmployerCount, allEmployers.length),
   };
 
   const employeeStats = {
     total: employees.length,
-    active: employees.filter((e) => e.status === "active").length,
-    inactive: employees.filter((e) => e.status === "inactive").length,
-    activeRate: employees.length > 0 
-      ? ((employees.filter((e) => e.status === "active").length / employees.length) * 100).toFixed(1)
-      : 0,
+    active: activeEmployeeCount,
+    inactive: inactiveEmployeeCount,
+    activeRate: formatPercent(activeEmployeeCount, employees.length),
   };
 
   const resetEmployeeForm = () => {
@@ -2226,221 +2229,142 @@ const AdminDashboard = () => {
             Overview of system statistics and progress metrics for employers and employees.
           </Text>
 
-          {/* Employer Progress Section */}
-          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
-            <CardHeader>
-              <Flex align="center" gap={2}>
-                <Icon as={FiUsers} color="blue.500" boxSize={5} />
-                <Heading size="md">Employer Progress</Heading>
-              </Flex>
-            </CardHeader>
-            <CardBody>
-              <Stack spacing={4}>
-                <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={4}>
-                  <Stat>
-                    <StatLabel>Total Employers</StatLabel>
-                    <StatNumber>{employerStats.total}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiUsers} mr={1} />
-                      All registered
-                    </StatHelpText>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Pending Approval</StatLabel>
-                    <StatNumber color="orange.500">{employerStats.pending}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiClock} mr={1} />
-                      Awaiting review
-                    </StatHelpText>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Approved</StatLabel>
-                    <StatNumber color="green.500">{employerStats.approved}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiCheckCircle} mr={1} />
-                      Active accounts
-                    </StatHelpText>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Rejected</StatLabel>
-                    <StatNumber color="red.500">{employerStats.rejected}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiTrash2} mr={1} />
-                      Inactive accounts
-                    </StatHelpText>
-                  </Stat>
-                </SimpleGrid>
-
-                <Box>
-                  <Flex justify="space-between" mb={2}>
-                    <Text fontSize="sm" fontWeight="semibold">
-                      Approval Rate
-                    </Text>
-                    <Text fontSize="sm" color={mutedText}>
-                      {employerStats.approvalRate}%
-                    </Text>
+          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={4}>
+            {/* Employer Progress Section */}
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader pb={3}>
+                <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+                  <Flex align="center" gap={2}>
+                    <Icon as={FiUsers} color="blue.500" boxSize={5} />
+                    <Heading size="md">Employer Progress</Heading>
                   </Flex>
-                  <Progress
-                    value={employerStats.approvalRate}
-                    colorScheme="green"
-                    size="lg"
-                    borderRadius="md"
-                  />
-                </Box>
+                  <Badge colorScheme="green" borderRadius="full" px={3} py={1}>
+                    {employerStats.approvalRate}% approval
+                  </Badge>
+                </Flex>
+              </CardHeader>
+              <CardBody pt={0}>
+                <Stack spacing={3}>
+                  <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Total</Text>
+                      <Text fontSize="xl" fontWeight="bold">{employerStats.total}</Text>
+                    </Box>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Pending</Text>
+                      <Text fontSize="xl" fontWeight="bold" color="orange.500">{employerStats.pending}</Text>
+                    </Box>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Approved</Text>
+                      <Text fontSize="xl" fontWeight="bold" color="green.500">{employerStats.approved}</Text>
+                    </Box>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Rejected</Text>
+                      <Text fontSize="xl" fontWeight="bold" color="red.500">{employerStats.rejected}</Text>
+                    </Box>
+                  </SimpleGrid>
 
-                {employerStats.total > 0 && (
                   <Box>
                     <Flex justify="space-between" mb={2}>
                       <Text fontSize="sm" fontWeight="semibold">
-                        Status Distribution
+                        Approval Rate
+                      </Text>
+                      <Text fontSize="sm" color={mutedText}>
+                        {employerStats.approvalRate}%
                       </Text>
                     </Flex>
-                    <Stack spacing={2}>
-                      <Flex align="center" justify="space-between">
-                        <Text fontSize="xs" color={mutedText}>
-                          Approved
-                        </Text>
-                        <Text fontSize="xs" fontWeight="semibold">
-                          {employerStats.approved} ({employerStats.total > 0 ? ((employerStats.approved / employerStats.total) * 100).toFixed(1) : 0}%)
-                        </Text>
-                      </Flex>
-                      <Progress
-                        value={employerStats.total > 0 ? (employerStats.approved / employerStats.total) * 100 : 0}
-                        colorScheme="green"
-                        size="sm"
-                        borderRadius="md"
-                      />
-                      <Flex align="center" justify="space-between">
-                        <Text fontSize="xs" color={mutedText}>
-                          Pending
-                        </Text>
-                        <Text fontSize="xs" fontWeight="semibold">
-                          {employerStats.pending} ({employerStats.total > 0 ? ((employerStats.pending / employerStats.total) * 100).toFixed(1) : 0}%)
-                        </Text>
-                      </Flex>
-                      <Progress
-                        value={employerStats.total > 0 ? (employerStats.pending / employerStats.total) * 100 : 0}
-                        colorScheme="orange"
-                        size="sm"
-                        borderRadius="md"
-                      />
-                      <Flex align="center" justify="space-between">
-                        <Text fontSize="xs" color={mutedText}>
-                          Rejected
-                        </Text>
-                        <Text fontSize="xs" fontWeight="semibold">
-                          {employerStats.rejected} ({employerStats.total > 0 ? ((employerStats.rejected / employerStats.total) * 100).toFixed(1) : 0}%)
-                        </Text>
-                      </Flex>
-                      <Progress
-                        value={employerStats.total > 0 ? (employerStats.rejected / employerStats.total) * 100 : 0}
-                        colorScheme="red"
-                        size="sm"
-                        borderRadius="md"
-                      />
-                    </Stack>
+                    <Progress
+                      value={Number(employerStats.approvalRate)}
+                      colorScheme="green"
+                      size="sm"
+                      borderRadius="full"
+                    />
                   </Box>
-                )}
-              </Stack>
-            </CardBody>
-          </Card>
 
-          {/* Employee Progress Section */}
-          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
-            <CardHeader>
-              <Flex align="center" gap={2}>
-                <Icon as={FiUser} color="orange.500" boxSize={5} />
-                <Heading size="md">Employee Progress</Heading>
-              </Flex>
-            </CardHeader>
-            <CardBody>
-              <Stack spacing={4}>
-                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
-                  <Stat>
-                    <StatLabel>Total Employees</StatLabel>
-                    <StatNumber>{employeeStats.total}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiUser} mr={1} />
-                      All registered
-                    </StatHelpText>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Active</StatLabel>
-                    <StatNumber color="green.500">{employeeStats.active}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiCheckCircle} mr={1} />
-                      Currently active
-                    </StatHelpText>
-                  </Stat>
-                  <Stat>
-                    <StatLabel>Inactive</StatLabel>
-                    <StatNumber color="red.500">{employeeStats.inactive}</StatNumber>
-                    <StatHelpText>
-                      <Icon as={FiPauseCircle} mr={1} />
-                      On hold
-                    </StatHelpText>
-                  </Stat>
-                </SimpleGrid>
+                  <Wrap spacing={2}>
+                    <WrapItem>
+                      <Badge colorScheme="green" variant="subtle" borderRadius="full" px={3} py={1}>
+                        Approved {employerStats.approved} · {formatPercent(employerStats.approved, employerStats.total)}%
+                      </Badge>
+                    </WrapItem>
+                    <WrapItem>
+                      <Badge colorScheme="orange" variant="subtle" borderRadius="full" px={3} py={1}>
+                        Pending {employerStats.pending} · {formatPercent(employerStats.pending, employerStats.total)}%
+                      </Badge>
+                    </WrapItem>
+                    <WrapItem>
+                      <Badge colorScheme="red" variant="subtle" borderRadius="full" px={3} py={1}>
+                        Rejected {employerStats.rejected} · {formatPercent(employerStats.rejected, employerStats.total)}%
+                      </Badge>
+                    </WrapItem>
+                  </Wrap>
+                </Stack>
+              </CardBody>
+            </Card>
 
-                <Box>
-                  <Flex justify="space-between" mb={2}>
-                    <Text fontSize="sm" fontWeight="semibold">
-                      Active Rate
-                    </Text>
-                    <Text fontSize="sm" color={mutedText}>
-                      {employeeStats.activeRate}%
-                    </Text>
+            {/* Employee Progress Section */}
+            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+              <CardHeader pb={3}>
+                <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+                  <Flex align="center" gap={2}>
+                    <Icon as={FiUser} color="orange.500" boxSize={5} />
+                    <Heading size="md">Employee Progress</Heading>
                   </Flex>
-                  <Progress
-                    value={employeeStats.activeRate}
-                    colorScheme="green"
-                    size="lg"
-                    borderRadius="md"
-                  />
-                </Box>
+                  <Badge colorScheme="green" borderRadius="full" px={3} py={1}>
+                    {employeeStats.activeRate}% active
+                  </Badge>
+                </Flex>
+              </CardHeader>
+              <CardBody pt={0}>
+                <Stack spacing={3}>
+                  <SimpleGrid columns={{ base: 2, md: 3 }} spacing={3}>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Total</Text>
+                      <Text fontSize="xl" fontWeight="bold">{employeeStats.total}</Text>
+                    </Box>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Active</Text>
+                      <Text fontSize="xl" fontWeight="bold" color="green.500">{employeeStats.active}</Text>
+                    </Box>
+                    <Box borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={3}>
+                      <Text fontSize="xs" color={mutedText}>Inactive</Text>
+                      <Text fontSize="xl" fontWeight="bold" color="red.500">{employeeStats.inactive}</Text>
+                    </Box>
+                  </SimpleGrid>
 
-                {employeeStats.total > 0 && (
                   <Box>
                     <Flex justify="space-between" mb={2}>
                       <Text fontSize="sm" fontWeight="semibold">
-                        Status Distribution
+                        Active Rate
+                      </Text>
+                      <Text fontSize="sm" color={mutedText}>
+                        {employeeStats.activeRate}%
                       </Text>
                     </Flex>
-                    <Stack spacing={2}>
-                      <Flex align="center" justify="space-between">
-                        <Text fontSize="xs" color={mutedText}>
-                          Active
-                        </Text>
-                        <Text fontSize="xs" fontWeight="semibold">
-                          {employeeStats.active} ({employeeStats.total > 0 ? ((employeeStats.active / employeeStats.total) * 100).toFixed(1) : 0}%)
-                        </Text>
-                      </Flex>
-                      <Progress
-                        value={employeeStats.total > 0 ? (employeeStats.active / employeeStats.total) * 100 : 0}
-                        colorScheme="green"
-                        size="sm"
-                        borderRadius="md"
-                      />
-                      <Flex align="center" justify="space-between">
-                        <Text fontSize="xs" color={mutedText}>
-                          Inactive
-                        </Text>
-                        <Text fontSize="xs" fontWeight="semibold">
-                          {employeeStats.inactive} ({employeeStats.total > 0 ? ((employeeStats.inactive / employeeStats.total) * 100).toFixed(1) : 0}%)
-                        </Text>
-                      </Flex>
-                      <Progress
-                        value={employeeStats.total > 0 ? (employeeStats.inactive / employeeStats.total) * 100 : 0}
-                        colorScheme="red"
-                        size="sm"
-                        borderRadius="md"
-                      />
-                    </Stack>
+                    <Progress
+                      value={Number(employeeStats.activeRate)}
+                      colorScheme="green"
+                      size="sm"
+                      borderRadius="full"
+                    />
                   </Box>
-                )}
-              </Stack>
-            </CardBody>
-          </Card>
+
+                  <Wrap spacing={2}>
+                    <WrapItem>
+                      <Badge colorScheme="green" variant="subtle" borderRadius="full" px={3} py={1}>
+                        Active {employeeStats.active} · {formatPercent(employeeStats.active, employeeStats.total)}%
+                      </Badge>
+                    </WrapItem>
+                    <WrapItem>
+                      <Badge colorScheme="red" variant="subtle" borderRadius="full" px={3} py={1}>
+                        Inactive {employeeStats.inactive} · {formatPercent(employeeStats.inactive, employeeStats.total)}%
+                      </Badge>
+                    </WrapItem>
+                  </Wrap>
+                </Stack>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
 
           {/* Quick Stats */}
           <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={4}>
