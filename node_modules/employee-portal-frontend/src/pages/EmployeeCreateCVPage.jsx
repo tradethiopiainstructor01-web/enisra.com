@@ -154,21 +154,23 @@ const EmployeeCreateCVPage = () => {
 
       const sourceElement = cvRef.current;
       const deviceScale = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-      const baseScale = isMobile ? 2 : 3;
-      const captureScale = Math.min(Math.max(baseScale, deviceScale), 4);
+      const baseScale = 3;
+      const maxScale = isMobile ? 3 : 4;
+      const captureScale = Math.min(Math.max(baseScale, deviceScale), maxScale);
 
       const canvas = await html2canvas(sourceElement, {
         scale: captureScale,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
+        letterRendering: true,
         width: sourceElement.scrollWidth,
         height: sourceElement.scrollHeight,
         windowWidth: sourceElement.scrollWidth,
         windowHeight: sourceElement.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'pt',

@@ -15,10 +15,18 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserStore } from '../../store/user';
 import { MIN_CV_PROFILE_COMPLETION, getEmployeeProfileCompletion } from '../../utils/employeeProfileCompletion';
+import {
+  downloadBlob,
+  isLikelyMobileBrowser,
+  openPreparingWindow,
+  tryShareBlobAsFile,
+} from '../../utils/fileDownload';
 import apiClient from '../../utils/apiClient';
 
 const formatMonthYear = (value) => {
@@ -111,10 +119,8 @@ const waitForCvAssets = async (element) => {
   await waitForElementImages(element);
 };
 
-const collectDocumentStyles = () =>
-  Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-    .map((node) => node.outerHTML)
-    .join('\n');
+const A4_PAGE_WIDTH_PX = 794;
+const A4_PAGE_MIN_HEIGHT_PX = 1123;
 
 // Function to filter out placeholder/dummy content
 const isPlaceholderContent = (text) => {
@@ -186,6 +192,11 @@ const EmployeeCreateCV = () => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const mutedText = useColorModeValue('gray.600', 'gray.300');
+  const pageBgGradient = useColorModeValue(
+    'linear(to-br, #f4fbfb, #eef6ff 40%, #f8fafc 100%)',
+    'linear(to-br, #0f172a, #102a43 45%, #111827 100%)',
+  );
+  const previewFrameBg = useColorModeValue('whiteAlpha.700', 'blackAlpha.300');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -312,72 +323,87 @@ const EmployeeCreateCV = () => {
     if (!cvRef.current || !canCreateCv) return;
 
     const filename = `CV_${fullName.replace(/\s+/g, '_')}.pdf`;
+    const isMobile = isLikelyMobileBrowser();
+    const preparingWindow = isMobile
+      ? openPreparingWindow(filename, 'Preparing your CV PDF...')
+      : null;
 
     setIsExporting(true);
-    let printWindow = null;
     try {
       await new Promise((r) => setTimeout(r, 50));
 
       const sourceElement = cvRef.current;
       await waitForCvAssets(sourceElement);
-      const sourceRect = sourceElement.getBoundingClientRect();
-      const sourceWidth = Math.max(sourceElement.scrollWidth, Math.ceil(sourceRect.width));
-      printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1200,height=900');
-      if (!printWindow) {
-        throw new Error('Pop-up blocked. Please allow pop-ups to download as PDF.');
+      const deviceScale = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+      const baseScale = 3;
+      const maxScale = isMobile ? 3 : 4;
+      const captureScale = Math.min(Math.max(baseScale, deviceScale), maxScale);
+
+      const canvas = await html2canvas(sourceElement, {
+        scale: captureScale,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        letterRendering: true,
+        width: A4_PAGE_WIDTH_PX,
+        height: sourceElement.scrollHeight,
+        windowWidth: A4_PAGE_WIDTH_PX,
+        windowHeight: sourceElement.scrollHeight,
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'pt',
+        format: 'a4',
+        compress: false,
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position -= pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
       }
 
-      const stylesMarkup = collectDocumentStyles();
-      printWindow.document.open();
-      printWindow.document.write(`
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <base href="${window.location.origin}/" />
-  <title>${filename}</title>
-  ${stylesMarkup}
-  <style>
-    @page {
-      size: A4;
-      margin: 0;
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #ffffff;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    #print-root {
-      width: ${sourceWidth}px;
-      margin: 0 auto;
-    }
-  </style>
-</head>
-<body>
-  <div id="print-root"></div>
-</body>
-</html>`);
-      printWindow.document.close();
+      const blob = pdf.output('blob');
 
-      const mountNode = printWindow.document.getElementById('print-root');
-      if (!mountNode) {
-        throw new Error('Unable to prepare print window.');
+      if (isMobile) {
+        const shared = await tryShareBlobAsFile(blob, filename, { title: filename });
+        if (shared) {
+          if (preparingWindow && !preparingWindow.closed) preparingWindow.close();
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000);
+        if (preparingWindow && !preparingWindow.closed) {
+          try {
+            preparingWindow.location.href = url;
+            if (typeof preparingWindow.focus === 'function') preparingWindow.focus();
+            return;
+          } catch (error) {
+            // Fall through to regular window.open / navigation fallback.
+          }
+        }
+
+        const opened = window.open(url, '_blank');
+        if (!opened) window.location.assign(url);
+        return;
       }
 
-      const clonedCv = printWindow.document.importNode(sourceElement, true);
-      mountNode.appendChild(clonedCv);
-
-      await waitForCvAssets(mountNode);
-      await new Promise((r) => setTimeout(r, 120));
-
-      printWindow.focus();
-      printWindow.print();
-      setTimeout(() => {
-        if (printWindow && !printWindow.closed) printWindow.close();
-      }, 1200);
+      downloadBlob(blob, filename);
     } catch (error) {
       toast({
         title: 'Export failed',
@@ -386,9 +412,9 @@ const EmployeeCreateCV = () => {
         duration: 4000,
         isClosable: true,
       });
-      if (printWindow && !printWindow.closed) {
+      if (preparingWindow && !preparingWindow.closed) {
         try {
-          printWindow.close();
+          preparingWindow.close();
         } catch (closeError) {
           // ignore
         }
@@ -399,8 +425,9 @@ const EmployeeCreateCV = () => {
   };
 
   return (
-    <Card bg={cardBg} borderWidth="1px" borderColor={borderColor} borderRadius="2xl" boxShadow="lg">
-      <CardBody>
+    <Box minH="100dvh" w="full" bgGradient={pageBgGradient} px={{ base: 3, md: 6 }} py={{ base: 4, md: 8 }}>
+      <Card bg={cardBg} borderWidth="1px" borderColor={borderColor} borderRadius="2xl" boxShadow="2xl">
+        <CardBody>
         <Flex
           direction={{ base: 'column', md: 'row' }}
           justify="space-between"
@@ -477,7 +504,26 @@ const EmployeeCreateCV = () => {
             ) : null}
           </Box>
         ) : (
-          <Box ref={cvRef} bg="white" color="gray.900" borderRadius="lg" overflow="hidden" borderWidth="1px" boxShadow="xl">
+          <Box
+            bg={previewFrameBg}
+            borderRadius="2xl"
+            p={{ base: 2, md: 5 }}
+            overflowX="auto"
+            boxShadow="inset 0 0 0 1px rgba(148, 163, 184, 0.16)"
+          >
+            <Box
+              ref={cvRef}
+              w={`${A4_PAGE_WIDTH_PX}px`}
+              minH={`${A4_PAGE_MIN_HEIGHT_PX}px`}
+              mx="auto"
+              bg="white"
+              color="gray.900"
+              borderRadius="lg"
+              overflow="hidden"
+              borderWidth="1px"
+              borderColor="gray.200"
+              boxShadow="xl"
+            >
             {/* Header Section with Modern Design */}
             <Box
               px={{ base: 6, md: 12 }}
@@ -960,10 +1006,12 @@ const EmployeeCreateCV = () => {
                 {/* Footer text is stamped directly into the PDF at export time. */}
               </Box>
             </Flex>
+            </Box>
           </Box>
         )}
-      </CardBody>
-    </Card>
+        </CardBody>
+      </Card>
+    </Box>
   );
 };
 
