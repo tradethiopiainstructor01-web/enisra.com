@@ -129,6 +129,14 @@ const JobsPage = () => {
     }
   }, [search, locationFilter, categoryFilter, typeFilter]);
 
+  const attemptedDirectJobLoadRef = useRef('');
+
+  const fetchJobById = useCallback(async (id, signal) => {
+    const response = await apiClient.get(`/jobs/${id}`, { signal });
+    const payload = response?.data?.data ?? null;
+    return payload;
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => fetchJobs(controller.signal), 300);
@@ -220,13 +228,53 @@ const JobsPage = () => {
   };
 
   useEffect(() => {
-    if (!jobId || !Array.isArray(jobs) || jobs.length === 0) return;
-    const matched = jobs.find((j) => String(j?._id) === String(jobId));
+    if (!jobId) {
+      attemptedDirectJobLoadRef.current = '';
+      return;
+    }
+
+    const matched = jobs.find((job) => String(job?._id) === String(jobId));
     if (matched) {
+      attemptedDirectJobLoadRef.current = String(jobId);
       setSelectedJob(matched);
       onOpen();
+      return;
     }
-  }, [jobId, jobs, onOpen]);
+
+    if (loading || attemptedDirectJobLoadRef.current === String(jobId)) {
+      return;
+    }
+
+    attemptedDirectJobLoadRef.current = String(jobId);
+    const controller = new AbortController();
+
+    fetchJobById(jobId, controller.signal)
+      .then((job) => {
+        if (!job) {
+          navigate('/jobs', { replace: true });
+          return;
+        }
+
+        setSelectedJob(job);
+        onOpen();
+      })
+      .catch((err) => {
+        if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') {
+          return;
+        }
+
+        toast({
+          title: 'Job not available',
+          description: 'That job could not be opened. Showing the latest listings instead.',
+          status: 'info',
+          duration: 3500,
+          isClosable: true,
+        });
+        navigate('/jobs', { replace: true });
+      });
+
+    return () => controller.abort();
+  }, [fetchJobById, jobId, jobs, loading, navigate, onOpen, toast]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -336,6 +384,15 @@ const JobsPage = () => {
     setLocationFilter('');
     setCategoryFilter('');
     setTypeFilter('');
+  };
+
+  const handleCloseJobDrawer = () => {
+    setSelectedJob(null);
+    onClose();
+
+    if (jobId) {
+      navigate('/jobs', { replace: true });
+    }
   };
 
   return (
@@ -499,6 +556,12 @@ const JobsPage = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => {
+                            const jobIdentifier = job?._id || job?.id;
+                            if (jobIdentifier) {
+                              navigate(`/jobs/${jobIdentifier}`);
+                              return;
+                            }
+
                             setSelectedJob(job);
                             onOpen();
                           }}
@@ -637,7 +700,7 @@ const JobsPage = () => {
         </Card>
       </Container>
 
-      <Drawer isOpen={isOpen} placement="left" onClose={() => { setSelectedJob(null); onClose(); }}>
+      <Drawer isOpen={isOpen} placement="left" onClose={handleCloseJobDrawer}>
         <DrawerOverlay />
         <DrawerContent maxW="420px">
           <DrawerCloseButton />

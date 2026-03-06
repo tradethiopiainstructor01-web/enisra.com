@@ -1865,7 +1865,9 @@ const AdminDashboard = () => {
           ? "Job saved and sent to Telegram."
           : telegramFailed
             ? `Job saved, but Telegram posting failed${telegramError}. It will appear in pending until approved.`
-            : "Job posted by admin. It will appear in pending until approved.",
+            : payload.postToTelegram
+              ? "Job posted by admin. It will stay pending until approved, then it will be sent to Telegram."
+              : "Job posted by admin. It will appear in pending until approved.",
         status: telegramFailed ? "warning" : "success",
         duration: telegramFailed ? 5500 : 3000,
         isClosable: true,

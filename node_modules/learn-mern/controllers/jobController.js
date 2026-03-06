@@ -178,6 +178,40 @@ exports.listMyJobs = async (req, res) => {
   }
 };
 
+exports.getJobById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const job = await Job.findOne({ _id: id, approved: true, active: true })
+      .populate('postedBy', 'email')
+      .lean();
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found',
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: normalizeJobForResponse(job),
+    });
+  } catch (error) {
+    if (error?.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found',
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch job',
+      error: error.message,
+    });
+  }
+};
+
 exports.createJob = async (req, res) => {
   try {
     const postToTelegram = parseBoolean(req.body.postToTelegram);
@@ -223,7 +257,7 @@ exports.createJob = async (req, res) => {
 
     const created = await Job.create(payload);
     const telegramResult = postToTelegram
-      ? await publishNewJob(created)
+      ? { skipped: true, reason: 'Queued until approval' }
       : { skipped: true, reason: 'Disabled by request' };
 
     res.status(201).json({ success: true, data: created, telegram: telegramResult });

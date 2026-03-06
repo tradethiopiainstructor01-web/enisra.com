@@ -176,7 +176,9 @@ const EmployerPostJob = () => {
           ? "Your job was saved and sent to Telegram."
           : telegramFailed
             ? `Your job was saved, but Telegram posting failed${telegramError}. It remains pending admin approval.`
-            : "Your job is pending admin approval. Once approved, it will move to Posted.",
+            : payload.postToTelegram
+              ? "Your job is pending admin approval. Once approved, it will be posted to Telegram."
+              : "Your job is pending admin approval. Once approved, it will move to Posted.",
         status: telegramFailed ? "warning" : "success",
         duration: telegramFailed ? 5500 : 3000,
         isClosable: true,

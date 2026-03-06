@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
+import { installTidioBlocker } from './utils/blockTidioWidget.js'
 
 // Custom theme for better mobile experience
 const theme = extendTheme({
@@ -33,6 +34,7 @@ const theme = extendTheme({
   },
 });
 
+installTidioBlocker();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

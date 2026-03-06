@@ -10,26 +10,44 @@ const normalizePublicUrl = (value = '') => {
   return `https://${raw.replace(/^\/+/, '').replace(/\/+$/, '')}`;
 };
 
+const isHttpsUrl = (value = '') => /^https:\/\//i.test((value || '').toString().trim());
+
+const buildJobPageUrl = (baseValue, jobId) => {
+  const normalizedBase = normalizePublicUrl(baseValue);
+  if (!normalizedBase) return '';
+
+  const baseUrl = new URL(normalizedBase);
+  const siteOrigin = baseUrl.origin;
+  return new URL(`/jobs/${jobId}`, `${siteOrigin}/`).toString();
+};
+
 const buildApplyUrl = (jobId) => {
-  const directApplyUrl = normalizePublicUrl(process.env.TELEGRAM_APPLY_URL);
-  if (directApplyUrl) {
-    return directApplyUrl.includes('{jobId}')
-      ? directApplyUrl.replace('{jobId}', String(jobId))
-      : directApplyUrl;
+  const jobIdText = String(jobId);
+  const jobTemplate = (process.env.TELEGRAM_JOB_URL_TEMPLATE || '').trim();
+  if (jobTemplate.includes('{jobId}')) {
+    return normalizePublicUrl(jobTemplate.replace('{jobId}', jobIdText));
   }
 
-  if (process.env.TELEGRAM_JOB_URL_TEMPLATE?.includes('{jobId}')) {
-    return normalizePublicUrl(process.env.TELEGRAM_JOB_URL_TEMPLATE.replace('{jobId}', String(jobId)));
+  const applyTemplate = (process.env.TELEGRAM_APPLY_URL || '').trim();
+  if (applyTemplate.includes('{jobId}')) {
+    return normalizePublicUrl(applyTemplate.replace('{jobId}', jobIdText));
   }
 
-  const base = process.env.JOB_PUBLIC_BASE_URL || process.env.FRONTEND_URL;
-  if (!base) throw new Error('Set TELEGRAM_APPLY_URL or JOB_PUBLIC_BASE_URL');
+  const baseCandidates = [
+    process.env.JOB_PUBLIC_BASE_URL
+    || '',
+    process.env.TELEGRAM_JOB_URL_TEMPLATE || '',
+    process.env.TELEGRAM_APPLY_URL || '',
+    process.env.FRONTEND_URL || '',
+  ];
 
-  const normalizedBase = normalizePublicUrl(base);
-  if (!normalizedBase) throw new Error('Invalid JOB_PUBLIC_BASE_URL/FRONTEND_URL');
+  const base = baseCandidates.find((candidate) => isHttpsUrl(candidate));
+  if (!base) throw new Error('Set JOB_PUBLIC_BASE_URL or TELEGRAM_* to an HTTPS public URL');
 
-  const url = new URL(`/jobs/${jobId}`, `${normalizedBase}/`);
-  return url.toString();
+  const jobPageUrl = buildJobPageUrl(base, jobIdText);
+  if (!jobPageUrl) throw new Error('Invalid HTTPS public job URL configuration');
+
+  return jobPageUrl;
 };
 
 exports.publishNewJob = async (job) => {
