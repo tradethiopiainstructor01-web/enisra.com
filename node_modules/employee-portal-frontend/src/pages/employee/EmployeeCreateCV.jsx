@@ -179,32 +179,20 @@ const SectionTitle = ({ children, color = 'teal.600', fontSize = 'xs', withDivid
   </Box>
 );
 
-const SkillChip = ({ children, bg, color }) => (
-  <Box
-    as="span"
-    display="inline-block"
-    px="18px"
-    py="8px"
-    borderRadius="full"
-    bg={bg}
-    whiteSpace="nowrap"
-    boxSizing="border-box"
-    overflow="visible"
-  >
+const SkillListItem = ({ children, accentColor }) => (
+  <Flex align="center" gap={2} minW={0}>
+    <Box boxSize="7px" borderRadius="full" bg={accentColor} flexShrink={0} />
     <Text
-      as="span"
-      display="block"
-      color={color}
-      fontSize="13px"
-      fontWeight="700"
-      lineHeight="16px"
-      letterSpacing="0.01em"
-      textTransform="uppercase"
+      fontSize="sm"
+      fontWeight="600"
+      lineHeight="1.5"
+      color="gray.800"
       fontFamily="Arial, Helvetica, sans-serif"
+      wordBreak="break-word"
     >
       {children}
     </Text>
-  </Box>
+  </Flex>
 );
 
 const EmployeeCreateCV = () => {
@@ -304,16 +292,6 @@ const EmployeeCreateCV = () => {
         }))
         .filter((l) => l && l.language && !isPlaceholderContent(l.language))
     : [];
-
-  const headerBadges = [
-    profile?.jobTitle,
-    profile?.department,
-    profile?.position,
-    profile?.workLocation,
-  ]
-    .map((v) => normalizeWhitespace(v))
-    .filter(Boolean)
-    .filter(label => !isPlaceholderContent(label));
 
   const jobLine = [profile?.jobTitle, profile?.department, profile?.position]
     .map((v) => normalizeWhitespace(v))
@@ -555,13 +533,7 @@ const EmployeeCreateCV = () => {
               py={{ base: 8, md: 10 }}
               bgGradient="linear(to-r, teal.600, teal.700, blue.600)"
               color="white"
-              position="relative"
             >
-              {/* Decorative Elements */}
-              <Box position="absolute" top="20px" right="20px" opacity="0.1">
-                <Box boxSize="80px" borderRadius="full" bg="white" />
-              </Box>
-              
               <Flex justify="space-between" align="center" gap={8} flexWrap="nowrap">
                 <Box flex="1" minW={0}>
                   <HStack align="flex-start" spacing={4}>
@@ -597,11 +569,11 @@ const EmployeeCreateCV = () => {
                         Professional Profile
                       </Text>
                       <Heading
-                        size="xl"
+                        fontSize={{ base: '28px', md: '32px' }}
                         mt={2}
                         fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                         fontWeight="700"
-                        lineHeight="1.3"
+                        lineHeight="1.2"
                       >
                         <SafeText fallback="Employee Name">{fullName}</SafeText>
                       </Heading>
@@ -617,26 +589,6 @@ const EmployeeCreateCV = () => {
                     </Text>
                   ) : null}
 
-                  {headerBadges.length ? (
-                    <HStack mt={6} spacing={3} flexWrap="wrap" justify="center">
-                      {headerBadges.map((label) => (
-                        <Badge
-                          key={label}
-                          px={3}
-                          py={1}
-                          bg="whiteAlpha.200"
-                          color="white"
-                          borderWidth="1px"
-                          borderColor="whiteAlpha.300"
-                          borderRadius="full"
-                          fontSize="sm"
-                          fontWeight="500"
-                        >
-                          {label}
-                        </Badge>
-                      ))}
-                    </HStack>
-                  ) : null}
                 </Box>
 
                 <VStack align="flex-end" spacing={1} flexShrink={0} minW="340px" textAlign="right">
@@ -729,13 +681,13 @@ const EmployeeCreateCV = () => {
                         <Text fontSize="xs" fontWeight="bold" color="teal.800" mb={2}>
                           TECHNICAL SKILLS
                         </Text>
-                        <Flex wrap="wrap" gap={2}>
+                        <VStack align="start" spacing={2}>
                           {technicalSkills.map((skill) => (
-                            <SkillChip key={skill} bg="teal.500" color="white">
+                            <SkillListItem key={skill} accentColor="teal.500">
                               {skill}
-                            </SkillChip>
+                            </SkillListItem>
                           ))}
-                        </Flex>
+                        </VStack>
                       </Box>
                     )}
                     
@@ -752,13 +704,13 @@ const EmployeeCreateCV = () => {
                         <Text fontSize="xs" fontWeight="bold" color="orange.800" mb={2}>
                           SOFT SKILLS
                         </Text>
-                        <Flex wrap="wrap" gap={2}>
+                        <VStack align="start" spacing={2}>
                           {softSkills.map((skill) => (
-                            <SkillChip key={skill} bg="orange.500" color="white">
+                            <SkillListItem key={skill} accentColor="orange.500">
                               {skill}
-                            </SkillChip>
+                            </SkillListItem>
                           ))}
-                        </Flex>
+                        </VStack>
                       </Box>
                     )}
                   </Box>
