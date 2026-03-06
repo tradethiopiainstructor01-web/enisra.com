@@ -454,6 +454,7 @@ const EmployerDashboard = () => {
       const response = await apiClient.post('/jobs', payload);
       const telegram = response?.data?.telegram;
       const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
+      const telegramQueued = Boolean(payload.postToTelegram && telegram?.queued);
       const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       const savedJob = response?.data?.data ?? response?.data ?? payload;
       const normalizedJob = {
@@ -480,12 +481,14 @@ const EmployerDashboard = () => {
       });
 
       toast({
-        title: telegramFailed ? "Job posted with warning" : "Job posted",
-        description: telegram?.success
-          ? "Your job posting is now visible in the pipeline and sent to Telegram."
+        title: telegramFailed ? "Job submitted with warning" : "Job submitted",
+        description: telegramQueued
+          ? "Your job was saved and will be sent to Telegram after admin approval."
+          : telegram?.success
+          ? "Your job was saved and sent to Telegram."
           : telegramFailed
-            ? `Your job posting is visible, but Telegram posting failed${telegramError}.`
-            : "Your job posting is now visible in the pipeline.",
+            ? `Your job was saved, but Telegram posting failed${telegramError}. It remains pending admin approval.`
+            : "Your job is pending admin approval.",
         status: telegramFailed ? "warning" : "success",
         duration: telegramFailed ? 5500 : 3000,
         isClosable: true,

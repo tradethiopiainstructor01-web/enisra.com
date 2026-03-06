@@ -179,6 +179,34 @@ const SectionTitle = ({ children, color = 'teal.600', fontSize = 'xs', withDivid
   </Box>
 );
 
+const SkillChip = ({ children, bg, color }) => (
+  <Box
+    as="span"
+    display="inline-block"
+    px="18px"
+    py="8px"
+    borderRadius="full"
+    bg={bg}
+    whiteSpace="nowrap"
+    boxSizing="border-box"
+    overflow="visible"
+  >
+    <Text
+      as="span"
+      display="block"
+      color={color}
+      fontSize="13px"
+      fontWeight="700"
+      lineHeight="16px"
+      letterSpacing="0.01em"
+      textTransform="uppercase"
+      fontFamily="Arial, Helvetica, sans-serif"
+    >
+      {children}
+    </Text>
+  </Box>
+);
+
 const EmployeeCreateCV = () => {
   const toast = useToast();
   const currentUser = useUserStore((state) => state.currentUser);
@@ -463,9 +491,6 @@ const EmployeeCreateCV = () => {
             >
               Download PDF
             </Button>
-            <Button variant="outline" onClick={() => window.print()} isDisabled={!profile || isLoading || !canCreateCv}>
-              Print
-            </Button>
           </HStack>
         </Flex>
 
@@ -706,18 +731,9 @@ const EmployeeCreateCV = () => {
                         </Text>
                         <Flex wrap="wrap" gap={2}>
                           {technicalSkills.map((skill) => (
-                            <Badge
-                              key={skill} 
-                              colorScheme="teal" 
-                              variant="solid"
-                              borderRadius="full"
-                              px={3}
-                              py={1}
-                              fontSize="xs"
-                              fontWeight="500"
-                            >
+                            <SkillChip key={skill} bg="teal.500" color="white">
                               {skill}
-                            </Badge>
+                            </SkillChip>
                           ))}
                         </Flex>
                       </Box>
@@ -738,18 +754,9 @@ const EmployeeCreateCV = () => {
                         </Text>
                         <Flex wrap="wrap" gap={2}>
                           {softSkills.map((skill) => (
-                            <Badge
-                              key={skill} 
-                              colorScheme="orange" 
-                              variant="solid"
-                              borderRadius="full"
-                              px={3}
-                              py={1}
-                              fontSize="xs"
-                              fontWeight="500"
-                            >
+                            <SkillChip key={skill} bg="orange.500" color="white">
                               {skill}
-                            </Badge>
+                            </SkillChip>
                           ))}
                         </Flex>
                       </Box>

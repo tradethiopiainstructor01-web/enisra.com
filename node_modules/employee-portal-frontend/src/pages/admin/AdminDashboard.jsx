@@ -1462,13 +1462,27 @@ const AdminDashboard = () => {
 
   const handleApproveJob = async (jobId) => {
     try {
-      await apiClient.patch(`/jobs/${jobId}/approve`);
+      const response = await apiClient.patch(`/jobs/${jobId}/approve`);
+      const telegram = response?.data?.telegram;
+      const telegramWarning =
+        telegram?.success === false
+        || (telegram?.skipped
+          && telegram?.reason
+          && telegram.reason !== "Disabled by request"
+          && telegram.reason !== "Already posted");
       setPendingJobs((prev) => prev.filter((job) => job._id !== jobId));
       await loadPostedJobs();
       toast({
-        title: "Job approved",
-        status: "success",
-        duration: 2000,
+        title: telegramWarning ? "Job approved with warning" : "Job approved",
+        description: telegram?.success
+          ? "The job was approved and sent to Telegram."
+          : telegram?.success === false
+            ? `The job was approved, but Telegram posting failed${telegram?.error ? ` (${telegram.error})` : ""}.`
+            : telegramWarning
+              ? `The job was approved, but Telegram was skipped${telegram?.reason ? ` (${telegram.reason})` : ""}.`
+            : undefined,
+        status: telegramWarning ? "warning" : "success",
+        duration: telegramWarning ? 5000 : 2500,
         isClosable: true,
       });
     } catch (error) {
@@ -1844,11 +1858,14 @@ const AdminDashboard = () => {
       const response = await apiClient.post("/jobs", payload);
       const telegram = response?.data?.telegram;
       const telegramFailed = Boolean(payload.postToTelegram && telegram && telegram.success === false);
+      const telegramQueued = Boolean(payload.postToTelegram && telegram?.queued);
       const telegramError = telegram?.error ? ` (${telegram.error})` : "";
       toast({
         title: telegramFailed ? "Job submitted with warning" : "Job submitted",
-        description: telegram?.success
-          ? "Job saved and sent to Telegram. It will appear in pending until approved."
+        description: telegramQueued
+          ? "Job saved and will be sent to Telegram after approval."
+          : telegram?.success
+          ? "Job saved and sent to Telegram."
           : telegramFailed
             ? `Job saved, but Telegram posting failed${telegramError}. It will appear in pending until approved.`
             : "Job posted by admin. It will appear in pending until approved.",
