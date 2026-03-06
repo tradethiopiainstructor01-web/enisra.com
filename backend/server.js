@@ -1,11 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const path = require('path');
 const mongoose = require('mongoose');
 
-dotenv.config();
+require('./config/loadEnv');
 
 const isServerless = !!process.env.VERCEL;
 

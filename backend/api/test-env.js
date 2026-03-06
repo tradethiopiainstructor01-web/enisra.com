@@ -1,3 +1,5 @@
+require('../config/loadEnv');
+
 module.exports = (req, res) => {
   res.json({
     vercel: !!process.env.VERCEL,
