@@ -234,15 +234,8 @@ const AdminDashboard = () => {
     logoUrl: "",
     website: "",
   });
-  const [scholarshipPosts, setScholarshipPosts] = useState([]);
-  const [scholarshipPostsLoading, setScholarshipPostsLoading] = useState(false);
-  const [scholarshipPostSubmitting, setScholarshipPostSubmitting] = useState(false);
-  const [scholarshipPostActionId, setScholarshipPostActionId] = useState(null);
-  const [scholarshipEditingId, setScholarshipEditingId] = useState(null);
-  const [scholarshipVideoUploading, setScholarshipVideoUploading] = useState(false);
-  const [scholarshipSlideUploading, setScholarshipSlideUploading] = useState(false);
-  const [scholarshipPostForm, setScholarshipPostForm] = useState({
-    type: "scholarship",
+  const buildScholarshipPostForm = (type = "scholarship") => ({
+    type,
     title: "",
     description: "",
     actionLabel: "Open",
@@ -251,6 +244,14 @@ const AdminDashboard = () => {
     slideUrls: "",
     isPublished: true,
   });
+  const [scholarshipPosts, setScholarshipPosts] = useState([]);
+  const [scholarshipPostsLoading, setScholarshipPostsLoading] = useState(false);
+  const [scholarshipPostSubmitting, setScholarshipPostSubmitting] = useState(false);
+  const [scholarshipPostActionId, setScholarshipPostActionId] = useState(null);
+  const [scholarshipEditingId, setScholarshipEditingId] = useState(null);
+  const [scholarshipVideoUploading, setScholarshipVideoUploading] = useState(false);
+  const [scholarshipSlideUploading, setScholarshipSlideUploading] = useState(false);
+  const [scholarshipPostForm, setScholarshipPostForm] = useState(buildScholarshipPostForm());
 
   // Column visibility state for Employee Directory
   const [visibleColumns, setVisibleColumns] = useState({
@@ -592,11 +593,20 @@ const AdminDashboard = () => {
     {
       id: "scholarship-content",
       title: "Scholarship Content",
-      description: "Post scholarship and free training items for SMS dashboard users.",
+      description: "Post scholarship opportunities for SMS dashboard users.",
       icon: FiBookOpen,
       tone: "blue",
       to: "",
       cta: "Manage scholarship content",
+    },
+    {
+      id: "courses",
+      title: "Courses",
+      description: "Post free training courses for SMS dashboard users.",
+      icon: FiBookOpen,
+      tone: "teal",
+      to: "",
+      cta: "Manage course posts",
     },
   ];
   const [activeSectionId, setActiveSectionId] = useState(adminSections[0]?.id || "overview");
@@ -789,16 +799,8 @@ const AdminDashboard = () => {
 
   const resetScholarshipPostForm = () => {
     setScholarshipEditingId(null);
-    setScholarshipPostForm({
-      type: "scholarship",
-      title: "",
-      description: "",
-      actionLabel: "Open",
-      actionUrl: "",
-      videoUrls: "",
-      slideUrls: "",
-      isPublished: true,
-    });
+    const nextType = activeSectionId === "courses" ? "free-training" : "scholarship";
+    setScholarshipPostForm(buildScholarshipPostForm(nextType));
   };
 
   const parseMultilineUrls = (value) =>
@@ -874,6 +876,7 @@ const AdminDashboard = () => {
   const handleCreateScholarshipPost = async () => {
     const title = scholarshipPostForm.title.trim();
     const description = scholarshipPostForm.description.trim();
+    const contentType = activeSectionId === "courses" ? "free-training" : "scholarship";
     if (!title || !description) {
       toast({
         title: "Missing required fields",
@@ -887,7 +890,7 @@ const AdminDashboard = () => {
     setScholarshipPostSubmitting(true);
     try {
       const payload = {
-        type: scholarshipPostForm.type,
+        type: contentType,
         title,
         description,
         actionLabel: scholarshipPostForm.actionLabel.trim() || "Open",
@@ -1448,6 +1451,11 @@ const AdminDashboard = () => {
     }
     if (activeSectionId === "scholarship-content") {
       loadScholarshipPosts();
+      resetScholarshipPostForm();
+    }
+    if (activeSectionId === "courses") {
+      loadScholarshipPosts();
+      resetScholarshipPostForm();
     }
   }, [activeSectionId]);
 
@@ -2727,45 +2735,45 @@ const AdminDashboard = () => {
       );
     }
 
-    if (section.id === "scholarship-content") {
-      const scholarshipOnly = scholarshipPosts.filter((item) => item.type === "scholarship");
-      const freeTrainingOnly = scholarshipPosts.filter((item) => item.type === "free-training");
+    if (section.id === "scholarship-content" || section.id === "courses") {
+      const isCoursesSection = section.id === "courses";
+      const contentType = isCoursesSection ? "free-training" : "scholarship";
+      const contentLabel = isCoursesSection ? "Course" : "Scholarship";
+      const contentDescription = isCoursesSection
+        ? "Create and manage free training course posts. Published posts appear on the SMS free training page."
+        : "Create and manage scholarship posts. Published posts appear on the SMS scholarship dashboard.";
+      const visiblePosts = scholarshipPosts.filter((item) => item.type === contentType);
 
       return (
         <Stack spacing={5}>
           <Text color={mutedText}>
-            Create scholarship and free training posts. Published posts appear on the SMS scholarship dashboard.
+            {contentDescription}
           </Text>
 
           <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
             <CardHeader>
-              <Heading size="sm">{scholarshipEditingId ? "Edit Post" : "Create Post"}</Heading>
+              <Heading size="sm">{scholarshipEditingId ? `Edit ${contentLabel}` : `Create ${contentLabel}`}</Heading>
             </CardHeader>
             <CardBody>
               <Stack spacing={4}>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>Type</FormLabel>
-                    <Select value={scholarshipPostForm.type} onChange={handleScholarshipPostFormChange("type")}>
-                      <option value="scholarship">Scholarship</option>
-                      <option value="free-training">Free Training</option>
-                    </Select>
-                  </FormControl>
-                  <FormControl isRequired>
-                    <FormLabel>Title</FormLabel>
-                    <Input
-                      placeholder="e.g. Data Science Scholarship 2026"
-                      value={scholarshipPostForm.title}
-                      onChange={handleScholarshipPostFormChange("title")}
-                    />
-                  </FormControl>
-                </SimpleGrid>
+                <FormControl isRequired>
+                  <FormLabel>Title</FormLabel>
+                  <Input
+                    placeholder={isCoursesSection ? "e.g. Digital Marketing Basics" : "e.g. Data Science Scholarship 2026"}
+                    value={scholarshipPostForm.title}
+                    onChange={handleScholarshipPostFormChange("title")}
+                  />
+                </FormControl>
 
                 <FormControl isRequired>
                   <FormLabel>Description</FormLabel>
                   <Textarea
                     minH="110px"
-                    placeholder="Details, eligibility, deadline, and benefits."
+                    placeholder={
+                      isCoursesSection
+                        ? "Course summary, what learners will cover, and how to join."
+                        : "Details, eligibility, deadline, and benefits."
+                    }
                     value={scholarshipPostForm.description}
                     onChange={handleScholarshipPostFormChange("description")}
                   />
@@ -2775,7 +2783,7 @@ const AdminDashboard = () => {
                   <FormControl>
                     <FormLabel>Action Label</FormLabel>
                     <Input
-                      placeholder="Open / Apply / Enroll"
+                      placeholder={isCoursesSection ? "Open / Enroll / Start" : "Open / Apply"}
                       value={scholarshipPostForm.actionLabel}
                       onChange={handleScholarshipPostFormChange("actionLabel")}
                     />
@@ -2790,7 +2798,7 @@ const AdminDashboard = () => {
                   </FormControl>
                 </SimpleGrid>
 
-                {scholarshipPostForm.type === "free-training" ? (
+                {isCoursesSection ? (
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <FormControl>
                       <FormLabel>Video Links (one per line)</FormLabel>
@@ -2864,7 +2872,7 @@ const AdminDashboard = () => {
                     isLoading={scholarshipPostSubmitting}
                     isDisabled={scholarshipVideoUploading || scholarshipSlideUploading}
                   >
-                    {scholarshipEditingId ? "Update" : "Post"}
+                    {scholarshipEditingId ? `Update ${contentLabel}` : `Post ${contentLabel}`}
                   </Button>
                   {scholarshipEditingId ? (
                     <Button variant="ghost" onClick={resetScholarshipPostForm}>
@@ -2879,127 +2887,67 @@ const AdminDashboard = () => {
             </CardBody>
           </Card>
 
-          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={5}>
-            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
-              <CardHeader>
-                <Heading size="sm">Scholarship Posts</Heading>
-              </CardHeader>
-              <CardBody>
-                {scholarshipPostsLoading ? (
-                  <Text color={mutedText}>Loading posts...</Text>
-                ) : scholarshipOnly.length ? (
-                  <Stack spacing={3}>
-                    {scholarshipOnly.map((item) => (
-                      <Box key={item._id} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={3}>
-                        <Flex justify="space-between" align="center" gap={2} mb={2}>
-                          <Text fontWeight="semibold">{item.title}</Text>
-                          <Badge colorScheme={item.isPublished ? "green" : "gray"}>
-                            {item.isPublished ? "Published" : "Draft"}
-                          </Badge>
+          <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
+            <CardHeader>
+              <Heading size="sm">{isCoursesSection ? "Free Training Posts" : "Scholarship Posts"}</Heading>
+            </CardHeader>
+            <CardBody>
+              {scholarshipPostsLoading ? (
+                <Text color={mutedText}>Loading posts...</Text>
+              ) : visiblePosts.length ? (
+                <Stack spacing={3}>
+                  {visiblePosts.map((item) => (
+                    <Box key={item._id} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={3}>
+                      <Flex justify="space-between" align="center" gap={2} mb={2}>
+                        <Text fontWeight="semibold">{item.title}</Text>
+                        <Badge colorScheme={item.isPublished ? "green" : "gray"}>
+                          {item.isPublished ? "Published" : "Draft"}
+                        </Badge>
+                      </Flex>
+                      <Text fontSize="sm" color={mutedText}>{item.description}</Text>
+                      {Array.isArray(item.videoUrls) && item.videoUrls.length ? (
+                        <Text fontSize="xs" color={mutedText} mt={2}>
+                          Videos: {item.videoUrls.length}
+                        </Text>
+                      ) : null}
+                      {Array.isArray(item.slideUrls) && item.slideUrls.length ? (
+                        <Text fontSize="xs" color={mutedText}>
+                          Slides: {item.slideUrls.length}
+                        </Text>
+                      ) : null}
+                      <Flex justify="space-between" align="center" mt={3}>
+                        <Text fontSize="xs" color={mutedText}>{new Date(item.createdAt).toLocaleString()}</Text>
+                        <Flex gap={1}>
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            leftIcon={<Icon as={FiEdit} />}
+                            onClick={() => handleEditScholarshipPost(item)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="xs"
+                            colorScheme="red"
+                            variant="ghost"
+                            leftIcon={<Icon as={FiTrash2} />}
+                            onClick={() => handleDeleteScholarshipPost(item._id)}
+                            isLoading={scholarshipPostActionId === item._id}
+                          >
+                            Delete
+                          </Button>
                         </Flex>
-                        <Text fontSize="sm" color={mutedText}>{item.description}</Text>
-                        {Array.isArray(item.videoUrls) && item.videoUrls.length ? (
-                          <Text fontSize="xs" color={mutedText} mt={2}>
-                            Videos: {item.videoUrls.length}
-                          </Text>
-                        ) : null}
-                        {Array.isArray(item.slideUrls) && item.slideUrls.length ? (
-                          <Text fontSize="xs" color={mutedText}>
-                            Slides: {item.slideUrls.length}
-                          </Text>
-                        ) : null}
-                        <Flex justify="space-between" align="center" mt={3}>
-                          <Text fontSize="xs" color={mutedText}>{new Date(item.createdAt).toLocaleString()}</Text>
-                          <Flex gap={1}>
-                            <Button
-                              size="xs"
-                              variant="outline"
-                              leftIcon={<Icon as={FiEdit} />}
-                              onClick={() => handleEditScholarshipPost(item)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="xs"
-                              colorScheme="red"
-                              variant="ghost"
-                              leftIcon={<Icon as={FiTrash2} />}
-                              onClick={() => handleDeleteScholarshipPost(item._id)}
-                              isLoading={scholarshipPostActionId === item._id}
-                            >
-                              Delete
-                            </Button>
-                          </Flex>
-                        </Flex>
-                      </Box>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Text color={mutedText}>No scholarship posts yet.</Text>
-                )}
-              </CardBody>
-            </Card>
-
-            <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
-              <CardHeader>
-                <Heading size="sm">Free Training Posts</Heading>
-              </CardHeader>
-              <CardBody>
-                {scholarshipPostsLoading ? (
-                  <Text color={mutedText}>Loading posts...</Text>
-                ) : freeTrainingOnly.length ? (
-                  <Stack spacing={3}>
-                    {freeTrainingOnly.map((item) => (
-                      <Box key={item._id} borderWidth="1px" borderColor={borderColor} borderRadius="md" p={3}>
-                        <Flex justify="space-between" align="center" gap={2} mb={2}>
-                          <Text fontWeight="semibold">{item.title}</Text>
-                          <Badge colorScheme={item.isPublished ? "green" : "gray"}>
-                            {item.isPublished ? "Published" : "Draft"}
-                          </Badge>
-                        </Flex>
-                        <Text fontSize="sm" color={mutedText}>{item.description}</Text>
-                        {Array.isArray(item.videoUrls) && item.videoUrls.length ? (
-                          <Text fontSize="xs" color={mutedText} mt={2}>
-                            Videos: {item.videoUrls.length}
-                          </Text>
-                        ) : null}
-                        {Array.isArray(item.slideUrls) && item.slideUrls.length ? (
-                          <Text fontSize="xs" color={mutedText}>
-                            Slides: {item.slideUrls.length}
-                          </Text>
-                        ) : null}
-                        <Flex justify="space-between" align="center" mt={3}>
-                          <Text fontSize="xs" color={mutedText}>{new Date(item.createdAt).toLocaleString()}</Text>
-                          <Flex gap={1}>
-                            <Button
-                              size="xs"
-                              variant="outline"
-                              leftIcon={<Icon as={FiEdit} />}
-                              onClick={() => handleEditScholarshipPost(item)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="xs"
-                              colorScheme="red"
-                              variant="ghost"
-                              leftIcon={<Icon as={FiTrash2} />}
-                              onClick={() => handleDeleteScholarshipPost(item._id)}
-                              isLoading={scholarshipPostActionId === item._id}
-                            >
-                              Delete
-                            </Button>
-                          </Flex>
-                        </Flex>
-                      </Box>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Text color={mutedText}>No free training posts yet.</Text>
-                )}
-              </CardBody>
-            </Card>
-          </SimpleGrid>
+                      </Flex>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : (
+                <Text color={mutedText}>
+                  {isCoursesSection ? "No free training posts yet." : "No scholarship posts yet."}
+                </Text>
+              )}
+            </CardBody>
+          </Card>
         </Stack>
       );
     }
