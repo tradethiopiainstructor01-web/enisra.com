@@ -1464,25 +1464,15 @@ const AdminDashboard = () => {
     try {
       const response = await apiClient.patch(`/jobs/${jobId}/approve`);
       const telegram = response?.data?.telegram;
-      const telegramWarning =
-        telegram?.success === false
-        || (telegram?.skipped
-          && telegram?.reason
-          && telegram.reason !== "Disabled by request"
-          && telegram.reason !== "Already posted");
       setPendingJobs((prev) => prev.filter((job) => job._id !== jobId));
       await loadPostedJobs();
       toast({
-        title: telegramWarning ? "Job approved with warning" : "Job approved",
+        title: "Job approved",
         description: telegram?.success
           ? "The job was approved and sent to Telegram."
-          : telegram?.success === false
-            ? `The job was approved, but Telegram posting failed${telegram?.error ? ` (${telegram.error})` : ""}.`
-            : telegramWarning
-              ? `The job was approved, but Telegram was skipped${telegram?.reason ? ` (${telegram.reason})` : ""}.`
-            : undefined,
-        status: telegramWarning ? "warning" : "success",
-        duration: telegramWarning ? 5000 : 2500,
+          : "The job was approved.",
+        status: "success",
+        duration: 2500,
         isClosable: true,
       });
     } catch (error) {
