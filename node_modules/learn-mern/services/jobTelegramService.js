@@ -52,7 +52,11 @@ const buildApplyUrl = (jobId) => {
 
 exports.publishNewJob = async (job) => {
   if (!job?._id) return { skipped: true, reason: 'Invalid job' };
-  if (!telegramService.isEnabled()) return { skipped: true, reason: 'Telegram config missing' };
+  if (!telegramService.isEnabled()) {
+    const missingKeys = telegramService.getMissingConfigKeys();
+    const suffix = missingKeys.length ? `: ${missingKeys.join(', ')}` : '';
+    return { skipped: true, reason: `Telegram config missing${suffix}` };
+  }
 
   const old = await TelegramJobPost.findOne({ jobId: job._id }).lean();
   if (old?.status === 'posted') return { skipped: true, reason: 'Already posted' };

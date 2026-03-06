@@ -30,8 +30,22 @@ class TelegramService {
     return (process.env.TELEGRAM_USE_SYSTEM_PROXY || 'false').toLowerCase() === 'true';
   }
 
+  getMissingConfigKeys() {
+    const missing = [];
+
+    if (!this.getBotToken()) {
+      missing.push('TELEGRAM_BOT_TOKEN');
+    }
+
+    if (!this.getChannelId()) {
+      missing.push('TELEGRAM_CHANNEL_ID');
+    }
+
+    return missing;
+  }
+
   isEnabled() {
-    return Boolean(this.getBotToken() && this.getChannelId());
+    return this.getMissingConfigKeys().length === 0;
   }
 
   apiUrl(method) {
