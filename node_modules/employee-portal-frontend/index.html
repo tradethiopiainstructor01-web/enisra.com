@@ -13,37 +13,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      (function loadTidioWhenIdle() {
-        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-          return;
-        }
-
-        var injectWidget = function () {
-          if (document.querySelector("script[data-tidio-widget='true']")) {
-            return;
-          }
-
-          var script = document.createElement("script");
-          script.src = "https://code.tidio.co/wwkdtiayjluvogqril6ibblb3tswxxgx.js";
-          script.async = true;
-          script.setAttribute("data-tidio-widget", "true");
-          document.body.appendChild(script);
-        };
-
-        if ("requestIdleCallback" in window) {
-          window.requestIdleCallback(injectWidget, { timeout: 4000 });
-          return;
-        }
-
-        window.addEventListener(
-          "load",
-          function () {
-            window.setTimeout(injectWidget, 1200);
-          },
-          { once: true }
-        );
-      })();
-    </script>
   </body>
 </html>

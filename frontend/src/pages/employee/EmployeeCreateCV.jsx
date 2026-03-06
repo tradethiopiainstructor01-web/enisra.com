@@ -569,7 +569,7 @@ const EmployeeCreateCV = () => {
                         Professional Profile
                       </Text>
                       <Heading
-                        fontSize={{ base: '28px', md: '32px' }}
+                        fontSize={{ base: '24px', md: '28px' }}
                         mt={2}
                         fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                         fontWeight="700"
