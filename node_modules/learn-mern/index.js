@@ -7,6 +7,6 @@ if (require.main === module) {
     console.log(`Server running on port ${PORT}`);
   });
 } else {
-  // For Vercel serverless functions, export the app directly
+  // Export the app when loaded as a module.
   module.exports = app;
 }
