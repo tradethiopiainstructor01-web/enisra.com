@@ -8,10 +8,10 @@ const scholarshipApi = axios.create({
   },
 });
 
-export const loginScholarshipSubscriber = async ({ msisdn, pin }) => {
+export const loginScholarshipSubscriber = async ({ msisdn, password }) => {
   const { data } = await scholarshipApi.post("/login", {
     msisdn,
-    pin
+    password
   });
   return data;
 };

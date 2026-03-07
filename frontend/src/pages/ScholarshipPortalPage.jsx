@@ -125,7 +125,7 @@ const ScholarshipPortalPage = () => {
               <Badge colorScheme="blue" mb={2}>Security</Badge>
               <Flex align="center" gap={3}>
                 <Icon as={FaUserShield} color="blue.500" boxSize={5} />
-                <Text fontWeight="semibold">PIN protected access</Text>
+                <Text fontWeight="semibold">Password protected access</Text>
               </Flex>
             </Box>
             <Box bg={cardBg} borderWidth="1px" borderRadius="xl" p={4}>
