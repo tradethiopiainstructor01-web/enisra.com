@@ -69,6 +69,7 @@ import {
   FiLogOut,
   FiMenu,
   FiMessageSquare,
+  FiMessageSquare,
   FiPauseCircle,
   FiPackage,
   FiPlus,
@@ -524,6 +525,9 @@ const AdminDashboard = () => {
   const smsPhonePattern = /^(?:09\d{8}|251\d{9})$/;
   const formatSmsAccountDate = (value) => (value ? new Date(value).toLocaleString() : "-");
 
+  const smsPhonePattern = /^(?:09\d{8}|251\d{9})$/;
+  const formatSmsAccountDate = (value) => (value ? new Date(value).toLocaleString() : "-");
+
   const adminSections = [
     {
       id: "overview",
@@ -608,6 +612,15 @@ const AdminDashboard = () => {
       tone: "teal",
       to: "",
       cta: "Manage categories",
+    },
+    {
+      id: "sms",
+      title: "SMS",
+      description: "Create scholar login accounts using phone number and password.",
+      icon: FiMessageSquare,
+      tone: "cyan",
+      to: "",
+      cta: "Manage SMS accounts",
     },
     {
       id: "sms",
@@ -823,6 +836,198 @@ const AdminDashboard = () => {
   const handleScholarshipPostFormChange = (field) => (event) => {
     const value = field === "isPublished" ? event.target.checked : event.target.value;
     setScholarshipPostForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSmsAccountFormChange = (field) => (event) => {
+    setSmsAccountForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleSmsDeleteFormChange = (field) => (event) => {
+    setSmsDeleteForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const loadSmsAccounts = async () => {
+    setSmsAccountsLoading(true);
+    try {
+      const response = await apiClient.get("/admin/sms-accounts");
+      const payload = response?.data?.data ?? [];
+      setSmsAccounts(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load SMS accounts",
+        description: error?.response?.data?.message || error?.message || "Unable to load SMS scholar accounts.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setSmsAccountsLoading(false);
+    }
+  };
+
+  const resetSmsAccountForm = () => {
+    setSmsEditingAccount(null);
+    setSmsAccountForm({
+      phoneNumber: "",
+      password: "",
+    });
+  };
+
+  const resetSmsDeleteForm = () => {
+    setSmsDeleteForm({
+      phoneNumber: "",
+    });
+  };
+
+  const handleEditSmsAccount = (account) => {
+    if (!account?.phoneNumber) return;
+    setSmsEditingAccount(account);
+    setSmsAccountForm({
+      phoneNumber: account.phoneNumber,
+      password: "",
+    });
+    setSmsDeleteForm({
+      phoneNumber: account.phoneNumber,
+    });
+  };
+
+  const handleCreateSmsAccount = async () => {
+    const phoneNumber = smsAccountForm.phoneNumber.trim();
+    const password = smsAccountForm.password.trim();
+
+    if (!smsPhonePattern.test(phoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Phone number must start with 09 or 251.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Invalid password",
+        description: "Password must be at least 6 characters.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setSmsAccountSubmitting(true);
+    try {
+      const response = await apiClient.post("/admin/sms-accounts", {
+        phoneNumber,
+        password,
+      });
+      const payload = response?.data?.data || null;
+      setLastSmsAccount(payload);
+      setSmsEditingAccount(null);
+      setSmsDeleteForm({
+        phoneNumber: payload?.subscriber?.phoneNumber || payload?.credentials?.phoneNumber || "",
+      });
+      await loadSmsAccounts();
+      toast({
+        title: payload?.created ? "SMS account created" : "SMS account updated",
+        description: "Scholar login credentials are ready to share.",
+        status: "success",
+        duration: 2500,
+        isClosable: true,
+      });
+      resetSmsAccountForm();
+    } catch (error) {
+      toast({
+        title: "Failed to save SMS account",
+        description: error?.response?.data?.message || error?.message || "Unable to save SMS account.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setSmsAccountSubmitting(false);
+    }
+  };
+
+  const handleDeleteSmsAccount = async (targetPhoneNumber = "") => {
+    const phoneNumber = (targetPhoneNumber || smsDeleteForm.phoneNumber).trim();
+
+    if (!smsPhonePattern.test(phoneNumber)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Enter a valid phone number starting with 09 or 251 to delete the account.",
+        status: "warning",
+        duration: 2500,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm(`Delete SMS scholar account for ${phoneNumber}?`);
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setSmsDeleteSubmitting(true);
+    setSmsDeleteTargetPhone(phoneNumber);
+    try {
+      await apiClient.delete(`/admin/sms-accounts/${encodeURIComponent(phoneNumber)}`);
+
+      setLastSmsAccount((prev) => {
+        const previousPhone =
+          prev?.subscriber?.phoneNumber || prev?.credentials?.phoneNumber || "";
+        if (previousPhone === phoneNumber) {
+          return null;
+        }
+        return prev;
+      });
+
+      setSmsAccountForm((prev) => {
+        if (prev.phoneNumber.trim() !== phoneNumber) {
+          return prev;
+        }
+        return {
+          ...prev,
+          phoneNumber: "",
+        };
+      });
+
+      setSmsEditingAccount((prev) => {
+        if (prev?.phoneNumber === phoneNumber) {
+          return null;
+        }
+        return prev;
+      });
+
+      setSmsDeleteForm((prev) => ({
+        ...prev,
+        phoneNumber: "",
+      }));
+      await loadSmsAccounts();
+
+      toast({
+        title: "SMS account deleted",
+        description: "Scholar login access has been removed.",
+        status: "success",
+        duration: 2500,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete SMS account",
+        description: error?.response?.data?.message || error?.message || "Unable to delete SMS account.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setSmsDeleteSubmitting(false);
+      setSmsDeleteTargetPhone("");
+    }
   };
 
   const handleSmsAccountFormChange = (field) => (event) => {
@@ -1668,6 +1873,9 @@ const AdminDashboard = () => {
     if (activeSectionId === "promotions") {
       loadCarouselPartners();
       loadPendingCarouselPartners();
+    }
+    if (activeSectionId === "sms") {
+      loadSmsAccounts();
     }
     if (activeSectionId === "sms") {
       loadSmsAccounts();
