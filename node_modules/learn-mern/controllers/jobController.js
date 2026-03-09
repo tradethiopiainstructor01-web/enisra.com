@@ -323,6 +323,10 @@ exports.rejectJob = async (req, res) => {
 };
 
 exports.updateJob = async (req, res) => {
+  // note: when an admin edits an existing job we now also look for a
+  // `postToTelegram` field and, if the job has previously been approved, send
+  // the update to Telegram.  the service handles deduplication so calling it is
+  // safe even if the job was already posted.
   try {
     const { id } = req.params;
     const setPayload = {
@@ -386,7 +390,27 @@ exports.updateJob = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
 
-    res.json({ success: true, data: normalizeJobForResponse(updated) });
+    // if the job is already approved and telegram posting is enabled, attempt to
+    // publish it.  publishNewJob is idempotent so it will skip if the message was
+    // already sent, but it'll also queue a new post if the flag was just toggled.
+    let telegramResult = null;
+    if (updated.approved && updated.postToTelegram) {
+      try {
+        telegramResult = await publishNewJob(updated);
+      } catch (e) {
+        // publishNewJob generally handles its own errors, but guard the whole
+        // request so we still return success for the job update.
+        console.error('Error publishing telegram notification during job update', e);
+        telegramResult = { success: false, error: e.message };
+      }
+    }
+
+    const responsePayload = { success: true, data: normalizeJobForResponse(updated) };
+    if (telegramResult) {
+      responsePayload.telegram = telegramResult;
+    }
+
+    res.json(responsePayload);
   } catch (error) {
     res.status(500).json({
       success: false,

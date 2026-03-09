@@ -7,6 +7,7 @@ it team workspace
 - Configure the usual backend environment variables for your hosting platform so the API can start:
   - `MONGO_URI`, `JWT_SECRET`, `FRONTEND_URL`
   - Telegram job posting: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, and one public HTTPS URL source for job links: `JOB_PUBLIC_BASE_URL` or `TELEGRAM_JOB_URL_TEMPLATE` or `TELEGRAM_APPLY_URL`
+  * When an approved job is edited to enable `postToTelegram`, the server will post it automatically (duplicates are prevented by an internal record).
   - Optional Telegram webhook settings if you use the webhook routes: `TELEGRAM_WEBHOOK_URL`, `TELEGRAM_WEBHOOK_SECRET`
   - Appwrite credentials: `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID`, `APPWRITE_API_KEY`, `APPWRITE_BUCKET_ID`
   - Any SMTP or custom secrets that appear in `backend/.env` (e.g., `SMTP_USER`, `SMTP_PASS`, `SMTP_HOST`, `SMTP_PORT`).

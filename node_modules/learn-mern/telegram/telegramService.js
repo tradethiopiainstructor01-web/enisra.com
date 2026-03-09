@@ -52,7 +52,10 @@ class TelegramService {
     return `${TELEGRAM_API_BASE}/bot${this.getBotToken()}/${method}`;
   }
 
-  formatJobMessage(job) {
+  // optionally include the jobUrl so recipients can see it even if the
+  // inline button is stripped or they forward the message.  `jobUrl` is not
+  // validated here (sendJobPost already throws if it's missing/invalid).
+  formatJobMessage(job, jobUrl) {
     const company = job.company || job.companyName || process.env.EMPLOYER_NAME || 'N/A';
     const title = job.title || 'N/A';
     const type = job.type || 'N/A';
@@ -60,7 +63,7 @@ class TelegramService {
     const requiredExperience = (job.description || 'No description provided.').slice(0, 2500);
     const yearsOfExperience = job.yearsOfExperience || 'N/A';
 
-    return [
+    const lines = [
       `<b>Company:</b> ${escapeHtml(company)}`,
       '',
       `<b>Job Position:</b> ${escapeHtml(title)}`,
@@ -73,7 +76,13 @@ class TelegramService {
       escapeHtml(requiredExperience),
       '',
       `<b>Years of Experience:</b> ${escapeHtml(yearsOfExperience)}`,
-    ].join('\n');
+    ];
+
+    if (jobUrl) {
+      lines.push('', `<a href="${escapeHtml(jobUrl)}">Apply now</a>`);
+    }
+
+    return lines.join('\n');
   }
 
   async sendJobPost({ job, jobUrl }) {
@@ -82,7 +91,7 @@ class TelegramService {
 
     const payload = {
       chat_id: this.getChannelId(),
-      text: this.formatJobMessage(job),
+      text: this.formatJobMessage(job, jobUrl),
       parse_mode: this.getParseMode(),
       disable_web_page_preview: true,
       reply_markup: {

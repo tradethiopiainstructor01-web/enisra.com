@@ -202,6 +202,7 @@ const AdminDashboard = () => {
     expirationDate: "",
     description: "",
     flow: "",
+    postToTelegram: false,
   });
   const [selectedJobId, setSelectedJobId] = useState(null);
   const {
@@ -1570,6 +1571,7 @@ const AdminDashboard = () => {
       expirationDate: job.expirationDate ? job.expirationDate.slice(0, 10) : "",
       description: job.description || "",
       flow: job.flow || "",
+      postToTelegram: Boolean(job.postToTelegram),
     });
     onEditJobOpen();
   };
@@ -1592,6 +1594,7 @@ const AdminDashboard = () => {
       expirationDate: "",
       description: "",
       flow: "",
+      postToTelegram: false,
     });
     onEditJobClose();
   };
@@ -1636,15 +1639,27 @@ const AdminDashboard = () => {
       expirationDate: editJobForm.expirationDate || undefined,
       description: editJobForm.description.trim(),
       flow: editJobForm.flow.trim(),
+      postToTelegram: Boolean(editJobForm.postToTelegram),
     };
 
     try {
       setEditJobSubmitting(true);
-      await apiClient.patch(`/jobs/${selectedJobId}`, payload);
+      const response = await apiClient.patch(`/jobs/${selectedJobId}`, payload);
+      const telegram = response?.data?.telegram;
+      const telegramFailed = telegram?.success === false;
+      const telegramSkipped = Boolean(telegram?.skipped);
+
       toast({
-        title: "Job updated",
-        status: "success",
-        duration: 2000,
+        title: telegramFailed || telegramSkipped ? "Job updated with warning" : "Job updated",
+        description: telegram?.success
+          ? "Changes saved and job sent to Telegram."
+          : telegramFailed
+            ? `Job saved but Telegram posting failed${telegram?.error ? ` (${telegram.error})` : ""}.`
+            : telegramSkipped
+              ? `Job saved. Telegram posting was skipped${telegram?.reason ? ` (${telegram.reason})` : ""}.`
+              : "Job updated.",
+        status: telegramFailed || telegramSkipped ? "warning" : "success",
+        duration: telegramFailed || telegramSkipped ? 5500 : 2000,
         isClosable: true,
       });
       closeEditJobModal();
@@ -1800,6 +1815,10 @@ const AdminDashboard = () => {
 
   const handleAdminTelegramToggle = (event) => {
     setAdminJobForm((prev) => ({ ...prev, postToTelegram: event.target.checked }));
+  };
+
+  const handleEditTelegramToggle = (event) => {
+    setEditJobForm((prev) => ({ ...prev, postToTelegram: event.target.checked }));
   };
 
   const resetAdminJobForm = () => {
@@ -4320,6 +4339,14 @@ const AdminDashboard = () => {
                   onChange={handleEditJobChange("description")}
                   placeholder="Describe responsibilities, qualifications, and benefits."
                   minH="120px"
+                />
+              </FormControl>
+              <FormControl display="flex" alignItems="center" justifyContent="space-between">
+                <FormLabel mb="0">Post to Telegram</FormLabel>
+                <Switch
+                  colorScheme="blue"
+                  isChecked={editJobForm.postToTelegram}
+                  onChange={handleEditTelegramToggle}
                 />
               </FormControl>
             </Stack>
