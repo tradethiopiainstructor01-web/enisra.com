@@ -4,12 +4,17 @@ const {
   login,
   dashboard,
   deleteSubscriberByUsername,
-  createUserWithAccessCode
+  createUserWithAccessCode,
+  createSubscriberByAdmin,
+  listSubscribersByAdmin
 } = require('../controllers/smsAuthController');
 const { smsJwtAuth } = require('../middleware/smsJwtAuth');
 
 const router = express.Router();
 
+router.get('/admin/sms-accounts', listSubscribersByAdmin);
+router.post('/admin/sms-accounts', createSubscriberByAdmin);
+router.delete('/admin/sms-accounts/:username', deleteSubscriberByUsername);
 router.post('/create-user', createUserWithAccessCode);
 router.post('/sms', receiveSms);
 router.post('/login', login);

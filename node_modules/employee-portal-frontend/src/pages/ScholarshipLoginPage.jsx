@@ -27,12 +27,12 @@ import { FaCheckCircle, FaGraduationCap, FaLock, FaMobileAlt } from "react-icons
 import { loginScholarshipSubscriber } from "../services/scholarshipAuthService";
 
 const phonePattern = /^(?:251\d{9}|09\d{8})$/;
-const pinPattern = /^\d{6}$/;
+const passwordMinLength = 6;
 
 const ScholarshipLoginPage = () => {
   const navigate = useNavigate();
   const [msisdn, setMsisdn] = useState("");
-  const [pin, setPin] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -62,14 +62,17 @@ const ScholarshipLoginPage = () => {
       setErrorMessage("Phone number must start with 09 or 251.");
       return;
     }
-    if (!pinPattern.test(pin)) {
-      setErrorMessage("PIN must be exactly 6 digits.");
+    if (password.trim().length < passwordMinLength) {
+      setErrorMessage(`Password must be at least ${passwordMinLength} characters.`);
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const response = await loginScholarshipSubscriber({ msisdn: normalizedMsisdn, pin });
+      const response = await loginScholarshipSubscriber({
+        msisdn: normalizedMsisdn,
+        password: password.trim(),
+      });
       localStorage.setItem("scholarshipToken", response.token);
       localStorage.setItem("scholarshipPhone", normalizedMsisdn);
       navigate("/scholarship-portal", { replace: true });
@@ -142,7 +145,7 @@ const ScholarshipLoginPage = () => {
                   <Heading size="md">Scholarship Access</Heading>
                 </HStack>
                 <Text opacity={0.95} fontSize={{ base: "sm", md: "md" }}>
-                  Subscribe by SMS first. Send OK to short code 9295, then login using your phone number and PIN.
+                  An admin creates your scholar account. Login using the phone number and password they give you.
                 </Text>
                 <VStack align="start" spacing={3} pt={2}>
                   <HStack
@@ -154,7 +157,7 @@ const ScholarshipLoginPage = () => {
                     borderColor="whiteAlpha.280"
                   >
                     <Icon as={FaMobileAlt} />
-                    <Text fontSize="sm">SMS subscribe short code: 9295</Text>
+                    <Text fontSize="sm">Use your registered phone number</Text>
                   </HStack>
                   <HStack
                     bg="whiteAlpha.170"
@@ -165,7 +168,7 @@ const ScholarshipLoginPage = () => {
                     borderColor="whiteAlpha.280"
                   >
                     <Icon as={FaLock} />
-                    <Text fontSize="sm">Secure 6-digit PIN login</Text>
+                    <Text fontSize="sm">Secure password-based login</Text>
                   </HStack>
                   <HStack
                     bg="whiteAlpha.170"
@@ -176,7 +179,7 @@ const ScholarshipLoginPage = () => {
                     borderColor="whiteAlpha.280"
                   >
                     <Icon as={FaCheckCircle} />
-                    <Text fontSize="sm">Fast and mobile-friendly process</Text>
+                    <Text fontSize="sm">Ask admin if you need a new password</Text>
                   </HStack>
                 </VStack>
               </VStack>
@@ -188,15 +191,15 @@ const ScholarshipLoginPage = () => {
                   Login
                 </Heading>
                 <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
-                  Enter your subscribed phone number and PIN from SMS.
+                  Enter the phone number and password created for your scholar account.
                 </Text>
 
                 <HStack spacing={2}>
                   <Badge colorScheme="blue" px={3} py={1} borderRadius="full">
-                    1. SMS OK to 9295
+                    1. Admin creates account
                   </Badge>
                   <Badge colorScheme="green" px={3} py={1} borderRadius="full">
-                    2. Login with PIN
+                    2. Login with password
                   </Badge>
                 </HStack>
 
@@ -207,7 +210,7 @@ const ScholarshipLoginPage = () => {
                     <FormControl isRequired>
                       <FormLabel>MSISDN</FormLabel>
                       <InputGroup size="lg">
-                        <InputLeftAddon children="ET" />
+                        <InputLeftAddon>ET</InputLeftAddon>
                         <Input
                           placeholder="09XXXXXXXX or 251XXXXXXXXX"
                           value={msisdn}
@@ -227,15 +230,13 @@ const ScholarshipLoginPage = () => {
                     </FormControl>
 
                     <FormControl isRequired>
-                      <FormLabel>PIN (6 digits)</FormLabel>
+                      <FormLabel>Password</FormLabel>
                       <Input
                         type="password"
                         size="lg"
-                        maxLength={6}
-                        inputMode="numeric"
-                        placeholder="Enter 6-digit PIN"
-                        value={pin}
-                        onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="Enter password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
                         bg={inputBg}
                         borderColor={inputBorder}
                         _hover={{ borderColor: inputHoverBorder }}
@@ -244,6 +245,9 @@ const ScholarshipLoginPage = () => {
                           boxShadow: "0 0 0 1px var(--chakra-colors-blue-400)",
                         }}
                       />
+                      <FormHelperText>
+                        Minimum {passwordMinLength} characters
+                      </FormHelperText>
                     </FormControl>
 
                     <Button

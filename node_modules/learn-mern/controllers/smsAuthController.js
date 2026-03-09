@@ -6,9 +6,10 @@ const ScholarshipContent = require('../models/ScholarshipContent');
 
 const SHORT_CODE = '9295';
 const BCRYPT_ROUNDS = Number(process.env.SMS_PIN_BCRYPT_ROUNDS || 10);
-const PIN_PATTERN = /^\d{6}$/;
 const KEYWORD_PATTERN = /^(OK|STOP)$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_MIN_LENGTH = Number(process.env.SMS_PASSWORD_MIN_LENGTH || 6);
+const PASSWORD_MAX_LENGTH = Number(process.env.SMS_PASSWORD_MAX_LENGTH || 64);
 
 const normalizeMsisdn = (value = '') => {
   const digits = value.toString().replace(/\D/g, '');
@@ -20,6 +21,11 @@ const normalizeMsisdn = (value = '') => {
 const isSupportedMsisdnInput = (value = '') => /^(?:09\d{8}|251\d{9})$/.test(value.toString().replace(/\D/g, ''));
 
 const generatePin6 = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const normalizeCredential = (value = '') => value.toString().trim();
+
+const isValidCredential = (value = '') =>
+  value.length >= PASSWORD_MIN_LENGTH && value.length <= PASSWORD_MAX_LENGTH;
 
 const toLocalUsername = (normalizedMsisdn = '') => {
   if (/^251\d{9}$/.test(normalizedMsisdn)) {
@@ -43,6 +49,26 @@ const safeEqual = (a = '', b = '') => {
   const right = Buffer.from(String(b));
   if (left.length !== right.length) return false;
   return crypto.timingSafeEqual(left, right);
+};
+
+const upsertSubscriberCredential = async ({ msisdn, password }) => {
+  const pinHash = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
+
+  return SmsSubscription.findOneAndUpdate(
+    { msisdn },
+    {
+      $set: {
+        pinHash,
+        status: 'ACTIVE',
+        lastKeyword: 'OK',
+        lastKeywordAt: new Date()
+      }
+    },
+    {
+      new: true,
+      upsert: true
+    }
+  );
 };
 
 const receiveSms = async (req, res) => {
@@ -69,23 +95,10 @@ const receiveSms = async (req, res) => {
 
     if (keyword === 'OK') {
       const pin = generatePin6();
-      const pinHash = await bcrypt.hash(pin, BCRYPT_ROUNDS);
-
-      const subscriber = await SmsSubscription.findOneAndUpdate(
-        { msisdn },
-        {
-          $set: {
-            pinHash,
-            status: 'ACTIVE',
-            lastKeyword: 'OK',
-            lastKeywordAt: new Date()
-          }
-        },
-        {
-          new: true,
-          upsert: true
-        }
-      );
+      const subscriber = await upsertSubscriberCredential({
+        msisdn,
+        password: pin
+      });
 
       // Testing visibility in terminal (remove in production).
       console.log(`[SMS OK] shortCode=${SHORT_CODE} msisdn=${subscriber.msisdn} pin=${pin}`);
@@ -136,7 +149,7 @@ const receiveSms = async (req, res) => {
 const login = async (req, res) => {
   try {
     const rawMsisdn = req.body?.msisdn || '';
-    const pin = (req.body?.pin || '').toString().trim();
+    const password = normalizeCredential(req.body?.password ?? req.body?.pin);
 
     if (!isSupportedMsisdnInput(rawMsisdn)) {
       return res.status(400).json({
@@ -145,10 +158,10 @@ const login = async (req, res) => {
       });
     }
 
-    if (!PIN_PATTERN.test(pin)) {
+    if (!isValidCredential(password)) {
       return res.status(400).json({
         success: false,
-        message: 'PIN must be exactly 6 digits.'
+        message: `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters.`
       });
     }
 
@@ -158,7 +171,7 @@ const login = async (req, res) => {
     if (!subscriber) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials.'
+        message: 'Invalid phone number or password.'
       });
     }
 
@@ -169,11 +182,11 @@ const login = async (req, res) => {
       });
     }
 
-    const validPin = await bcrypt.compare(pin, subscriber.pinHash);
-    if (!validPin) {
+    const validPassword = await bcrypt.compare(password, subscriber.pinHash);
+    if (!validPassword) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials.'
+        message: 'Invalid phone number or password.'
       });
     }
 
@@ -248,6 +261,7 @@ const createUserWithAccessCode = async (req, res) => {
     }
 
     const { username, password, email, roles } = req.body || {};
+    const normalizedPassword = normalizeCredential(password);
 
     if (!username || !password || !email || !Array.isArray(roles)) {
       return res.status(400).json({
@@ -263,10 +277,10 @@ const createUserWithAccessCode = async (req, res) => {
       });
     }
 
-    if (!PIN_PATTERN.test(String(password))) {
+    if (!isValidCredential(normalizedPassword)) {
       return res.status(400).json({
         success: false,
-        error: 'password must be exactly 6 digits.'
+        error: `password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters.`
       });
     }
 
@@ -285,20 +299,10 @@ const createUserWithAccessCode = async (req, res) => {
     }
 
     const msisdn = normalizeMsisdn(username);
-    const pinHash = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
-
-    await SmsSubscription.findOneAndUpdate(
-      { msisdn },
-      {
-        $set: {
-          pinHash,
-          status: 'ACTIVE',
-          lastKeyword: 'OK',
-          lastKeywordAt: new Date()
-        }
-      },
-      { upsert: true, new: true }
-    );
+    await upsertSubscriberCredential({
+      msisdn,
+      password: normalizedPassword
+    });
 
     return res.json({
       success: true,
@@ -315,6 +319,80 @@ const createUserWithAccessCode = async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to create user.'
+    });
+  }
+};
+
+const createSubscriberByAdmin = async (req, res) => {
+  try {
+    const rawMsisdn = req.body?.phoneNumber || req.body?.msisdn || req.body?.username || '';
+    const password = normalizeCredential(req.body?.password);
+
+    if (!isSupportedMsisdnInput(rawMsisdn)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number must start with 09 or 251 and be valid.'
+      });
+    }
+
+    if (!isValidCredential(password)) {
+      return res.status(400).json({
+        success: false,
+        message: `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters.`
+      });
+    }
+
+    const msisdn = normalizeMsisdn(rawMsisdn);
+    const existingSubscriber = await SmsSubscription.findOne({ msisdn }).lean();
+    const subscriber = await upsertSubscriberCredential({ msisdn, password });
+
+    return res.json({
+      success: true,
+      message: existingSubscriber ? 'SMS scholar account updated.' : 'SMS scholar account created.',
+      data: {
+        created: !existingSubscriber,
+        subscriber: {
+          msisdn: subscriber.msisdn,
+          phoneNumber: toLocalUsername(subscriber.msisdn),
+          status: subscriber.status
+        },
+        credentials: {
+          phoneNumber: toLocalUsername(subscriber.msisdn),
+          password
+        }
+      }
+    });
+  } catch (error) {
+    console.error('createSubscriberByAdmin error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create SMS scholar account.'
+    });
+  }
+};
+
+const listSubscribersByAdmin = async (req, res) => {
+  try {
+    const subscribers = await SmsSubscription.find({})
+      .sort({ createdAt: -1 })
+      .select('msisdn status createdAt updatedAt')
+      .lean();
+
+    return res.json({
+      success: true,
+      data: subscribers.map((subscriber) => ({
+        msisdn: subscriber.msisdn,
+        phoneNumber: toLocalUsername(subscriber.msisdn),
+        status: subscriber.status,
+        createdAt: subscriber.createdAt,
+        updatedAt: subscriber.updatedAt
+      }))
+    });
+  } catch (error) {
+    console.error('listSubscribersByAdmin error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load SMS scholar accounts.'
     });
   }
 };
@@ -347,6 +425,8 @@ const deleteSubscriberByUsername = async (req, res) => {
     }
 
     return res.json({
+      success: true,
+      message: 'Subscriber deleted successfully.',
       user: buildSubscriberJson({
         normalizedMsisdn: deleted.msisdn,
         pin: ''
@@ -366,5 +446,7 @@ module.exports = {
   login,
   dashboard,
   deleteSubscriberByUsername,
-  createUserWithAccessCode
+  createUserWithAccessCode,
+  createSubscriberByAdmin,
+  listSubscribersByAdmin
 };
