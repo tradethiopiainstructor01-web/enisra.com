@@ -27,3 +27,4 @@ router.patch('/employers/:id/approve', approveEmployer);
 router.patch('/employers/:id/reject', rejectEmployer);
 
 module.exports = router;
+
