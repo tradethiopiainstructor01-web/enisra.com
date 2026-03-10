@@ -219,7 +219,10 @@ const corsOptions = {
   allowedHeaders: [
     'Content-Type',
     'Authorization',
-    'X-Requested-With'
+    'X-Requested-With',
+    'X-API-Key',
+    'X-Remote-API-Key',
+    'X-Job-API-Key',
   ],
   credentials: true
 };

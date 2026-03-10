@@ -29,6 +29,130 @@ const extractEmail = (value) => {
   return match ? match[0].toLowerCase() : '';
 };
 
+const buildCreateJobPayload = ({
+  body = {},
+  user = null,
+  postedByName = '',
+  contactEmailFallback = '',
+  approved = false,
+  approvedAt = undefined,
+  approvedBy = undefined,
+}) => {
+  const postToTelegram = parseBoolean(body.postToTelegram);
+  const payload = {
+    title: toTrimmedString(body.title),
+    department: toTrimmedString(body.department),
+    company: toTrimmedString(body.company || body.companyName),
+    companyAddress: toTrimmedString(body.companyAddress || body.company_address),
+    contactEmail: extractEmail(body.contactEmail || body.contact_email || body.email),
+    category: toTrimmedString(body.category),
+    location: toTrimmedString(body.location),
+    address: toTrimmedString(body.address),
+    type: toTrimmedString(body.type),
+    salary: toTrimmedString(body.salary),
+    yearsOfExperience: toTrimmedString(body.yearsOfExperience),
+    description: toTrimmedString(body.description),
+    flow: toTrimmedString(body.flow),
+    approved: Boolean(approved),
+    postToTelegram,
+  };
+
+  const deadline = parseDate(body.deadline);
+  if (deadline) payload.deadline = deadline;
+
+  const expirationDate = parseDate(body.expirationDate);
+  if (expirationDate) payload.expirationDate = expirationDate;
+
+  if (!payload.contactEmail && contactEmailFallback) {
+    payload.contactEmail = extractEmail(contactEmailFallback);
+  }
+
+  if (user?._id) {
+    payload.postedBy = user._id;
+    payload.postedByName = user.fullName || user.username || user.email;
+  } else {
+    const resolvedPostedByName = toTrimmedString(
+      postedByName || body.postedByName || body.contactName || body.sourceName || body.company || body.companyName
+    );
+    if (resolvedPostedByName) {
+      payload.postedByName = resolvedPostedByName;
+    }
+  }
+
+  if (payload.approved) {
+    payload.approvedAt = approvedAt || new Date();
+    if (approvedBy) {
+      payload.approvedBy = approvedBy;
+    }
+  }
+
+  return payload;
+};
+
+const validateCreateJobPayload = (payload) => {
+  if (
+    !payload.title ||
+    !payload.company ||
+    !payload.category ||
+    !payload.location ||
+    !payload.type ||
+    !payload.contactEmail
+  ) {
+    return 'Title, company name, category, location, job type, and contact email are required.';
+  }
+
+  return '';
+};
+
+const createJobRecord = async ({
+  body,
+  user = null,
+  postedByName = '',
+  contactEmailFallback = '',
+  approved = false,
+  approvedAt = undefined,
+  approvedBy = undefined,
+}) => {
+  const payload = buildCreateJobPayload({
+    body,
+    user,
+    postedByName,
+    contactEmailFallback,
+    approved,
+    approvedAt,
+    approvedBy,
+  });
+
+  const validationMessage = validateCreateJobPayload(payload);
+  if (validationMessage) {
+    return {
+      error: validationMessage,
+      statusCode: 400,
+    };
+  }
+
+  const created = await Job.create(payload);
+  let telegramResult;
+
+  if (!payload.postToTelegram) {
+    telegramResult = { skipped: true, reason: 'Disabled by request' };
+  } else if (!payload.approved) {
+    telegramResult = { skipped: true, reason: 'Queued until approval' };
+  } else {
+    try {
+      telegramResult = await publishNewJob(created);
+    } catch (error) {
+      telegramResult = { success: false, error: error.message };
+    }
+  }
+
+  return {
+    created,
+    telegramResult,
+    payload,
+  };
+};
+
 const normalizeJobForResponse = (job) => {
   if (!job || typeof job !== 'object') return job;
 
@@ -214,57 +338,64 @@ exports.getJobById = async (req, res) => {
 
 exports.createJob = async (req, res) => {
   try {
-    const postToTelegram = parseBoolean(req.body.postToTelegram);
-    const payload = {
-      title: toTrimmedString(req.body.title),
-      department: toTrimmedString(req.body.department),
-      company: toTrimmedString(req.body.company || req.body.companyName),
-      companyAddress: toTrimmedString(req.body.companyAddress || req.body.company_address),
-      contactEmail: extractEmail(req.body.contactEmail || req.body.contact_email || req.body.email),
-      category: toTrimmedString(req.body.category),
-      location: toTrimmedString(req.body.location),
-      address: toTrimmedString(req.body.address),
-      type: toTrimmedString(req.body.type),
-      salary: toTrimmedString(req.body.salary),
-      yearsOfExperience: toTrimmedString(req.body.yearsOfExperience),
-      description: toTrimmedString(req.body.description),
-      flow: toTrimmedString(req.body.flow),
+    const { created, telegramResult, error, statusCode } = await createJobRecord({
+      body: req.body,
+      user: req.user,
+      contactEmailFallback: req.user?.email,
       approved: false,
-      postToTelegram,
-    };
+    });
 
-    const deadline = parseDate(req.body.deadline);
-    if (deadline) payload.deadline = deadline;
-    
-    const expirationDate = parseDate(req.body.expirationDate);
-    if (expirationDate) payload.expirationDate = expirationDate;
-
-    if (!payload.contactEmail && req.user?.email) {
-      payload.contactEmail = extractEmail(req.user.email);
-    }
-
-    if (!payload.title || !payload.company || !payload.category || !payload.location || !payload.type || !payload.contactEmail) {
-      return res.status(400).json({
+    if (error) {
+      return res.status(statusCode || 400).json({
         success: false,
-        message: 'Title, company name, category, location, job type, and contact email are required.',
+        message: error,
       });
     }
-
-    if (req.user) {
-      payload.postedBy = req.user._id;
-      payload.postedByName = req.user.fullName || req.user.username || req.user.email;
-    }
-
-    const created = await Job.create(payload);
-    const telegramResult = postToTelegram
-      ? { skipped: true, reason: 'Queued until approval' }
-      : { skipped: true, reason: 'Disabled by request' };
 
     res.status(201).json({ success: true, data: created, telegram: telegramResult });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Failed to create job',
+      error: error.message,
+    });
+  }
+};
+
+exports.createRemoteJob = async (req, res) => {
+  try {
+    const autoApprove = parseBoolean(process.env.REMOTE_JOB_POST_AUTO_APPROVE);
+    const remotePostedByName = toTrimmedString(
+      req.body.postedByName || req.body.contactName || req.body.sourceName || req.body.company || req.body.companyName
+    );
+
+    const { created, telegramResult, error, statusCode } = await createJobRecord({
+      body: req.body,
+      postedByName: remotePostedByName,
+      contactEmailFallback: req.body.contactEmail || req.body.contact_email || req.body.email,
+      approved: autoApprove,
+    });
+
+    if (error) {
+      return res.status(statusCode || 400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: created,
+      telegram: telegramResult,
+      remote: {
+        source: req.remoteJobPost?.source || 'remote-api',
+        autoApproved: autoApprove,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create remote job',
       error: error.message,
     });
   }

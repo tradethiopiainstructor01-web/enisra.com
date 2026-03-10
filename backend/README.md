@@ -31,6 +31,12 @@ This backend powers:
 - `/partners`
 - `/analytics/registrations`
 
+## Remote Job Posting
+- `POST /api/jobs/remote`
+- Auth: send `x-api-key: <REMOTE_JOB_POST_API_KEY>` or `Authorization: Bearer <REMOTE_JOB_POST_API_KEY>`
+- Required fields: `title`, `company` or `companyName`, `category`, `location`, `type`, `contactEmail`
+- Optional env: `REMOTE_JOB_POST_AUTO_APPROVE=true` to publish immediately instead of leaving the job pending admin approval
+
 ## Notes
 - Requests are department-scoped for most roles; `admin`, `finance`, and `coo` can view across departments.
 - Historical modules for Sales, Customer Success, and HR are no longer mounted as runtime APIs.

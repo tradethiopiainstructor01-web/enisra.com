@@ -2,11 +2,13 @@ const express = require('express');
 const jobController = require('../controllers/jobController');
 const { protect } = require('../middleware/auth');
 const { authorizeRoles } = require('../middleware/roles');
+const { protectRemoteJobPost } = require('../middleware/remoteJobApiKey');
 
 const router = express.Router();
 
 router.get('/', jobController.listJobs);
 router.post('/', protect, authorizeRoles('employer', 'admin'), jobController.createJob);
+router.post('/remote', protectRemoteJobPost, jobController.createRemoteJob);
 router.get('/pending', protect, authorizeRoles('admin'), jobController.listPendingJobs);
 router.get('/mine', protect, authorizeRoles('employer', 'admin'), jobController.listMyJobs);
 router.get('/:id', jobController.getJobById);
