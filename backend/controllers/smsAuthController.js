@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const SmsSubscription = require('../models/SmsSubscription');
+const DeletedSmsSubscription = require('../models/DeletedSmsSubscription');
 const ScholarshipContent = require('../models/ScholarshipContent');
 
 const SHORT_CODE = '9295';
@@ -54,7 +55,7 @@ const safeEqual = (a = '', b = '') => {
 const upsertSubscriberCredential = async ({ msisdn, password }) => {
   const pinHash = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
 
-  return SmsSubscription.findOneAndUpdate(
+  const subscriber = await SmsSubscription.findOneAndUpdate(
     { msisdn },
     {
       $set: {
@@ -69,6 +70,10 @@ const upsertSubscriberCredential = async ({ msisdn, password }) => {
       upsert: true
     }
   );
+
+  await DeletedSmsSubscription.deleteOne({ msisdn });
+
+  return subscriber;
 };
 
 const receiveSms = async (req, res) => {
@@ -397,6 +402,31 @@ const listSubscribersByAdmin = async (req, res) => {
   }
 };
 
+const listDeletedSubscribersByAdmin = async (req, res) => {
+  try {
+    const deletedSubscribers = await DeletedSmsSubscription.find({})
+      .sort({ deletedAt: -1, updatedAt: -1 })
+      .select('msisdn deletedAt updatedAt')
+      .lean();
+
+    return res.json({
+      success: true,
+      data: deletedSubscribers.map((subscriber) => ({
+        msisdn: subscriber.msisdn,
+        phoneNumber: toLocalUsername(subscriber.msisdn),
+        deletedAt: subscriber.deletedAt || subscriber.updatedAt,
+        updatedAt: subscriber.updatedAt
+      }))
+    });
+  } catch (error) {
+    console.error('listDeletedSubscribersByAdmin error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to load deleted SMS scholar accounts.'
+    });
+  }
+};
+
 const deleteSubscriberByUsername = async (req, res) => {
   try {
     const username = (req.params?.username || '').toString().trim();
@@ -424,9 +454,29 @@ const deleteSubscriberByUsername = async (req, res) => {
       });
     }
 
+    const deletedRecord = await DeletedSmsSubscription.findOneAndUpdate(
+      { msisdn: normalizedMsisdn },
+      {
+        $set: {
+          deletedAt: new Date()
+        }
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
     return res.json({
       success: true,
       message: 'Subscriber deleted successfully.',
+      deletedRecord: {
+        msisdn: deletedRecord.msisdn,
+        phoneNumber: toLocalUsername(deletedRecord.msisdn),
+        deletedAt: deletedRecord.deletedAt,
+        updatedAt: deletedRecord.updatedAt
+      },
       user: buildSubscriberJson({
         normalizedMsisdn: deleted.msisdn,
         pin: ''
@@ -448,5 +498,6 @@ module.exports = {
   deleteSubscriberByUsername,
   createUserWithAccessCode,
   createSubscriberByAdmin,
-  listSubscribersByAdmin
+  listSubscribersByAdmin,
+  listDeletedSubscribersByAdmin
 };

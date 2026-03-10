@@ -42,8 +42,13 @@
   StatLabel,
   StatNumber,
   Switch,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
   Table,
   TableContainer,
+  Tabs,
   Tbody,
   Td,
   Th,
@@ -68,7 +73,6 @@ import {
   FiEdit,
   FiLogOut,
   FiMenu,
-  FiMessageSquare,
   FiPauseCircle,
   FiPackage,
   FiPlus,
@@ -261,9 +265,11 @@ const AdminDashboard = () => {
     phoneNumber: "",
   });
   const [smsAccounts, setSmsAccounts] = useState([]);
+  const [deletedSmsAccounts, setDeletedSmsAccounts] = useState([]);
   const [smsEditingAccount, setSmsEditingAccount] = useState(null);
   const [smsAccountSubmitting, setSmsAccountSubmitting] = useState(false);
   const [smsAccountsLoading, setSmsAccountsLoading] = useState(false);
+  const [deletedSmsAccountsLoading, setDeletedSmsAccountsLoading] = useState(false);
   const [smsDeleteSubmitting, setSmsDeleteSubmitting] = useState(false);
   const [smsDeleteTargetPhone, setSmsDeleteTargetPhone] = useState("");
   const [lastSmsAccount, setLastSmsAccount] = useState(null);
@@ -608,13 +614,13 @@ const AdminDashboard = () => {
       cta: "Manage categories",
     },
     {
-      id: "sms",
-      title: "SMS",
-      description: "Create scholar login accounts using phone number and password.",
-      icon: FiMessageSquare,
+      id: "settings",
+      title: "Settings",
+      description: "Manage scholar user phone numbers and passwords for dashboard access.",
+      icon: FiSettings,
       tone: "cyan",
       to: "",
-      cta: "Manage SMS accounts",
+      cta: "Manage scholar credentials",
     },
     {
       id: "scholarship-content",
@@ -850,6 +856,29 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadDeletedSmsAccounts = async () => {
+    setDeletedSmsAccountsLoading(true);
+    try {
+      const response = await apiClient.get("/admin/sms-accounts/deleted");
+      const payload = response?.data?.data ?? [];
+      setDeletedSmsAccounts(Array.isArray(payload) ? payload : []);
+    } catch (error) {
+      toast({
+        title: "Failed to load deleted numbers",
+        description: error?.response?.data?.message || error?.message || "Unable to load deleted scholar phone numbers.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setDeletedSmsAccountsLoading(false);
+    }
+  };
+
+  const refreshSmsAccountLists = async () => {
+    await Promise.all([loadSmsAccounts(), loadDeletedSmsAccounts()]);
+  };
+
   const resetSmsAccountForm = () => {
     setSmsEditingAccount(null);
     setSmsAccountForm({
@@ -914,7 +943,7 @@ const AdminDashboard = () => {
       setSmsDeleteForm({
         phoneNumber: payload?.subscriber?.phoneNumber || payload?.credentials?.phoneNumber || "",
       });
-      await loadSmsAccounts();
+      await refreshSmsAccountLists();
       toast({
         title: payload?.created ? "SMS account created" : "SMS account updated",
         description: "Scholar login credentials are ready to share.",
@@ -992,7 +1021,7 @@ const AdminDashboard = () => {
         ...prev,
         phoneNumber: "",
       }));
-      await loadSmsAccounts();
+      await refreshSmsAccountLists();
 
       toast({
         title: "SMS account deleted",
@@ -1667,8 +1696,8 @@ const AdminDashboard = () => {
       loadCarouselPartners();
       loadPendingCarouselPartners();
     }
-    if (activeSectionId === "sms") {
-      loadSmsAccounts();
+    if (activeSectionId === "settings" || activeSectionId === "sms") {
+      refreshSmsAccountLists();
     }
     if (activeSectionId === "scholarship-content") {
       loadScholarshipPosts();
@@ -2981,24 +3010,24 @@ const AdminDashboard = () => {
       );
     }
 
-    if (section.id === "sms") {
+    if (section.id === "settings" || section.id === "sms") {
       return (
         <Stack spacing={5}>
           <Text color={mutedText}>
-            Create or update scholar login credentials. Scholars will sign in using the phone number and password you set here.
+            Create or update scholar user credentials. Scholars will sign in using the phone number and password you set here.
           </Text>
 
           <SimpleGrid columns={{ base: 1, xl: 3 }} spacing={5}>
             <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
               <CardHeader>
                 <Heading size="sm">
-                  {smsEditingAccount ? "Update SMS Scholar Account" : "Create SMS Scholar Account"}
+                  {smsEditingAccount ? "Update Scholar User" : "Create Scholar User"}
                 </Heading>
               </CardHeader>
               <CardBody>
                 <Stack spacing={4}>
                   <FormControl isRequired>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>Scholar User Phone</FormLabel>
                     <Input
                       placeholder="09XXXXXXXX or 251XXXXXXXXX"
                       value={smsAccountForm.phoneNumber}
@@ -3010,7 +3039,7 @@ const AdminDashboard = () => {
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Scholar User Password</FormLabel>
                     <Input
                       type="password"
                       placeholder="Create password"
@@ -3032,7 +3061,7 @@ const AdminDashboard = () => {
                       onClick={handleCreateSmsAccount}
                       isLoading={smsAccountSubmitting}
                     >
-                      {smsEditingAccount ? "Update SMS Account" : "Save SMS Account"}
+                      {smsEditingAccount ? "Update Scholar User" : "Save Scholar User"}
                     </Button>
                   </Flex>
                 </Stack>
@@ -3094,7 +3123,7 @@ const AdminDashboard = () => {
 
             <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
               <CardHeader>
-                <Heading size="sm">Latest Credentials</Heading>
+                <Heading size="sm">Latest Scholar Credentials</Heading>
               </CardHeader>
               <CardBody>
                 {lastSmsAccount ? (
@@ -3146,73 +3175,109 @@ const AdminDashboard = () => {
           <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
             <CardHeader>
               <Flex justify="space-between" align="center" gap={3} wrap="wrap">
-                <Heading size="sm">All SMS Scholar Accounts</Heading>
+                <Heading size="sm">Scholar User Lists</Heading>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={loadSmsAccounts}
-                  isLoading={smsAccountsLoading}
+                  onClick={refreshSmsAccountLists}
+                  isLoading={smsAccountsLoading || deletedSmsAccountsLoading}
                 >
                   Refresh
                 </Button>
               </Flex>
             </CardHeader>
             <CardBody>
-              {smsAccountsLoading ? (
-                <Text color={mutedText}>Loading SMS scholar accounts...</Text>
-              ) : smsAccounts.length ? (
-                <TableContainer>
-                  <Table size="sm" variant="simple">
-                    <Thead>
-                      <Tr>
-                        <Th>Phone Number</Th>
-                        <Th>Status</Th>
-                        <Th>Created</Th>
-                        <Th>Updated</Th>
-                        <Th textAlign="right">Actions</Th>
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {smsAccounts.map((account) => (
-                        <Tr key={account.msisdn}>
-                          <Td>{account.phoneNumber}</Td>
-                          <Td>
-                            <Badge colorScheme={account.status === "ACTIVE" ? "green" : "gray"}>
-                              {account.status}
-                            </Badge>
-                          </Td>
-                          <Td>{formatSmsAccountDate(account.createdAt)}</Td>
-                          <Td>{formatSmsAccountDate(account.updatedAt)}</Td>
-                          <Td>
-                            <Flex justify="flex-end" gap={2}>
-                              <Button
-                                size="xs"
-                                variant="outline"
-                                leftIcon={<Icon as={FiEdit} />}
-                                onClick={() => handleEditSmsAccount(account)}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                size="xs"
-                                colorScheme="red"
-                                variant="ghost"
-                                leftIcon={<Icon as={FiTrash2} />}
-                                onClick={() => handleDeleteSmsAccount(account.phoneNumber)}
-                                isLoading={smsDeleteSubmitting && smsDeleteTargetPhone === account.phoneNumber}
-                              >
-                                Delete
-                              </Button>
-                            </Flex>
-                          </Td>
-                        </Tr>
-                      ))}
-                    </Tbody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Text color={mutedText}>No SMS scholar accounts found.</Text>
-              )}
+              <Tabs variant="enclosed" colorScheme="cyan">
+                <TabList>
+                  <Tab>All Scholar Users ({smsAccounts.length})</Tab>
+                  <Tab>Deleted Phone Numbers ({deletedSmsAccounts.length})</Tab>
+                </TabList>
+                <TabPanels>
+                  <TabPanel px={0} pt={4}>
+                    {smsAccountsLoading ? (
+                      <Text color={mutedText}>Loading SMS scholar accounts...</Text>
+                    ) : smsAccounts.length ? (
+                      <TableContainer>
+                        <Table size="sm" variant="simple">
+                          <Thead>
+                            <Tr>
+                              <Th>Phone Number</Th>
+                              <Th>Status</Th>
+                              <Th>Created</Th>
+                              <Th>Updated</Th>
+                              <Th textAlign="right">Actions</Th>
+                            </Tr>
+                          </Thead>
+                          <Tbody>
+                            {smsAccounts.map((account) => (
+                              <Tr key={account.msisdn}>
+                                <Td>{account.phoneNumber}</Td>
+                                <Td>
+                                  <Badge colorScheme={account.status === "ACTIVE" ? "green" : "gray"}>
+                                    {account.status}
+                                  </Badge>
+                                </Td>
+                                <Td>{formatSmsAccountDate(account.createdAt)}</Td>
+                                <Td>{formatSmsAccountDate(account.updatedAt)}</Td>
+                                <Td>
+                                  <Flex justify="flex-end" gap={2}>
+                                    <Button
+                                      size="xs"
+                                      variant="outline"
+                                      leftIcon={<Icon as={FiEdit} />}
+                                      onClick={() => handleEditSmsAccount(account)}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      colorScheme="red"
+                                      variant="ghost"
+                                      leftIcon={<Icon as={FiTrash2} />}
+                                      onClick={() => handleDeleteSmsAccount(account.phoneNumber)}
+                                      isLoading={smsDeleteSubmitting && smsDeleteTargetPhone === account.phoneNumber}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </Flex>
+                                </Td>
+                              </Tr>
+                            ))}
+                          </Tbody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Text color={mutedText}>No SMS scholar accounts found.</Text>
+                    )}
+                  </TabPanel>
+                  <TabPanel px={0} pt={4}>
+                    {deletedSmsAccountsLoading ? (
+                      <Text color={mutedText}>Loading deleted scholar phone numbers...</Text>
+                    ) : deletedSmsAccounts.length ? (
+                      <TableContainer>
+                        <Table size="sm" variant="simple">
+                          <Thead>
+                            <Tr>
+                              <Th>Phone Number</Th>
+                              <Th>Deleted At</Th>
+                            </Tr>
+                          </Thead>
+                          <Tbody>
+                            {deletedSmsAccounts.map((account) => (
+                              <Tr key={`${account.msisdn}-${account.deletedAt || account.updatedAt || ""}`}>
+                                <Td>{account.phoneNumber}</Td>
+                                <Td>{formatSmsAccountDate(account.deletedAt || account.updatedAt)}</Td>
+                              </Tr>
+                            ))}
+                          </Tbody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Text color={mutedText}>No deleted scholar phone numbers found.</Text>
+                    )}
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
             </CardBody>
           </Card>
         </Stack>
