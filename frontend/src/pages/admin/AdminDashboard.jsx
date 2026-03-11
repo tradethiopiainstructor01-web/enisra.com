@@ -4621,20 +4621,31 @@ const AdminDashboard = () => {
           minH={{ lg: "100vh" }}
           height={{ base: "auto", lg: "100vh" }}
           boxShadow={sidebarShadow}
-          display={{ base: "none", lg: "block" }}
-          transition="width 0.2s ease"
+          display={{ base: "none", lg: "flex" }}
+          flexDirection="column"
+          overflow="hidden"
+          transition="width 0.2s ease, padding 0.2s ease"
         >
-          <Stack spacing={3}>
-            <Flex justify="space-between" align="center">
-              {!isCollapsed && <Heading size="sm">Admin Navigation</Heading>}
-              <IconButton
-                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                icon={isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsCollapsed((prev) => !prev)}
-              />
-            </Flex>
+          <Flex justify="space-between" align="center" flexShrink={0}>
+            {!isCollapsed && <Heading size="sm">Admin Navigation</Heading>}
+            <IconButton
+              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              icon={isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsCollapsed((prev) => !prev)}
+            />
+          </Flex>
+
+          <Stack
+            spacing={3}
+            flex="1"
+            mt={3}
+            overflowY="auto"
+            overflowX="hidden"
+            pr={isCollapsed ? 0 : 1}
+            pb={3}
+          >
             {adminSections.map((section) => {
               const isActive = section.id === activeSectionId;
               return (
@@ -4655,13 +4666,16 @@ const AdminDashboard = () => {
                     _hover={{ bg: isActive ? highlightBg : "gray.50" }}
                     _dark={{ _hover: { bg: isActive ? highlightBg : "gray.700" } }}
                     width="100%"
+                    flexShrink={0}
                   >
                     {!isCollapsed && section.title}
                   </Button>
                 </Tooltip>
               );
             })}
-            <Divider borderColor={borderColor} />
+          </Stack>
+
+          <Box pt={3} borderTop="1px solid" borderColor={borderColor} flexShrink={0}>
             <Button
               justifyContent={isCollapsed ? "center" : "flex-start"}
               leftIcon={<Icon as={FiLogOut} />}
@@ -4675,7 +4689,7 @@ const AdminDashboard = () => {
             >
               {!isCollapsed && "Log out"}
             </Button>
-          </Stack>
+          </Box>
         </Box>
 
         <Stack spacing={6} flex="1" minW={0}>
@@ -4715,9 +4729,9 @@ const AdminDashboard = () => {
 
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay />
-        <DrawerContent bg={sidebarBg}>
+        <DrawerContent bg={sidebarBg} maxW="280px">
           <DrawerCloseButton />
-          <DrawerBody pt={12}>
+          <DrawerBody pt={12} overflowY="auto">
             <Stack spacing={3}>
               <Heading size="sm">Admin Navigation</Heading>
               {adminSections.map((section) => (
