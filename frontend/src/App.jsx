@@ -26,7 +26,10 @@ import ComingSoonPage from "./pages/ComingSoonPage";
 import ScholarshipLoginPage from "./pages/ScholarshipLoginPage";
 import ScholarshipPortalPage from "./pages/ScholarshipPortalPage";
 import ScholarshipApplicationPage from "./pages/ScholarshipApplicationPage";
+import ScholarshipPostsPage from "./pages/ScholarshipPostsPage";
+import ScholarshipPostDetailPage from "./pages/ScholarshipPostDetailPage";
 import FreeTrainingCoursesPage from "./pages/FreeTrainingCoursesPage";
+import FreeTrainingCourseDetailPage from "./pages/FreeTrainingCourseDetailPage";
 import AdminTrainingUpload from "./pages/AdminTrainingUpload";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import B2BDashboard from "./pages/B2BDashboard";
@@ -102,6 +105,7 @@ function App() {
     "/scholarship-login",
     "/scholarship-portal",
     "/scholarship-application",
+    "/scholarship-posts",
     "/free-training-courses",
   ].map((path) => path.toLowerCase());
 
@@ -146,10 +150,34 @@ function App() {
         }
       />
       <Route
+        path="/scholarship-posts"
+        element={
+          <ScholarshipProtectedRoute>
+            <ScholarshipPostsPage />
+          </ScholarshipProtectedRoute>
+        }
+      />
+      <Route
+        path="/scholarship-posts/:postId"
+        element={
+          <ScholarshipProtectedRoute>
+            <ScholarshipPostDetailPage />
+          </ScholarshipProtectedRoute>
+        }
+      />
+      <Route
         path="/free-training-courses"
         element={
           <ScholarshipProtectedRoute>
             <FreeTrainingCoursesPage />
+          </ScholarshipProtectedRoute>
+        }
+      />
+      <Route
+        path="/free-training-courses/:courseId"
+        element={
+          <ScholarshipProtectedRoute>
+            <FreeTrainingCourseDetailPage />
           </ScholarshipProtectedRoute>
         }
       />

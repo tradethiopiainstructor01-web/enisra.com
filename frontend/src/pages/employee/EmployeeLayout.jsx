@@ -84,14 +84,14 @@ const EmployeeLayout = () => {
                 Jobs
               </Button>
               <Button
-                as="a"
-                href="http://localhost:3002/scholarship-login"
+                as={RouterLink}
+                to="/scholarship-login"
                 size="sm"
                 variant="ghost"
               >
                 Scholarships
               </Button>
-              <Button as={RouterLink} to="/scholarship-login" size="sm" colorScheme="teal" variant="solid">
+              <Button as={RouterLink} to="/free-training-courses" size="sm" colorScheme="teal" variant="solid">
                 Free Trainings
               </Button>
             </HStack>

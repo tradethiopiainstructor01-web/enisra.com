@@ -440,14 +440,14 @@ const JobsPage = () => {
                 {t('home')}
               </Button>
               <Button
-                as="a"
-                href="http://localhost:3002/scholarship-login"
+                as={RouterLink}
+                to="/scholarship-login"
                 size="sm"
                 variant="ghost"
               >
                 {t('scholarships')}
               </Button>
-              <Button as={RouterLink} to="/" size="sm" variant="ghost">
+              <Button as={RouterLink} to="/free-training-courses" size="sm" variant="ghost">
                 {t('freeTrainings')}
               </Button>
               <Button as={RouterLink} to="/employee/profile" size="sm" variant="ghost">
