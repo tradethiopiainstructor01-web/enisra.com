@@ -93,6 +93,12 @@ import apiClient from "../../utils/apiClient";
 import { useUserStore } from "../../store/user";
 import * as XLSX from "xlsx";
 
+const TELEGRAM_NON_WARNING_SKIP_REASONS = new Set([
+  "Already posted",
+  "Disabled by request",
+  "Queued until approval",
+]);
+
 const AdminDashboard = () => {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -1727,20 +1733,31 @@ const AdminDashboard = () => {
       const telegram = response?.data?.telegram;
       const telegramFailed = telegram?.success === false;
       const telegramSkipped = Boolean(telegram?.skipped);
+      const benignTelegramSkip =
+        telegramSkipped && TELEGRAM_NON_WARNING_SKIP_REASONS.has(telegram?.reason);
+      const telegramWarning = telegramFailed || (telegramSkipped && !benignTelegramSkip);
       const telegramDetail = telegram?.error || telegram?.reason || "";
+      let approvalDescription = "The job was approved.";
+
+      if (telegram?.success) {
+        approvalDescription = "The job was approved and sent to Telegram.";
+      } else if (telegramFailed) {
+        approvalDescription = `The job was approved, but Telegram posting failed${telegramDetail ? ` (${telegramDetail})` : ""}.`;
+      } else if (telegram?.reason === "Already posted") {
+        approvalDescription = "The job was approved. It was already posted to Telegram.";
+      } else if (telegram?.reason === "Disabled by request") {
+        approvalDescription = "The job was approved.";
+      } else if (telegramSkipped) {
+        approvalDescription = `The job was approved. Telegram posting was skipped${telegramDetail ? ` (${telegramDetail})` : ""}.`;
+      }
+
       setPendingJobs((prev) => prev.filter((job) => job._id !== jobId));
       await loadPostedJobs();
       toast({
-        title: telegramFailed || telegramSkipped ? "Job approved with warning" : "Job approved",
-        description: telegram?.success
-          ? "The job was approved and sent to Telegram."
-          : telegramFailed
-            ? `The job was approved, but Telegram posting failed${telegramDetail ? ` (${telegramDetail})` : ""}.`
-            : telegramSkipped
-              ? `The job was approved. Telegram posting was skipped${telegramDetail ? ` (${telegramDetail})` : ""}.`
-              : "The job was approved.",
-        status: telegramFailed || telegramSkipped ? "warning" : "success",
-        duration: telegramFailed || telegramSkipped ? 5500 : 2500,
+        title: telegramWarning ? "Job approved with warning" : "Job approved",
+        description: approvalDescription,
+        status: telegramWarning ? "warning" : "success",
+        duration: telegramWarning ? 5500 : 2500,
         isClosable: true,
       });
     } catch (error) {
@@ -1897,18 +1914,28 @@ const AdminDashboard = () => {
       const telegram = response?.data?.telegram;
       const telegramFailed = telegram?.success === false;
       const telegramSkipped = Boolean(telegram?.skipped);
+      const benignTelegramSkip =
+        telegramSkipped && TELEGRAM_NON_WARNING_SKIP_REASONS.has(telegram?.reason);
+      const telegramWarning = telegramFailed || (telegramSkipped && !benignTelegramSkip);
+      let updateDescription = "Job updated.";
+
+      if (telegram?.success) {
+        updateDescription = "Changes saved and job sent to Telegram.";
+      } else if (telegramFailed) {
+        updateDescription = `Job saved but Telegram posting failed${telegram?.error ? ` (${telegram.error})` : ""}.`;
+      } else if (telegram?.reason === "Already posted") {
+        updateDescription = "Job saved. It was already posted to Telegram.";
+      } else if (telegram?.reason === "Disabled by request") {
+        updateDescription = "Job updated.";
+      } else if (telegramSkipped) {
+        updateDescription = `Job saved. Telegram posting was skipped${telegram?.reason ? ` (${telegram.reason})` : ""}.`;
+      }
 
       toast({
-        title: telegramFailed || telegramSkipped ? "Job updated with warning" : "Job updated",
-        description: telegram?.success
-          ? "Changes saved and job sent to Telegram."
-          : telegramFailed
-            ? `Job saved but Telegram posting failed${telegram?.error ? ` (${telegram.error})` : ""}.`
-            : telegramSkipped
-              ? `Job saved. Telegram posting was skipped${telegram?.reason ? ` (${telegram.reason})` : ""}.`
-              : "Job updated.",
-        status: telegramFailed || telegramSkipped ? "warning" : "success",
-        duration: telegramFailed || telegramSkipped ? 5500 : 2000,
+        title: telegramWarning ? "Job updated with warning" : "Job updated",
+        description: updateDescription,
+        status: telegramWarning ? "warning" : "success",
+        duration: telegramWarning ? 5500 : 2000,
         isClosable: true,
       });
       closeEditJobModal();
