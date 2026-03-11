@@ -1,10 +1,13 @@
 const telegramService = require('../telegram/telegramService');
+const { buildApplyUrl } = require('../services/jobTelegramService');
 
 const isHttpsReq = (req) => {
   if (process.env.NODE_ENV !== 'production') return true;
   const fp = req.headers['x-forwarded-proto'];
   return fp ? fp === 'https' : req.secure === true;
 };
+
+const shortErr = (e) => e?.response?.data?.description || e?.message || 'Unknown error';
 
 exports.webhook = async (req, res) => {
   try {
@@ -32,4 +35,80 @@ exports.setWebhook = async (req, res) => {
   } catch (e) {
     return res.status(500).json({ success: false, message: 'Failed to set webhook', error: e.message });
   }
+};
+
+exports.debugStatus = async (req, res) => {
+  const sampleJobId = (req.query?.jobId || 'debug-job-id').toString().trim() || 'debug-job-id';
+  let sampleJobUrl = '';
+  let sampleJobUrlError = '';
+  let botProfile = null;
+  let botProfileError = '';
+  let channelInfo = null;
+  let channelInfoError = '';
+
+  try {
+    sampleJobUrl = buildApplyUrl(sampleJobId);
+  } catch (e) {
+    sampleJobUrlError = shortErr(e);
+  }
+
+  if (telegramService.isEnabled()) {
+    try {
+      const result = await telegramService.getBotProfile();
+      if (result) {
+        botProfile = {
+          id: result.id,
+          username: result.username || '',
+          firstName: result.first_name || '',
+          canJoinGroups: Boolean(result.can_join_groups),
+          canReadAllGroupMessages: Boolean(result.can_read_all_group_messages),
+          supportsInlineQueries: Boolean(result.supports_inline_queries),
+        };
+      }
+    } catch (e) {
+      botProfileError = shortErr(e);
+    }
+
+    try {
+      const result = await telegramService.getChannelInfo();
+      if (result) {
+        channelInfo = {
+          id: result.id,
+          title: result.title || '',
+          username: result.username || '',
+          type: result.type || '',
+        };
+      }
+    } catch (e) {
+      channelInfoError = shortErr(e);
+    }
+  }
+
+  return res.json({
+    success: true,
+    data: {
+      environment: process.env.NODE_ENV || 'development',
+      telegramEnabled: telegramService.isEnabled(),
+      missingConfigKeys: telegramService.getMissingConfigKeys(),
+      parseMode: telegramService.getParseMode(),
+      useSystemProxy: telegramService.getUseSystemProxy(),
+      botTokenConfigured: Boolean(telegramService.getBotToken()),
+      channelConfigured: Boolean(telegramService.getChannelId()),
+      urlConfig: {
+        jobPublicBaseUrl: (process.env.JOB_PUBLIC_BASE_URL || '').trim(),
+        telegramJobUrlTemplate: (process.env.TELEGRAM_JOB_URL_TEMPLATE || '').trim(),
+        telegramApplyUrl: (process.env.TELEGRAM_APPLY_URL || '').trim(),
+        frontendUrl: (process.env.FRONTEND_URL || '').trim(),
+      },
+      webhookConfigured: Boolean((process.env.TELEGRAM_WEBHOOK_URL || '').trim()),
+      webhookUrl: (process.env.TELEGRAM_WEBHOOK_URL || '').trim(),
+      sampleJobId,
+      sampleJobUrl,
+      sampleJobUrlError,
+      botProfile,
+      botProfileError,
+      channelInfo,
+      channelInfoError,
+    },
+  });
 };

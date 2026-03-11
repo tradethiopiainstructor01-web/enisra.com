@@ -352,6 +352,7 @@ app.use('/api/employer-categories', employerCategoryRoutes);
 app.use('/api/analytics/registrations', registrationAnalyticsRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/telegram', telegramRoutes);
+app.use('/api/telegram', telegramRoutes);
 app.use('/api/partners', partnerCompanyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);

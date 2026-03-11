@@ -99,3 +99,5 @@ exports.publishNewJob = async (job) => {
     return { success: false, error: msg };
   }
 };
+
+exports.buildApplyUrl = buildApplyUrl;

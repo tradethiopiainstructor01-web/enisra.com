@@ -11,6 +11,14 @@ class TelegramService {
     this.maxRetries = 3;
   }
 
+  getRequestConfig() {
+    return {
+      timeout: 10000,
+      headers: { 'Content-Type': 'application/json' },
+      ...(this.getUseSystemProxy() ? {} : { proxy: false }),
+    };
+  }
+
   getBotToken() {
     return (process.env.TELEGRAM_BOT_TOKEN || '').trim();
   }
@@ -102,11 +110,7 @@ class TelegramService {
     let lastError;
     for (let attempt = 1; attempt <= this.maxRetries; attempt += 1) {
       try {
-        const res = await axios.post(this.apiUrl('sendMessage'), payload, {
-          timeout: 10000,
-          headers: { 'Content-Type': 'application/json' },
-          ...(this.getUseSystemProxy() ? {} : { proxy: false }),
-        });
+        const res = await axios.post(this.apiUrl('sendMessage'), payload, this.getRequestConfig());
 
         return {
           success: true,
@@ -133,14 +137,26 @@ class TelegramService {
         secret_token: process.env.TELEGRAM_WEBHOOK_SECRET || undefined,
         drop_pending_updates: false,
       },
-      {
-        timeout: 10000,
-        headers: { 'Content-Type': 'application/json' },
-        ...(this.getUseSystemProxy() ? {} : { proxy: false }),
-      }
+      this.getRequestConfig()
     );
 
     return res.data;
+  }
+
+  async getBotProfile() {
+    if (!this.isEnabled()) throw new Error('Telegram not configured');
+    const res = await axios.get(this.apiUrl('getMe'), this.getRequestConfig());
+    return res.data?.result || null;
+  }
+
+  async getChannelInfo() {
+    if (!this.isEnabled()) throw new Error('Telegram not configured');
+    const res = await axios.post(
+      this.apiUrl('getChat'),
+      { chat_id: this.getChannelId() },
+      this.getRequestConfig()
+    );
+    return res.data?.result || null;
   }
 }
 
