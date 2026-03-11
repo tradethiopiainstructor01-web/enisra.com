@@ -1,7 +1,37 @@
-const axios = require('axios');
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ensureHttpsUrl = (v) => /^https:\/\//i.test(v || '');
+const TELEGRAM_TIMEOUT_MS = 10000;
+
+const resolveFetchRuntime = () => {
+  if (typeof globalThis.fetch === 'function') {
+    return {
+      fetchImpl: globalThis.fetch.bind(globalThis),
+      AbortControllerImpl: globalThis.AbortController,
+    };
+  }
+
+  try {
+    const fetchModule = require('node-fetch-native-with-agent');
+    return {
+      fetchImpl: fetchModule.fetch,
+      AbortControllerImpl: fetchModule.AbortController || globalThis.AbortController,
+    };
+  } catch (error) {
+    throw new Error('Fetch API is unavailable in this runtime');
+  }
+};
+
+const buildTelegramError = (message, data = null, status = null) => {
+  const error = new Error(message);
+  if (data || status) {
+    error.response = {
+      data,
+      status,
+    };
+  }
+  return error;
+};
 
 const escapeHtml = (v = '') =>
   v.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -9,14 +39,9 @@ const escapeHtml = (v = '') =>
 class TelegramService {
   constructor() {
     this.maxRetries = 3;
-  }
-
-  getRequestConfig() {
-    return {
-      timeout: 10000,
-      headers: { 'Content-Type': 'application/json' },
-      ...(this.getUseSystemProxy() ? {} : { proxy: false }),
-    };
+    const runtime = resolveFetchRuntime();
+    this.fetchImpl = runtime.fetchImpl;
+    this.AbortControllerImpl = runtime.AbortControllerImpl;
   }
 
   getBotToken() {
@@ -58,6 +83,45 @@ class TelegramService {
 
   apiUrl(method) {
     return `${TELEGRAM_API_BASE}/bot${this.getBotToken()}/${method}`;
+  }
+
+  async request(method, apiMethod, payload = undefined) {
+    const controller = this.AbortControllerImpl ? new this.AbortControllerImpl() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS) : null;
+
+    try {
+      const response = await this.fetchImpl(this.apiUrl(apiMethod), {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+
+      const rawText = await response.text();
+      let data = null;
+
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (_error) {
+          data = { ok: false, description: rawText };
+        }
+      }
+
+      if (!response.ok || data?.ok === false) {
+        const description = data?.description || `HTTP ${response.status}`;
+        throw buildTelegramError(`Telegram error: ${description}`, data, response.status);
+      }
+
+      return data;
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw buildTelegramError('Telegram request timed out', { description: 'Request timed out' }, 408);
+      }
+      throw error;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
+    }
   }
 
   // optionally include the jobUrl so recipients can see it even if the
@@ -110,12 +174,12 @@ class TelegramService {
     let lastError;
     for (let attempt = 1; attempt <= this.maxRetries; attempt += 1) {
       try {
-        const res = await axios.post(this.apiUrl('sendMessage'), payload, this.getRequestConfig());
+        const res = await this.request('POST', 'sendMessage', payload);
 
         return {
           success: true,
           attempt,
-          telegramMessageId: res?.data?.result?.message_id,
+          telegramMessageId: res?.result?.message_id,
         };
       } catch (err) {
         lastError = err;
@@ -130,33 +194,23 @@ class TelegramService {
     if (!this.isEnabled()) throw new Error('Telegram not configured');
     if (!ensureHttpsUrl(webhookUrl)) throw new Error('Webhook URL must be HTTPS');
 
-    const res = await axios.post(
-      this.apiUrl('setWebhook'),
-      {
-        url: webhookUrl,
-        secret_token: process.env.TELEGRAM_WEBHOOK_SECRET || undefined,
-        drop_pending_updates: false,
-      },
-      this.getRequestConfig()
-    );
-
-    return res.data;
+    return this.request('POST', 'setWebhook', {
+      url: webhookUrl,
+      secret_token: process.env.TELEGRAM_WEBHOOK_SECRET || undefined,
+      drop_pending_updates: false,
+    });
   }
 
   async getBotProfile() {
     if (!this.isEnabled()) throw new Error('Telegram not configured');
-    const res = await axios.get(this.apiUrl('getMe'), this.getRequestConfig());
-    return res.data?.result || null;
+    const res = await this.request('GET', 'getMe');
+    return res?.result || null;
   }
 
   async getChannelInfo() {
     if (!this.isEnabled()) throw new Error('Telegram not configured');
-    const res = await axios.post(
-      this.apiUrl('getChat'),
-      { chat_id: this.getChannelId() },
-      this.getRequestConfig()
-    );
-    return res.data?.result || null;
+    const res = await this.request('POST', 'getChat', { chat_id: this.getChannelId() });
+    return res?.result || null;
   }
 }
 
