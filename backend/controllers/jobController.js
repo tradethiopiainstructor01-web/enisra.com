@@ -38,7 +38,9 @@ const buildCreateJobPayload = ({
   approvedAt = undefined,
   approvedBy = undefined,
 }) => {
-  const postToTelegram = parseBoolean(body.postToTelegram);
+  const postToTelegram = Object.prototype.hasOwnProperty.call(body, 'postToTelegram')
+    ? parseBoolean(body.postToTelegram)
+    : true;
   const payload = {
     title: toTrimmedString(body.title),
     department: toTrimmedString(body.department),
@@ -404,19 +406,23 @@ exports.createRemoteJob = async (req, res) => {
 exports.approveJob = async (req, res) => {
   try {
     const { id } = req.params;
+    const shouldPostToTelegram = Object.prototype.hasOwnProperty.call(req.body || {}, 'postToTelegram')
+      ? parseBoolean(req.body.postToTelegram)
+      : true;
     const updated = await Job.findByIdAndUpdate(
       id,
       {
         approved: true,
         approvedAt: new Date(),
         approvedBy: req.user?._id,
+        postToTelegram: shouldPostToTelegram,
       },
       { new: true }
     );
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
-    const telegramResult = updated.postToTelegram
+    const telegramResult = shouldPostToTelegram
       ? await publishNewJob(updated)
       : { skipped: true, reason: 'Disabled by request' };
     res.json({ success: true, data: updated, telegram: telegramResult });

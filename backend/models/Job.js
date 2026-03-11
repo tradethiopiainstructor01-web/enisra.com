@@ -85,7 +85,7 @@ const JobSchema = new mongoose.Schema(
     },
     postToTelegram: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     approvedAt: {
       type: Date,

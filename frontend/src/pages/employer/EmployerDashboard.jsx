@@ -205,7 +205,7 @@ const EmployerDashboard = () => {
     expirationDate: "",
     description: "",
     flow: "",
-    postToTelegram: false,
+    postToTelegram: true,
   });
 
   const bg = useColorModeValue("gray.50", "gray.900");
@@ -476,7 +476,7 @@ const EmployerDashboard = () => {
         expirationDate: "",
         description: "",
         flow: "",
-        postToTelegram: false,
+        postToTelegram: true,
       });
 
       toast({

@@ -193,7 +193,7 @@ const AdminDashboard = () => {
     expirationDate: "",
     description: "",
     flow: "",
-    postToTelegram: false,
+    postToTelegram: true,
   });
   const [adminJobSubmitting, setAdminJobSubmitting] = useState(false);
   const [editJobForm, setEditJobForm] = useState({
@@ -2114,7 +2114,7 @@ const AdminDashboard = () => {
       expirationDate: "",
       description: "",
       flow: "",
-      postToTelegram: false,
+      postToTelegram: true,
     });
   };
 

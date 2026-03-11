@@ -51,7 +51,7 @@ const EmployerPostJob = () => {
     expirationDate: "",
     description: "",
     flow: "",
-    postToTelegram: false,
+    postToTelegram: true,
   });
 
   const cardBg = useColorModeValue("white", "gray.800");
@@ -164,7 +164,7 @@ const EmployerPostJob = () => {
         expirationDate: "",
         description: "",
         flow: "",
-        postToTelegram: false,
+        postToTelegram: true,
       });
 
       const telegram = response?.data?.telegram;
