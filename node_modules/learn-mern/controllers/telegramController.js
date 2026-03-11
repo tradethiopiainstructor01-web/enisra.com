@@ -8,6 +8,16 @@ const isHttpsReq = (req) => {
 };
 
 const shortErr = (e) => e?.response?.data?.description || e?.message || 'Unknown error';
+const maskSecret = (value = '', visibleStart = 6, visibleEnd = 0) => {
+  const raw = (value || '').toString().trim();
+  if (!raw) return '';
+  if (raw.length <= visibleStart + visibleEnd) {
+    return `${raw.slice(0, 2)}***`;
+  }
+  const start = raw.slice(0, visibleStart);
+  const end = visibleEnd > 0 ? raw.slice(-visibleEnd) : '';
+  return `${start}***${end}`;
+};
 
 exports.webhook = async (req, res) => {
   try {
@@ -39,6 +49,23 @@ exports.setWebhook = async (req, res) => {
 
 exports.debugStatus = async (req, res) => {
   const sampleJobId = (req.query?.jobId || 'debug-job-id').toString().trim() || 'debug-job-id';
+  const botToken = telegramService.getBotToken();
+  const channelId = telegramService.getChannelId();
+  const envSnapshot = {
+    nodeEnv: process.env.NODE_ENV || 'development',
+    cwd: process.cwd(),
+    vercelRuntime: Boolean(process.env.VERCEL),
+    botTokenConfigured: Boolean(botToken),
+    botTokenPreview: maskSecret(botToken),
+    botTokenLength: botToken.length,
+    channelConfigured: Boolean(channelId),
+    channelIdValue: channelId,
+    jobPublicBaseUrl: (process.env.JOB_PUBLIC_BASE_URL || '').trim(),
+    telegramJobUrlTemplate: (process.env.TELEGRAM_JOB_URL_TEMPLATE || '').trim(),
+    telegramApplyUrl: (process.env.TELEGRAM_APPLY_URL || '').trim(),
+    frontendUrl: (process.env.FRONTEND_URL || '').trim(),
+    webhookUrl: (process.env.TELEGRAM_WEBHOOK_URL || '').trim(),
+  };
   let sampleJobUrl = '';
   let sampleJobUrlError = '';
   let botProfile = null;
@@ -84,6 +111,8 @@ exports.debugStatus = async (req, res) => {
     }
   }
 
+  console.log('Telegram debug env snapshot', envSnapshot);
+
   return res.json({
     success: true,
     data: {
@@ -102,6 +131,7 @@ exports.debugStatus = async (req, res) => {
       },
       webhookConfigured: Boolean((process.env.TELEGRAM_WEBHOOK_URL || '').trim()),
       webhookUrl: (process.env.TELEGRAM_WEBHOOK_URL || '').trim(),
+      envSnapshot,
       sampleJobId,
       sampleJobUrl,
       sampleJobUrlError,

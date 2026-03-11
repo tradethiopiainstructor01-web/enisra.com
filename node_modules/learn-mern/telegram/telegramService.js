@@ -1,3 +1,5 @@
+const { botToken, channelId } = require('../config/telegram');
+
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ensureHttpsUrl = (v) => /^https:\/\//i.test(v || '');
@@ -45,11 +47,11 @@ class TelegramService {
   }
 
   getBotToken() {
-    return (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+    return (botToken || '').trim();
   }
 
   getChannelId() {
-    return (process.env.TELEGRAM_CHANNEL_ID || '').trim();
+    return (channelId || '').trim();
   }
 
   getParseMode() {
