@@ -1198,7 +1198,10 @@ const WelcomePage = () => {
                             borderColor={primaryBlue}
                             color={primaryBlue}
                             _hover={{ bg: softBlueBg }}
-                            onClick={() => navigate('/jobs')}
+                            onClick={() => {
+                              const jobId = job?._id || job?.id;
+                              navigate(jobId ? `/jobs/${jobId}` : '/jobs');
+                            }}
                           >
                             Read more
                           </Button>

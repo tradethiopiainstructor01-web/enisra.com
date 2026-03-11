@@ -13,6 +13,7 @@ import {
   Text,
   Tooltip,
   useColorModeValue,
+  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
@@ -22,6 +23,7 @@ import { FiHeart } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
+import JobDetailsDrawer from '../../components/jobs/JobDetailsDrawer.jsx';
 
 const safeDateLabel = (value) => {
   if (!value) return '';
@@ -38,11 +40,42 @@ const EmployeeFavorites = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const mutedText = useColorModeValue('gray.600', 'gray.300');
   const jobCardBg = useColorModeValue('gray.50', 'gray.900');
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [favorites, setFavorites] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [favoriteJobId, setFavoriteJobId] = useState('');
+  const [selectedJob, setSelectedJob] = useState(null);
+
+  const handleApply = useCallback((job) => {
+    const applyAccess = getJobApplyAccess();
+    if (!applyAccess.allowed) {
+      window.alert(getJobApplyAccessMessage(applyAccess.reason));
+      if (applyAccess.reason === 'not_authenticated') {
+        navigate('/login');
+      }
+      return;
+    }
+
+    const didOpenMailClient = openJobApplicationEmail(
+      job,
+      'Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.'
+    );
+    if (!didOpenMailClient) {
+      window.alert('No contact email provided for this job.');
+    }
+  }, [navigate]);
+
+  const handleOpenJobDetails = useCallback((job) => {
+    setSelectedJob(job);
+    onOpen();
+  }, [onOpen]);
+
+  const handleCloseJobDetails = useCallback(() => {
+    setSelectedJob(null);
+    onClose();
+  }, [onClose]);
 
   const fetchFavorites = useCallback(async (signal) => {
     setIsLoading(true);
@@ -220,37 +253,28 @@ const EmployeeFavorites = () => {
                     </Text>
                   ) : null}
 
-                  <Button
-                    mt={4}
-                    size="sm"
-                    colorScheme="teal"
-                    onClick={() => {
-                      const applyAccess = getJobApplyAccess();
-                      if (!applyAccess.allowed) {
-                        window.alert(getJobApplyAccessMessage(applyAccess.reason));
-                        if (applyAccess.reason === 'not_authenticated') {
-                          navigate('/login');
-                        }
-                        return;
-                      }
-
-                      const didOpenMailClient = openJobApplicationEmail(
-                        job,
-                        'Hello,\n\nI would like to apply for this position. Please find my details attached.\n\nThank you.'
-                      );
-                      if (!didOpenMailClient) {
-                        window.alert('No contact email provided for this job.');
-                      }
-                    }}
-                  >
-                    Apply
-                  </Button>
+                  <HStack mt={4} spacing={3}>
+                    <Button size="sm" variant="outline" onClick={() => handleOpenJobDetails(job)}>
+                      Read more
+                    </Button>
+                    <Button size="sm" colorScheme="teal" onClick={() => handleApply(job)}>
+                      Apply
+                    </Button>
+                  </HStack>
                 </Box>
               );
             })}
           </SimpleGrid>
         )}
       </CardBody>
+
+      <JobDetailsDrawer
+        formatDate={safeDateLabel}
+        isOpen={isOpen}
+        job={selectedJob}
+        onApply={handleApply}
+        onClose={handleCloseJobDetails}
+      />
     </Card>
   );
 };

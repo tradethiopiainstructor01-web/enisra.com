@@ -19,12 +19,6 @@ import {
   CardBody,
   Divider,
   IconButton,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerCloseButton,
   Tooltip,
   useToast,
   VStack,
@@ -37,6 +31,7 @@ import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
 import { useLanguage } from '../../context/language.jsx';
+import JobDetailsDrawer from '../../components/jobs/JobDetailsDrawer.jsx';
 
 const safeDate = (value) => {
   if (!value) return '';
@@ -44,6 +39,8 @@ const safeDate = (value) => {
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString();
 };
+
+const getJobIdentifier = (job) => String(job?._id || job?.id || '');
 
 const JobsPage = () => {
   const navigate = useNavigate();
@@ -76,6 +73,34 @@ const JobsPage = () => {
   const [typeFilter, setTypeFilter] = useState('');
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
   const [favoriteJobId, setFavoriteJobId] = useState('');
+
+  const handleApply = useCallback((job) => {
+    const applyAccess = getJobApplyAccess();
+    if (!applyAccess.allowed) {
+      window.alert(getJobApplyAccessMessage(applyAccess.reason));
+      if (applyAccess.reason === 'not_authenticated') {
+        navigate('/login');
+      }
+      return;
+    }
+
+    const didOpenMailClient = openJobApplicationEmail(job);
+    if (!didOpenMailClient) {
+      window.alert('No contact email provided for this job.');
+    }
+  }, [navigate]);
+
+  const openJobDetails = useCallback((job) => {
+    if (!job) return;
+
+    setSelectedJob(job);
+    onOpen();
+
+    const nextJobId = getJobIdentifier(job);
+    if (nextJobId && String(jobId) !== nextJobId) {
+      navigate(`/jobs/${nextJobId}`);
+    }
+  }, [jobId, navigate, onOpen]);
 
   const filteredLocations = useMemo(() => {
     const vals = jobs.map((j) => j.location).filter(Boolean);
@@ -233,7 +258,7 @@ const JobsPage = () => {
       return;
     }
 
-    const matched = jobs.find((job) => String(job?._id) === String(jobId));
+    const matched = jobs.find((job) => getJobIdentifier(job) === String(jobId));
     if (matched) {
       attemptedDirectJobLoadRef.current = String(jobId);
       setSelectedJob(matched);
@@ -504,7 +529,7 @@ const JobsPage = () => {
             ) : (
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                 {jobs.map((job) => {
-                  const jobIdentifier = String(job?._id || job?.id || '');
+                  const jobIdentifier = getJobIdentifier(job);
                   const isFavorite = jobIdentifier ? favoriteIds.has(jobIdentifier) : false;
 
                   return (
@@ -555,38 +580,14 @@ const JobsPage = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            const jobIdentifier = job?._id || job?.id;
-                            if (jobIdentifier) {
-                              navigate(`/jobs/${jobIdentifier}`);
-                              return;
-                            }
-
-                            setSelectedJob(job);
-                            onOpen();
-                          }}
+                          onClick={() => openJobDetails(job)}
                         >
                           Read more
                         </Button>
                         <Button
                           size="sm"
                           colorScheme="teal"
-                          onClick={() => {
-                            const applyAccess = getJobApplyAccess();
-                            if (!applyAccess.allowed) {
-                              window.alert(getJobApplyAccessMessage(applyAccess.reason));
-                              if (applyAccess.reason === 'not_authenticated') {
-                                navigate('/login');
-                              }
-                              return;
-                            }
-
-                            const didOpenMailClient = openJobApplicationEmail(job);
-                            if (!didOpenMailClient) {
-                              window.alert('No contact email provided for this job.');
-                              return;
-                            }
-                          }}
+                          onClick={() => handleApply(job)}
                         >
                           Apply
                         </Button>
@@ -700,67 +701,14 @@ const JobsPage = () => {
         </Card>
       </Container>
 
-      <Drawer isOpen={isOpen} placement="left" onClose={handleCloseJobDrawer}>
-        <DrawerOverlay />
-        <DrawerContent maxW="420px">
-          <DrawerCloseButton />
-          <DrawerHeader borderBottomWidth="1px">
-            {selectedJob?.title || 'Job details'}
-          </DrawerHeader>
-          <DrawerBody>
-            {selectedJob ? (
-              <VStack align="stretch" spacing={3}>
-                <Text fontWeight="semibold">{selectedJob.company || 'Company not specified'}</Text>
-                {selectedJob.companyAddress ? (
-                  <Text fontSize="sm" color={muted}>Company address: {selectedJob.companyAddress}</Text>
-                ) : null}
-                <HStack spacing={2} flexWrap="wrap">
-                  {selectedJob.category ? <Badge colorScheme="purple">{selectedJob.category}</Badge> : null}
-                  {selectedJob.type ? <Badge colorScheme="blue">{selectedJob.type}</Badge> : null}
-                  {selectedJob.location ? <Badge colorScheme="green">{selectedJob.location}</Badge> : null}
-                </HStack>
-                {selectedJob.deadline ? (
-                  <Text fontSize="sm" color={muted}>
-                    Deadline: {safeDate(selectedJob.deadline)}
-                  </Text>
-                ) : null}
-                {selectedJob.salary ? (
-                  <Text fontSize="sm" color={muted}>
-                    Salary: {selectedJob.salary}
-                </Text>
-              ) : null}
-              <Divider />
-              <Text fontSize="sm" whiteSpace="pre-wrap">
-                {selectedJob.description || 'No description provided.'}
-              </Text>
-              <Button
-                colorScheme="teal"
-                onClick={() => {
-                  const applyAccess = getJobApplyAccess();
-                  if (!applyAccess.allowed) {
-                    window.alert(getJobApplyAccessMessage(applyAccess.reason));
-                    if (applyAccess.reason === 'not_authenticated') {
-                      navigate('/login');
-                    }
-                    return;
-                  }
-
-                  const didOpenMailClient = openJobApplicationEmail(selectedJob);
-                  if (!didOpenMailClient) {
-                    window.alert('No contact email provided for this job.');
-                    return;
-                  }
-                }}
-              >
-                Apply via email
-              </Button>
-            </VStack>
-          ) : (
-            <Text color={muted}>Select a job to view details.</Text>
-          )}
-        </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+      <JobDetailsDrawer
+        applyLabel="Apply via email"
+        formatDate={safeDate}
+        isOpen={isOpen}
+        job={selectedJob}
+        onApply={handleApply}
+        onClose={handleCloseJobDrawer}
+      />
     </Box>
   );
 };
