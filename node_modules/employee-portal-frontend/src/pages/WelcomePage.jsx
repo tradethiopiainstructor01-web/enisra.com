@@ -130,7 +130,6 @@ const trainingHighlights = [
 ];
 
 const heroImageUrl = '/assets/newhero.png';
-const contactEmail = 'hello@enisra.com';
 
 const partnerDescriptions = {
   'trade ethiopia':
@@ -1342,12 +1341,6 @@ const WelcomePage = () => {
                 </Heading>
                 <ChakraLink color={primaryBlue} href={telegramChannelUrl}>
                   Telegram
-                </ChakraLink>
-                <ChakraLink color={primaryBlue} href={`mailto:${contactEmail}`}>
-                  {contactEmail}
-                </ChakraLink>
-                <ChakraLink color={primaryBlue} href={`mailto:${contactEmail}?subject=Contact%20Enisra`}>
-                  Contact
                 </ChakraLink>
               </VStack>
           </SimpleGrid>
