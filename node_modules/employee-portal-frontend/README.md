@@ -12,6 +12,8 @@ Create a `.env` file in the frontend directory with the following variables:
 VITE_API_URL=https://your-backend-url.com
 ```
 
+For same-origin deployments such as an AWS-hosted site serving the API under `/api`, leave `VITE_API_URL` empty or omit it.
+
 ### Local Development
 
 1. Install dependencies: `npm install`
@@ -19,4 +21,4 @@ VITE_API_URL=https://your-backend-url.com
 
 ## Backend Deployment
 
-The backend needs to be deployed separately. You can use services like Render, Heroku, or any cloud provider that supports Node.js applications.
+The backend can be deployed on any Node.js-capable host. If your frontend and backend share the same public domain, the frontend will use `/api` automatically when `VITE_API_URL` is empty.

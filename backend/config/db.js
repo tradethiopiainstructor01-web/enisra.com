@@ -31,7 +31,6 @@ const ensurePackageIndexSetup = async () => {
 const connectDB = async () => {
     console.log('Attempting to connect to database...');
     console.log('Environment:', {
-      vercel: !!process.env.VERCEL,
       nodeEnv: process.env.NODE_ENV,
       hasMongoUri: !!process.env.MONGO_URI
     });
@@ -78,13 +77,6 @@ const connectDB = async () => {
     }
     
     try {
-        // Check if we're in a Vercel environment
-        const isVercel = !!process.env.VERCEL;
-        
-        if (isVercel) {
-            console.log('Running in Vercel environment');
-        }
-        
         console.log('Connecting to MongoDB...');
         // Connection options to handle network issues
         const conn = await mongoose.connect(mongoUri, {
@@ -101,12 +93,11 @@ const connectDB = async () => {
     catch (error){
         console.log(`Database failed to connect: ${error.message}`);
         console.error('Connection error details:', error);
-        // Don't exit in serverless environment
         throw error;
     }
 }
 
-// Add a function to disconnect from database (useful for Vercel)
+// Add a function to disconnect from database
 const disconnectDB = async () => {
     if (isConnected) {
         await mongoose.disconnect();

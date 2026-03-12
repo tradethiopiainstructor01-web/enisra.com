@@ -174,7 +174,6 @@ const userHealthCheck = async (req, res) => {
   try {
     console.log('User health check called');
     console.log('Environment:', {
-      vercel: !!process.env.VERCEL,
       nodeEnv: process.env.NODE_ENV,
       mongoUri: process.env.MONGO_URI ? 'SET' : 'NOT SET'
     });
@@ -187,7 +186,6 @@ const userHealthCheck = async (req, res) => {
       success: true,
       status: 'OK',
       database: dbStatus,
-      vercel: !!process.env.VERCEL,
       nodeEnv: process.env.NODE_ENV,
       timestamp: new Date()
     });
@@ -197,7 +195,6 @@ const userHealthCheck = async (req, res) => {
       success: false, 
       message: 'User health check failed',
       error: error.message,
-      vercel: !!process.env.VERCEL
     });
   }
 };
@@ -462,7 +459,6 @@ const getuser = async (req, res) => {
     try {
         console.log('Get users called');
         console.log('Environment:', {
-          vercel: !!process.env.VERCEL,
           nodeEnv: process.env.NODE_ENV
         });
         

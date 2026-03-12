@@ -54,7 +54,6 @@ exports.debugStatus = async (req, res) => {
   const envSnapshot = {
     nodeEnv: process.env.NODE_ENV || 'development',
     cwd: process.cwd(),
-    vercelRuntime: Boolean(process.env.VERCEL),
     botTokenConfigured: Boolean(botToken),
     botTokenPreview: maskSecret(botToken),
     botTokenLength: botToken.length,
