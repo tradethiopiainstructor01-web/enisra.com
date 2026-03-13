@@ -354,7 +354,7 @@ module.exports = app;
 // Connect to MongoDB and start the server only when running directly
 if (require.main === module) {
     const PORT = Number(process.env.PORT) || 5000;
-    const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces by default
+    const HOST = '0.0.0.0';
     
     // Connect to database and start server
     connectDB()

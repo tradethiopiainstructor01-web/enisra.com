@@ -40,3 +40,15 @@ This backend powers:
 ## Notes
 - Requests are department-scoped for most roles; `admin`, `finance`, and `coo` can view across departments.
 - Historical modules for Sales, Customer Success, and HR are no longer mounted as runtime APIs.
+
+## Production Startup
+- The checked-in server entrypoints now default to `PORT=5000` and bind to `0.0.0.0` so nginx or a load balancer can reach the process.
+- A systemd template is available at `backend/deploy/enisra-backend.service.example`.
+
+## Deploy / Restart
+```bash
+sudo cp backend/deploy/enisra-backend.service.example /etc/systemd/system/your-app.service
+sudo systemctl daemon-reload
+sudo systemctl restart your-app.service
+sudo systemctl status your-app.service
+```
