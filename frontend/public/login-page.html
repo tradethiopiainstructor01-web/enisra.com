@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ENISRA Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
+            colors: {
+              brand: {
+                50: "#eef4ff",
+                100: "#dbe8ff",
+                500: "#4361ee",
+                600: "#3451dd",
+                700: "#2942b8",
+                900: "#14203f",
+              },
+            },
+            boxShadow: {
+              panel: "0 28px 60px rgba(15, 23, 42, 0.12)",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-slate-100 font-sans text-slate-900">
+    <div class="relative isolate overflow-hidden">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(67,97,238,0.18),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(15,23,42,0.14),_transparent_30%)]"></div>
+      <main class="relative mx-auto flex min-h-screen max-w-7xl items-center px-4 py-8 sm:px-6 lg:px-8">
+        <div class="grid w-full overflow-hidden rounded-[2rem] bg-white shadow-panel lg:grid-cols-[1.05fr_0.95fr]">
+          <section class="relative overflow-hidden bg-slate-950 px-6 py-8 text-white sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+            <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(67,97,238,0.24),transparent_55%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.22),transparent_28%)]"></div>
+            <div class="absolute -left-24 top-10 h-56 w-56 rounded-full bg-brand-500/15 blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 h-72 w-72 translate-x-20 translate-y-16 rounded-full bg-sky-400/10 blur-3xl"></div>
+
+            <div class="relative flex h-full flex-col">
+              <div class="flex items-center gap-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur">
+                  <svg class="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12.5 12 4l7 8.5v6A1.5 1.5 0 0 1 17.5 20h-11A1.5 1.5 0 0 1 5 18.5v-6Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 14.5h5" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.28em] text-blue-100/70">ENISRA Portal</p>
+                  <h1 class="text-xl font-bold sm:text-2xl">Workforce Access</h1>
+                </div>
+              </div>
+
+              <div class="mt-10 max-w-xl">
+                <p class="text-sm font-semibold uppercase tracking-[0.24em] text-blue-100/70">How It Works</p>
+                <h2 class="mt-3 text-3xl font-bold leading-tight sm:text-4xl">
+                  Move from onboarding to opportunity in four clear steps.
+                </h2>
+                <p class="mt-4 max-w-lg text-sm leading-7 text-slate-200/80 sm:text-base">
+                  Sign in to manage your profile, access employer opportunities, and track the next action in your hiring journey.
+                </p>
+              </div>
+
+              <div class="mt-10 grid gap-4">
+                <article class="rounded-3xl border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
+                  <div class="flex gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 text-brand-100 ring-1 ring-white/10">
+                      <span class="text-sm font-bold">01</span>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-3">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 20a7 7 0 0 1 14 0" />
+                          </svg>
+                        </span>
+                        <h3 class="text-lg font-semibold">Create your account</h3>
+                      </div>
+                      <p class="mt-2 text-sm leading-6 text-slate-200/75">
+                        Register with your email to unlock your dashboard and secure access.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="rounded-3xl border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
+                  <div class="flex gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 text-brand-100 ring-1 ring-white/10">
+                      <span class="text-sm font-bold">02</span>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-3">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 5.5A2.5 2.5 0 0 1 9.5 3h8A2.5 2.5 0 0 1 20 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-8A2.5 2.5 0 0 1 7 18.5v-13Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 7h7M10 11h7M10 15h4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7.5h.01M4 11.5h.01M4 15.5h.01" />
+                          </svg>
+                        </span>
+                        <h3 class="text-lg font-semibold">Complete your profile</h3>
+                      </div>
+                      <p class="mt-2 text-sm leading-6 text-slate-200/75">
+                        Add your background, documents, and preferences so employers see the full picture.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="rounded-3xl border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
+                  <div class="flex gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 text-brand-100 ring-1 ring-white/10">
+                      <span class="text-sm font-bold">03</span>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-3">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.5 4h11A1.5 1.5 0 0 1 19 5.5v11A1.5 1.5 0 0 1 17.5 18h-11A1.5 1.5 0 0 1 5 16.5v-11A1.5 1.5 0 0 1 6.5 4Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h3m2 0h3m-8 3h8" />
+                          </svg>
+                        </span>
+                        <h3 class="text-lg font-semibold">Browse jobs</h3>
+                      </div>
+                      <p class="mt-2 text-sm leading-6 text-slate-200/75">
+                        Explore vetted roles, save opportunities, and focus on the matches that fit best.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="rounded-3xl border border-white/10 bg-white/6 p-4 backdrop-blur-sm">
+                  <div class="flex gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500/20 text-brand-100 ring-1 ring-white/10">
+                      <span class="text-sm font-bold">04</span>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-3">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m7 12 3 3 7-7" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c4.97 0 9 1.79 9 4v10c0 2.21-4.03 4-9 4s-9-1.79-9-4V7c0-2.21 4.03-4 9-4Z" />
+                          </svg>
+                        </span>
+                        <h3 class="text-lg font-semibold">Get hired</h3>
+                      </div>
+                      <p class="mt-2 text-sm leading-6 text-slate-200/75">
+                        Track applications, respond faster, and move confidently through the hiring process.
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="bg-white px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+            <div class="mx-auto flex h-full w-full max-w-md flex-col justify-center">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.24em] text-brand-600">Welcome back</p>
+                <h2 class="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Sign in to your account</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
+                  Enter your credentials to continue to your dashboard and hiring workflow.
+                </p>
+              </div>
+
+              <form class="mt-8 space-y-5">
+                <div>
+                  <label for="email" class="mb-2 block text-sm font-medium text-slate-700">Email address</label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@company.com"
+                    class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                  />
+                </div>
+
+                <div>
+                  <div class="mb-2 flex items-center justify-between gap-4">
+                    <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
+                    <a href="#" class="text-sm font-medium text-brand-600 transition hover:text-brand-700">Forgot password?</a>
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    class="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                  />
+                </div>
+
+                <div class="flex items-center justify-between gap-4">
+                  <label class="inline-flex items-center gap-3 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span>Remember me</span>
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  class="inline-flex w-full items-center justify-center rounded-2xl bg-brand-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/20 transition hover:bg-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                >
+                  Log in
+                </button>
+              </form>
+
+              <div class="mt-8 text-center text-sm text-slate-500">
+                Don't have an account?
+                <a href="#" class="font-semibold text-brand-600 transition hover:text-brand-700">Sign up</a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
