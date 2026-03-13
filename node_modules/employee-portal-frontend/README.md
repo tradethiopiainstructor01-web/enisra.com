@@ -14,10 +14,13 @@ VITE_API_URL=https://your-backend-url.com
 
 For same-origin deployments such as an AWS-hosted site serving the API under `/api`, leave `VITE_API_URL` empty or omit it.
 
+For local development, you can also leave `VITE_API_URL` empty. The Vite dev server proxies `/api`, `/telegram`, and `/uploads` to `http://localhost:5000` by default. Override that backend target with `VITE_DEV_PROXY_TARGET` only if your local API is running elsewhere.
+
 ### Local Development
 
 1. Install dependencies: `npm install`
-2. Start the development server: `npm run dev`
+2. Start the backend on `http://localhost:5000`
+3. Start the frontend development server: `npm run dev`
 
 ## Backend Deployment
 

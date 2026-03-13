@@ -1,6 +1,3 @@
-const telegramService = require('../telegram/telegramService');
-const { buildApplyUrl } = require('../services/jobTelegramService');
-
 const isHttpsReq = (req) => {
   if (process.env.NODE_ENV !== 'production') return true;
   const fp = req.headers['x-forwarded-proto'];
@@ -8,6 +5,33 @@ const isHttpsReq = (req) => {
 };
 
 const shortErr = (e) => e?.response?.data?.description || e?.message || 'Unknown error';
+let telegramServiceLoadWarningShown = false;
+let jobTelegramServiceLoadWarningShown = false;
+
+const loadTelegramService = () => {
+  try {
+    return require('../telegram/telegramService');
+  } catch (error) {
+    if (!telegramServiceLoadWarningShown) {
+      telegramServiceLoadWarningShown = true;
+      console.error('Telegram service unavailable; Telegram admin routes will degrade gracefully.', error);
+    }
+    return null;
+  }
+};
+
+const loadJobTelegramService = () => {
+  try {
+    return require('../services/jobTelegramService');
+  } catch (error) {
+    if (!jobTelegramServiceLoadWarningShown) {
+      jobTelegramServiceLoadWarningShown = true;
+      console.error('Job Telegram service unavailable; Telegram debug route will degrade gracefully.', error);
+    }
+    return null;
+  }
+};
+
 const maskSecret = (value = '', visibleStart = 6, visibleEnd = 0) => {
   const raw = (value || '').toString().trim();
   if (!raw) return '';
@@ -39,6 +63,14 @@ exports.webhook = async (req, res) => {
 
 exports.setWebhook = async (req, res) => {
   try {
+    const telegramService = loadTelegramService();
+    if (!telegramService) {
+      return res.status(503).json({
+        success: false,
+        message: 'Telegram service unavailable',
+      });
+    }
+
     const url = req.body?.url || process.env.TELEGRAM_WEBHOOK_URL;
     const out = await telegramService.setWebhook(url);
     return res.json({ success: true, data: out });
@@ -49,8 +81,10 @@ exports.setWebhook = async (req, res) => {
 
 exports.debugStatus = async (req, res) => {
   const sampleJobId = (req.query?.jobId || 'debug-job-id').toString().trim() || 'debug-job-id';
-  const botToken = telegramService.getBotToken();
-  const channelId = telegramService.getChannelId();
+  const telegramService = loadTelegramService();
+  const jobTelegramService = loadJobTelegramService();
+  const botToken = telegramService ? telegramService.getBotToken() : '';
+  const channelId = telegramService ? telegramService.getChannelId() : '';
   const envSnapshot = {
     nodeEnv: process.env.NODE_ENV || 'development',
     cwd: process.cwd(),
@@ -71,14 +105,23 @@ exports.debugStatus = async (req, res) => {
   let botProfileError = '';
   let channelInfo = null;
   let channelInfoError = '';
+  let telegramServiceLoadError = '';
+  let jobTelegramServiceLoadError = '';
 
   try {
-    sampleJobUrl = buildApplyUrl(sampleJobId);
+    if (jobTelegramService?.buildApplyUrl) {
+      sampleJobUrl = jobTelegramService.buildApplyUrl(sampleJobId);
+    } else {
+      jobTelegramServiceLoadError = 'Job Telegram service unavailable';
+      sampleJobUrlError = 'Job Telegram service unavailable';
+    }
   } catch (e) {
     sampleJobUrlError = shortErr(e);
   }
 
-  if (telegramService.isEnabled()) {
+  if (!telegramService) {
+    telegramServiceLoadError = 'Telegram service unavailable';
+  } else if (telegramService.isEnabled()) {
     try {
       const result = await telegramService.getBotProfile();
       if (result) {
@@ -116,12 +159,12 @@ exports.debugStatus = async (req, res) => {
     success: true,
     data: {
       environment: process.env.NODE_ENV || 'development',
-      telegramEnabled: telegramService.isEnabled(),
-      missingConfigKeys: telegramService.getMissingConfigKeys(),
-      parseMode: telegramService.getParseMode(),
-      useSystemProxy: telegramService.getUseSystemProxy(),
-      botTokenConfigured: Boolean(telegramService.getBotToken()),
-      channelConfigured: Boolean(telegramService.getChannelId()),
+      telegramEnabled: telegramService ? telegramService.isEnabled() : false,
+      missingConfigKeys: telegramService ? telegramService.getMissingConfigKeys() : ['TELEGRAM_SERVICE_UNAVAILABLE'],
+      parseMode: telegramService ? telegramService.getParseMode() : '',
+      useSystemProxy: telegramService ? telegramService.getUseSystemProxy() : false,
+      botTokenConfigured: Boolean(botToken),
+      channelConfigured: Boolean(channelId),
       urlConfig: {
         jobPublicBaseUrl: (process.env.JOB_PUBLIC_BASE_URL || '').trim(),
         telegramJobUrlTemplate: (process.env.TELEGRAM_JOB_URL_TEMPLATE || '').trim(),
@@ -134,6 +177,8 @@ exports.debugStatus = async (req, res) => {
       sampleJobId,
       sampleJobUrl,
       sampleJobUrlError,
+      telegramServiceLoadError,
+      jobTelegramServiceLoadError,
       botProfile,
       botProfileError,
       channelInfo,

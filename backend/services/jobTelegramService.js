@@ -1,7 +1,19 @@
 const TelegramJobPost = require('../models/TelegramJobPost');
-const telegramService = require('../telegram/telegramService');
 
 const shortErr = (e) => e?.response?.data?.description || e?.message || 'Unknown error';
+let telegramServiceLoadWarningShown = false;
+
+const getTelegramService = () => {
+  try {
+    return require('../telegram/telegramService');
+  } catch (error) {
+    if (!telegramServiceLoadWarningShown) {
+      telegramServiceLoadWarningShown = true;
+      console.error('Telegram service unavailable; skipping Telegram publishing.', error);
+    }
+    return null;
+  }
+};
 
 const normalizePublicUrl = (value = '') => {
   const raw = (value || '').toString().trim();
@@ -52,6 +64,10 @@ const buildApplyUrl = (jobId) => {
 
 exports.publishNewJob = async (job) => {
   if (!job?._id) return { skipped: true, reason: 'Invalid job' };
+  const telegramService = getTelegramService();
+  if (!telegramService) {
+    return { skipped: true, reason: 'Telegram service unavailable' };
+  }
   if (!telegramService.isEnabled()) {
     const missingKeys = telegramService.getMissingConfigKeys();
     const suffix = missingKeys.length ? `: ${missingKeys.join(', ')}` : '';

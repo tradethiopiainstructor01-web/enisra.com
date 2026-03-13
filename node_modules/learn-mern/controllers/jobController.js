@@ -1,9 +1,35 @@
 const Job = require('../models/Job');
 const Application = require('../models/Application');
 const Notification = require('../models/Notification');
-const { publishNewJob } = require('../services/jobTelegramService');
 
 const toTrimmedString = (value) => (value || '').toString().trim();
+let telegramPublisherLoadWarningShown = false;
+
+const loadJobTelegramService = () => {
+  try {
+    return require('../services/jobTelegramService');
+  } catch (error) {
+    if (!telegramPublisherLoadWarningShown) {
+      telegramPublisherLoadWarningShown = true;
+      console.error('Job Telegram service unavailable; continuing without Telegram publishing.', error);
+    }
+    return null;
+  }
+};
+
+const publishNewJobSafely = async (job) => {
+  const jobTelegramService = loadJobTelegramService();
+  if (!jobTelegramService?.publishNewJob) {
+    return { skipped: true, reason: 'Telegram publishing unavailable' };
+  }
+
+  try {
+    return await jobTelegramService.publishNewJob(job);
+  } catch (error) {
+    console.error('Failed to publish job to Telegram.', error);
+    return { success: false, error: error.message };
+  }
+};
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
@@ -141,11 +167,7 @@ const createJobRecord = async ({
   } else if (!payload.approved) {
     telegramResult = { skipped: true, reason: 'Queued until approval' };
   } else {
-    try {
-      telegramResult = await publishNewJob(created);
-    } catch (error) {
-      telegramResult = { success: false, error: error.message };
-    }
+    telegramResult = await publishNewJobSafely(created);
   }
 
   return {
@@ -423,7 +445,7 @@ exports.approveJob = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Job not found' });
     }
     const telegramResult = shouldPostToTelegram
-      ? await publishNewJob(updated)
+      ? await publishNewJobSafely(updated)
       : { skipped: true, reason: 'Disabled by request' };
     res.json({ success: true, data: updated, telegram: telegramResult });
   } catch (error) {
@@ -532,14 +554,7 @@ exports.updateJob = async (req, res) => {
     // already sent, but it'll also queue a new post if the flag was just toggled.
     let telegramResult = null;
     if (updated.approved && updated.postToTelegram) {
-      try {
-        telegramResult = await publishNewJob(updated);
-      } catch (e) {
-        // publishNewJob generally handles its own errors, but guard the whole
-        // request so we still return success for the job update.
-        console.error('Error publishing telegram notification during job update', e);
-        telegramResult = { success: false, error: e.message };
-      }
+      telegramResult = await publishNewJobSafely(updated);
     }
 
     const responsePayload = { success: true, data: normalizeJobForResponse(updated) };
