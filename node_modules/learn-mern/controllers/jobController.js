@@ -289,6 +289,79 @@ exports.createJob = async (req, res) => {
   }
 };
 
+exports.createRemoteJob = async (req, res) => {
+  try {
+    const autoApprove = parseBoolean(process.env.REMOTE_JOB_POST_AUTO_APPROVE);
+    const postToTelegram = parseBoolean(req.body.postToTelegram);
+    const payload = {
+      title: toTrimmedString(req.body.title),
+      department: toTrimmedString(req.body.department),
+      company: toTrimmedString(req.body.company || req.body.companyName),
+      companyAddress: toTrimmedString(req.body.companyAddress || req.body.company_address),
+      contactEmail: extractEmail(req.body.contactEmail || req.body.contact_email || req.body.email),
+      category: toTrimmedString(req.body.category),
+      location: toTrimmedString(req.body.location),
+      address: toTrimmedString(req.body.address),
+      type: toTrimmedString(req.body.type),
+      salary: toTrimmedString(req.body.salary),
+      yearsOfExperience: toTrimmedString(req.body.yearsOfExperience),
+      description: toTrimmedString(req.body.description),
+      flow: toTrimmedString(req.body.flow),
+      approved: autoApprove,
+      postToTelegram,
+      postedByName:
+        toTrimmedString(req.body.postedByName) ||
+        toTrimmedString(req.body.source) ||
+        toTrimmedString(req.body.company || req.body.companyName),
+    };
+
+    const deadline = parseDate(req.body.deadline);
+    if (deadline) payload.deadline = deadline;
+
+    const expirationDate = parseDate(req.body.expirationDate);
+    if (expirationDate) payload.expirationDate = expirationDate;
+
+    if (
+      !payload.title ||
+      !payload.company ||
+      !payload.category ||
+      !payload.location ||
+      !payload.type ||
+      !payload.contactEmail
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, company name, category, location, job type, and contact email are required.',
+      });
+    }
+
+    if (autoApprove) {
+      payload.approvedAt = new Date();
+    }
+
+    const created = await Job.create(payload);
+    const telegramResult =
+      autoApprove && postToTelegram
+        ? await publishNewJob(created, getTelegramRequestMeta(req))
+        : {
+            skipped: true,
+            reason: autoApprove ? 'Disabled by request' : 'Pending approval',
+          };
+
+    return res.status(201).json({
+      success: true,
+      data: normalizeJobForResponse(created.toObject()),
+      telegram: telegramResult,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create remote job',
+      error: error.message,
+    });
+  }
+};
+
 exports.approveJob = async (req, res) => {
   try {
     const { id } = req.params;
