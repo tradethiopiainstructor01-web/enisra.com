@@ -123,8 +123,12 @@ const normalizeOrigin = (value) => {
     return [trimmed];
   }
 
-  // Allow host-only values in env by expanding to both protocols.
-  return [`https://${trimmed}`, `http://${trimmed}`];
+  // Normalize public host-only values to HTTPS while preserving localhost dev.
+  if (/^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(trimmed)) {
+    return [`http://${trimmed}`, `https://${trimmed}`];
+  }
+
+  return [`https://${trimmed}`];
 };
 
 const parseOriginsEnv = (...values) =>
@@ -165,10 +169,9 @@ const configuredOrigins = parseOriginsEnv(
 );
 
 const localDevOrigins = [
-  'http://enisra.com',
   'https://enisra.com',
   'https://www.enisra.com',
-  'http://174.129146.82',
+  'https://174.129146.82',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:3001',

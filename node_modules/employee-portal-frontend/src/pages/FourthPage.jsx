@@ -184,7 +184,7 @@ const packages = [
 </Box>
 
 <Text textAlign="justify">
-  For more information, visit our website: <Text as="span" fontWeight="bold" color="blue.500"><a href="http://www.enisra.com" target="_blank" rel="noopener noreferrer">www.enisra.com</a></Text> 
+  For more information, visit our website: <Text as="span" fontWeight="bold" color="blue.500"><a href="https://www.enisra.com" target="_blank" rel="noopener noreferrer">www.enisra.com</a></Text> 
   or contact us via email: <Text as="span" fontWeight="bold" color="blue.500"><a href="mailto:job@enrisra.com">job@enrisra.com</a></Text>
 </Text>
 
