@@ -1,9 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const path = require('path');
 const mongoose = require('mongoose');
 
 require('./config/loadEnv');
+
+const isServerless = !!process.env.VERCEL;
 
 const { connectDB, disconnectDB } = require('./config/db.js');
 const userRoutes = require('./routes/user.route.js');
@@ -55,40 +58,56 @@ const { initSmppHandlers } = require('./services/subscriptionService');
 
 // Initialize Express app
 const app = express();
+app.set('trust proxy', true);
 
 // Store connected users
 const connectedUsers = new Map();
 
-const http = require('http');
-const socketIo = require('socket.io');
-
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
+const createNoopIo = () => ({
+  to: () => ({ emit: () => {} }),
+  emit: () => {},
+  on: () => {}
 });
 
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+let io = createNoopIo();
+let server;
 
-  socket.on('registerUser', (userId) => {
-    connectedUsers.set(userId, socket.id);
-    console.log(`User ${userId} registered with socket ${socket.id}`);
-  });
+if (!isServerless) {
+  const http = require('http');
+  const socketIo = require('socket.io');
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-    for (let [userId, socketId] of connectedUsers.entries()) {
-      if (socketId === socket.id) {
-        connectedUsers.delete(userId);
-        break;
-      }
+  server = http.createServer(app);
+  io = socketIo(server, {
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST'],
+      credentials: true
     }
   });
-});
+
+  // Socket.IO connection handling
+  io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+    
+    // Register user with their ID
+    socket.on('registerUser', (userId) => {
+      connectedUsers.set(userId, socket.id);
+      console.log(`User ${userId} registered with socket ${socket.id}`);
+    });
+    
+    // Handle disconnection
+    socket.on('disconnect', () => {
+      console.log('User disconnected:', socket.id);
+      // Remove user from connected users map
+      for (let [userId, socketId] of connectedUsers.entries()) {
+        if (socketId === socket.id) {
+          connectedUsers.delete(userId);
+          break;
+        }
+      }
+    });
+  });
+}
 
 // Make io available to other modules
 app.set('io', io);
@@ -201,10 +220,7 @@ const corsOptions = {
   allowedHeaders: [
     'Content-Type',
     'Authorization',
-    'X-Requested-With',
-    'X-API-Key',
-    'X-Remote-API-Key',
-    'X-Job-API-Key',
+    'X-Requested-With'
   ],
   credentials: true
 };
@@ -227,6 +243,7 @@ app.use('/api/health', async (req, res) => {
       success: true,
       status: 'OK',
       database: dbStatus,
+      vercel: !!process.env.VERCEL,
       timestamp: new Date()
     });
   } catch (error) {
@@ -253,6 +270,7 @@ app.use(async (req, res, next) => {
       success: false, 
       message: 'Database connection error', 
       error: error.message,
+      vercel: !!process.env.VERCEL
     });
   }
 });
@@ -265,7 +283,8 @@ app.get('/', (req, res) => {
     status: 'OK',
     timestamp: new Date(),
     service: 'Employee Portal Backend API',
-    version: '1.0.0'
+    version: '1.0.0',
+    vercel: !!process.env.VERCEL
   });
 });
 
@@ -275,7 +294,8 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date(), 
     service: 'Employee Portal Backend',
-    version: '1.0.0'
+    version: '1.0.0',
+    vercel: !!process.env.VERCEL
   });
 });
 
@@ -284,7 +304,8 @@ app.get('/api/test', (req, res) => {
     success: true,
     message: 'API is working correctly!', 
     status: 'OK',
-    timestamp: new Date()
+    timestamp: new Date(),
+    vercel: !!process.env.VERCEL
   });
 });
 
@@ -329,7 +350,6 @@ app.use('/api/employer-categories', employerCategoryRoutes);
 app.use('/api/analytics/registrations', registrationAnalyticsRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/telegram', telegramRoutes);
-app.use('/api/telegram', telegramRoutes);
 app.use('/api/partners', partnerCompanyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);
@@ -346,15 +366,17 @@ app.use((err, req, res, next) => {
     success: false,
     message: err.message || 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    vercel: !!process.env.VERCEL
   });
 });
 
+// For Vercel serverless functions, export the app directly
 module.exports = app;
 
-// Connect to MongoDB and start the server only when running directly
+// Connect to MongoDB and start the server only when running locally
 if (require.main === module) {
     const PORT = Number(process.env.PORT) || 5000;
-    const HOST = '0.0.0.0';
+    const HOST = process.env.HOST || '0.0.0.0'; // Bind to all interfaces by default
     
     // Connect to database and start server
     connectDB()
