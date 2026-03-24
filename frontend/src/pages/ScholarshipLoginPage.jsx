@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Alert,
   AlertIcon,
@@ -31,10 +31,16 @@ const passwordMinLength = 6;
 
 const ScholarshipLoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [msisdn, setMsisdn] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const redirectTo =
+    searchParams.get("redirect") ||
+    location.state?.redirectTo ||
+    "/scholarship-portal";
 
   const normalizedMsisdn = useMemo(() => msisdn.replace(/\s+/g, ""), [msisdn]);
   const cardBg = useColorModeValue("white", "gray.800");
@@ -50,9 +56,9 @@ const ScholarshipLoginPage = () => {
 
   useEffect(() => {
     if (localStorage.getItem("scholarshipToken")) {
-      navigate("/scholarship-portal", { replace: true });
+      navigate(redirectTo, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, redirectTo]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -75,7 +81,7 @@ const ScholarshipLoginPage = () => {
       });
       localStorage.setItem("scholarshipToken", response.token);
       localStorage.setItem("scholarshipPhone", normalizedMsisdn);
-      navigate("/scholarship-portal", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       setErrorMessage(error.response?.data?.message || "Login failed.");
     } finally {

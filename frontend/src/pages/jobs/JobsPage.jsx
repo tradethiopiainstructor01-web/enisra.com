@@ -41,6 +41,12 @@ const safeDate = (value) => {
 };
 
 const getJobIdentifier = (job) => String(job?._id || job?.id || '');
+const hasScholarshipAccess = () => {
+  if (typeof window === 'undefined') return false;
+  return Boolean(localStorage.getItem('scholarshipToken'));
+};
+const buildScholarshipLoginRedirect = (targetPath) =>
+  `/scholarship-login?redirect=${encodeURIComponent(targetPath)}`;
 
 const JobsPage = () => {
   const navigate = useNavigate();
@@ -93,10 +99,18 @@ const JobsPage = () => {
   const openJobDetails = useCallback((job) => {
     if (!job) return;
 
+    const nextJobId = getJobIdentifier(job);
+    if (!hasScholarshipAccess()) {
+      const redirectTo = nextJobId ? `/jobs/${nextJobId}` : '/jobs';
+      navigate(buildScholarshipLoginRedirect(redirectTo), {
+        state: { redirectTo: nextJobId ? `/jobs/${nextJobId}` : '/jobs' },
+      });
+      return;
+    }
+
     setSelectedJob(job);
     onOpen();
 
-    const nextJobId = getJobIdentifier(job);
     if (nextJobId && String(jobId) !== nextJobId) {
       navigate(`/jobs/${nextJobId}`);
     }
@@ -255,6 +269,14 @@ const JobsPage = () => {
   useEffect(() => {
     if (!jobId) {
       attemptedDirectJobLoadRef.current = '';
+      return;
+    }
+
+    if (!hasScholarshipAccess()) {
+      navigate(buildScholarshipLoginRedirect(`/jobs/${jobId}`), {
+        replace: true,
+        state: { redirectTo: `/jobs/${jobId}` },
+      });
       return;
     }
 

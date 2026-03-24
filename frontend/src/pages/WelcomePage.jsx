@@ -168,6 +168,12 @@ const isMobileInteraction = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
   return window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches;
 };
+const hasScholarshipAccess = () => {
+  if (typeof window === 'undefined') return false;
+  return Boolean(localStorage.getItem('scholarshipToken'));
+};
+const buildScholarshipLoginRedirect = (targetPath) =>
+  `/scholarship-login?redirect=${encodeURIComponent(targetPath)}`;
 
 const WelcomePage = () => {
   const {
@@ -1199,7 +1205,14 @@ const WelcomePage = () => {
                             _hover={{ bg: softBlueBg }}
                             onClick={() => {
                               const jobId = job?._id || job?.id;
-                              navigate(jobId ? `/jobs/${jobId}` : '/jobs');
+                              const targetPath = jobId ? `/jobs/${jobId}` : '/jobs';
+                              if (!hasScholarshipAccess()) {
+                                navigate(buildScholarshipLoginRedirect(targetPath), {
+                                  state: { redirectTo: targetPath },
+                                });
+                                return;
+                              }
+                              navigate(targetPath);
                             }}
                           >
                             Read more
