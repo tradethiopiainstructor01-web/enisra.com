@@ -126,8 +126,7 @@ class TelegramService {
   }
 
   // optionally include the jobUrl so recipients can see it even if the
-  // inline button is stripped or they forward the message.  `jobUrl` is not
-  // validated here (sendJobPost already throws if it's missing/invalid).
+  // inline button is stripped or they forward the message.
   formatJobMessage(job, jobUrl) {
     const company = job.company || job.companyName || process.env.EMPLOYER_NAME || 'N/A';
     const title = job.title || 'N/A';
@@ -160,16 +159,20 @@ class TelegramService {
 
   async sendJobPost({ job, jobUrl }) {
     if (!this.isEnabled()) return { skipped: true, reason: 'Telegram not configured' };
-    if (!ensureHttpsUrl(jobUrl)) throw new Error('Job URL must be HTTPS');
+    const hasJobUrl = ensureHttpsUrl(jobUrl);
 
     const payload = {
       chat_id: this.getChannelId(),
       text: this.formatJobMessage(job, jobUrl),
       parse_mode: this.getParseMode(),
       disable_web_page_preview: true,
-      reply_markup: {
-        inline_keyboard: [[{ text: 'Apply Now', url: jobUrl }]],
-      },
+      ...(hasJobUrl
+        ? {
+            reply_markup: {
+              inline_keyboard: [[{ text: 'Apply Now', url: jobUrl }]],
+            },
+          }
+        : {}),
     };
 
     let lastError;
@@ -181,6 +184,7 @@ class TelegramService {
           success: true,
           attempt,
           telegramMessageId: res?.result?.message_id,
+          withoutJobUrl: !hasJobUrl,
         };
       } catch (err) {
         lastError = err;

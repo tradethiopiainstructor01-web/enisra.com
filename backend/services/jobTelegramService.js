@@ -98,12 +98,14 @@ exports.publishNewJob = async (job, requestMeta = {}) => {
 
   try {
     let jobUrl = '';
+    let jobUrlWarning = '';
     try {
       jobUrl = buildApplyUrl(job._id, requestMeta);
     } catch (urlError) {
+      jobUrlWarning = shortErr(urlError);
       console.warn('Telegram job URL unavailable, sending without link', {
         jobId: String(job._id),
-        error: shortErr(urlError),
+        error: jobUrlWarning,
       });
     }
 
@@ -122,8 +124,19 @@ exports.publishNewJob = async (job, requestMeta = {}) => {
       }
     );
 
-    console.log('Telegram posted', { jobId: String(job._id), telegramMessageId: res.telegramMessageId });
-    return { success: true, jobUrl, telegramMessageId: res.telegramMessageId };
+    console.log('Telegram posted', {
+      jobId: String(job._id),
+      telegramMessageId: res.telegramMessageId,
+      withoutJobUrl: Boolean(res.withoutJobUrl),
+      jobUrlWarning: jobUrlWarning || undefined,
+    });
+    return {
+      success: true,
+      jobUrl,
+      telegramMessageId: res.telegramMessageId,
+      withoutJobUrl: Boolean(res.withoutJobUrl),
+      ...(jobUrlWarning ? { warning: jobUrlWarning } : {}),
+    };
   } catch (e) {
     const msg = shortErr(e);
     await TelegramJobPost.findOneAndUpdate(
@@ -134,3 +147,5 @@ exports.publishNewJob = async (job, requestMeta = {}) => {
     return { success: false, error: msg };
   }
 };
+
+exports.buildApplyUrl = buildApplyUrl;
