@@ -143,6 +143,7 @@ const AdminDashboard = () => {
   const [jobsLoading, setJobsLoading] = useState(false);
   const [postedJobs, setPostedJobs] = useState([]);
   const [postedJobsLoading, setPostedJobsLoading] = useState(false);
+  const [telegramPostingJobId, setTelegramPostingJobId] = useState(null);
   const [pendingEmployers, setPendingEmployers] = useState([]);
   const [employersLoading, setEmployersLoading] = useState(false);
   const [allEmployers, setAllEmployers] = useState([]);
@@ -1818,6 +1819,85 @@ const AdminDashboard = () => {
     }
   };
 
+  const buildJobUpdatePayload = (job) => ({
+    title: (job?.title || "").trim(),
+    department: (job?.department || "").trim(),
+    company: (job?.company || job?.companyName || "").trim(),
+    companyAddress: (job?.companyAddress || job?.company_address || "").trim(),
+    contactEmail: (job?.contactEmail || job?.contact_email || job?.postedByEmail || "").trim(),
+    category: (job?.category || "").trim(),
+    location: (job?.location || "").trim(),
+    address: (job?.address || "").trim(),
+    type: (job?.type || "").trim(),
+    salary: (job?.salary || "").trim(),
+    yearsOfExperience: (job?.yearsOfExperience || "").trim(),
+    deadline: job?.deadline || undefined,
+    expirationDate: job?.expirationDate || undefined,
+    description: (job?.description || "").trim(),
+    flow: (job?.flow || "").trim(),
+    postToTelegram: true,
+  });
+
+  const handlePostJobToTelegram = async (job) => {
+    const jobId = job?._id;
+    if (!jobId) return;
+
+    try {
+      setTelegramPostingJobId(jobId);
+      let response;
+
+      try {
+        response = await apiClient.patch(`/jobs/${jobId}/post-to-telegram`);
+      } catch (primaryError) {
+        response = await apiClient.patch(`/jobs/${jobId}`, buildJobUpdatePayload(job));
+      }
+
+      const telegram = response?.data?.telegram;
+      const telegramFailed = telegram?.success === false;
+      const telegramSkipped = Boolean(telegram?.skipped);
+      const benignTelegramSkip =
+        telegramSkipped && TELEGRAM_NON_WARNING_SKIP_REASONS.has(telegram?.reason);
+      const telegramWarning = telegramFailed || (telegramSkipped && !benignTelegramSkip);
+      const detail = telegram?.error || telegram?.reason || "";
+
+      let description = "The job was sent to Telegram.";
+      if (telegram?.success) {
+        description = "The job was sent to Telegram.";
+      } else if (telegram?.reason === "Already posted") {
+        description = "This job was already posted to Telegram.";
+      } else if (telegramFailed) {
+        description = `Telegram posting failed${detail ? ` (${detail})` : ""}.`;
+      } else if (telegramSkipped) {
+        description = `Telegram posting was skipped${detail ? ` (${detail})` : ""}.`;
+      }
+
+      toast({
+        title: telegramWarning ? "Telegram post warning" : "Posted to Telegram",
+        description,
+        status: telegramWarning ? "warning" : "success",
+        duration: telegramWarning ? 5500 : 2500,
+        isClosable: true,
+      });
+
+      await loadPostedJobs();
+      await loadPendingJobs();
+    } catch (error) {
+      toast({
+        title: "Failed to post to Telegram",
+        description:
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to post this job.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setTelegramPostingJobId(null);
+    }
+  };
+
   const openEditJobModal = (job) => {
     if (!job) return;
     setSelectedJobId(job._id);
@@ -3008,6 +3088,15 @@ const AdminDashboard = () => {
                       <Badge colorScheme="green">Posted</Badge>
                     </Flex>
                     <Flex gap={2} mt={3} wrap="wrap">
+                      <Button
+                        size="sm"
+                        colorScheme="blue"
+                        onClick={() => handlePostJobToTelegram(job)}
+                        isLoading={telegramPostingJobId === job._id}
+                        loadingText="Posting"
+                      >
+                        Post to Telegram
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

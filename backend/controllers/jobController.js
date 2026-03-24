@@ -271,9 +271,9 @@ exports.createJob = async (req, res) => {
 
     const created = await Job.create(payload);
     const telegramResult =
-      postToTelegram
+      isAdmin && postToTelegram
         ? await publishNewJob(created, getTelegramRequestMeta(req))
-        : { skipped: true, reason: 'Disabled by request' };
+        : { skipped: true, reason: isAdmin ? 'Disabled by request' : 'Pending approval' };
 
     res.status(201).json({
       success: true,
@@ -385,6 +385,55 @@ exports.approveJob = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to approve job',
+      error: error.message,
+    });
+  }
+};
+
+exports.postJobToTelegram = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const existing = await Job.findById(id).lean();
+
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    if (!existing.active) {
+      return res.status(400).json({ success: false, message: 'Inactive jobs cannot be posted to Telegram.' });
+    }
+
+    if (!existing.approved) {
+      return res.status(400).json({ success: false, message: 'Approve the job before posting it to Telegram.' });
+    }
+
+    const jobForPublish = existing.postToTelegram
+      ? existing
+      : await Job.findByIdAndUpdate(
+          id,
+          { $set: { postToTelegram: true } },
+          { new: true, runValidators: false }
+        ).lean();
+
+    if (!jobForPublish) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    const telegramResult = await publishNewJob(jobForPublish, getTelegramRequestMeta(req), { force: true });
+
+    return res.json({
+      success: true,
+      data: normalizeJobForResponse(jobForPublish),
+      telegram: telegramResult,
+    });
+  } catch (error) {
+    if (error?.name === 'CastError') {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to post job to Telegram',
       error: error.message,
     });
   }

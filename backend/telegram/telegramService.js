@@ -1,10 +1,25 @@
+require('../config/loadEnv');
+
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ensureHttpsUrl = (v) => /^https:\/\//i.test(v || '');
 const TELEGRAM_TIMEOUT_MS = 10000;
 const readEnv = (key) => (process.env[key] || '').trim();
 
-const resolveFetchRuntime = () => {
+const resolveFetchRuntime = (useSystemProxy = false) => {
+  try {
+    if (useSystemProxy) {
+      const fetchModule = require('node-fetch-native-with-agent');
+      return {
+        fetchImpl: fetchModule.fetch,
+        AbortControllerImpl: fetchModule.AbortController || globalThis.AbortController,
+      };
+    }
+  } catch (_error) {
+    // Fall through to the native fetch runtime if the proxy-aware runtime
+    // cannot be loaded. The actual request error will still surface later.
+  }
+
   if (typeof globalThis.fetch === 'function') {
     return {
       fetchImpl: globalThis.fetch.bind(globalThis),
@@ -40,7 +55,7 @@ const escapeHtml = (v = '') =>
 class TelegramService {
   constructor() {
     this.maxRetries = 3;
-    const runtime = resolveFetchRuntime();
+    const runtime = resolveFetchRuntime(this.getUseSystemProxy());
     this.fetchImpl = runtime.fetchImpl;
     this.AbortControllerImpl = runtime.AbortControllerImpl;
   }

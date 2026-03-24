@@ -14,6 +14,7 @@ router.get('/mine', protect, authorizeRoles('employer', 'admin'), jobController.
 router.get('/:id', jobController.getJobById);
 router.post('/:id/apply', protect, authorizeRoles('employee'), jobController.applyToJob);
 router.patch('/:id/approve', protect, authorizeRoles('admin'), jobController.approveJob);
+router.patch('/:id/post-to-telegram', protect, authorizeRoles('admin'), jobController.postJobToTelegram);
 router.patch('/:id/reject', protect, authorizeRoles('admin'), jobController.rejectJob);
 router.patch('/:id', protect, authorizeRoles('admin'), jobController.updateJob);
 router.delete('/:id', protect, authorizeRoles('admin'), jobController.deleteJob);

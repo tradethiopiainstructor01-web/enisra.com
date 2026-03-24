@@ -1,3 +1,5 @@
+require('../config/loadEnv');
+
 const TelegramJobPost = require('../models/TelegramJobPost');
 const telegramService = require('../telegram/telegramService');
 
@@ -76,8 +78,12 @@ const buildApplyUrl = (jobId, requestMeta = {}) => {
   return jobPageUrl;
 };
 
-exports.publishNewJob = async (job, requestMeta = {}) => {
+exports.publishNewJob = async (job, requestMeta = {}, options = {}) => {
+  const force = options?.force === true;
   if (!job?._id) return { skipped: true, reason: 'Invalid job' };
+  if (job.active === false) return { skipped: true, reason: 'Job inactive' };
+  if (!job.approved) return { skipped: true, reason: 'Pending approval' };
+  if (!job.postToTelegram) return { skipped: true, reason: 'Disabled by request' };
   if (!telegramService.isEnabled()) {
     const missingKeys = telegramService.getMissingConfigKeys();
     const suffix = missingKeys.length ? `: ${missingKeys.join(', ')}` : '';
@@ -85,7 +91,7 @@ exports.publishNewJob = async (job, requestMeta = {}) => {
   }
 
   const old = await TelegramJobPost.findOne({ jobId: job._id }).lean();
-  if (old?.status === 'posted') return { skipped: true, reason: 'Already posted' };
+  if (old?.status === 'posted' && !force) return { skipped: true, reason: 'Already posted' };
 
   if (!old) {
     try {
@@ -94,6 +100,18 @@ exports.publishNewJob = async (job, requestMeta = {}) => {
       if (e?.code === 11000) return { skipped: true, reason: 'Duplicate prevented' };
       throw e;
     }
+  } else if (force) {
+    await TelegramJobPost.findOneAndUpdate(
+      { jobId: job._id },
+      {
+        $set: {
+          status: 'pending',
+        },
+        $unset: {
+          lastError: 1,
+        },
+      }
+    );
   }
 
   try {
@@ -135,6 +153,7 @@ exports.publishNewJob = async (job, requestMeta = {}) => {
       jobUrl,
       telegramMessageId: res.telegramMessageId,
       withoutJobUrl: Boolean(res.withoutJobUrl),
+      ...(force ? { reposted: true } : {}),
       ...(jobUrlWarning ? { warning: jobUrlWarning } : {}),
     };
   } catch (e) {
