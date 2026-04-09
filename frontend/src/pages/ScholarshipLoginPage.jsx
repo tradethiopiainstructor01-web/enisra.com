@@ -148,10 +148,10 @@ const ScholarshipLoginPage = () => {
                   >
                     <Icon as={FaGraduationCap} boxSize={6} />
                   </Flex>
-                  <Heading size="md">Scholarship Access</Heading>
+                  <Heading size="md">Login Access</Heading>
                 </HStack>
                 <Text opacity={0.95} fontSize={{ base: "sm", md: "md" }}>
-                  An admin creates your scholar account. Login using the phone number and password they give you.
+                  To access login, first use your phone number to request your login PIN by SMS. Send OK to 9295, wait for the PIN on your phone, then use that PIN to sign in here.
                 </Text>
                 <VStack align="start" spacing={3} pt={2}>
                   <HStack
@@ -163,7 +163,7 @@ const ScholarshipLoginPage = () => {
                     borderColor="whiteAlpha.280"
                   >
                     <Icon as={FaMobileAlt} />
-                    <Text fontSize="sm">Use your registered phone number</Text>
+                    <Text fontSize="sm">Step 1: Send OK to 9295 using your registered phone number</Text>
                   </HStack>
                   <HStack
                     bg="whiteAlpha.170"
@@ -174,7 +174,7 @@ const ScholarshipLoginPage = () => {
                     borderColor="whiteAlpha.280"
                   >
                     <Icon as={FaLock} />
-                    <Text fontSize="sm">Secure password-based login</Text>
+                    <Text fontSize="sm">Step 2: Receive your PIN by SMS on that same phone number</Text>
                   </HStack>
                   <HStack
                     bg="whiteAlpha.170"
@@ -185,7 +185,7 @@ const ScholarshipLoginPage = () => {
                     borderColor="whiteAlpha.280"
                   >
                     <Icon as={FaCheckCircle} />
-                    <Text fontSize="sm">Ask admin if you need a new password</Text>
+                    <Text fontSize="sm">Step 3: Enter your phone number and the received PIN on this page to login</Text>
                   </HStack>
                 </VStack>
               </VStack>
@@ -197,15 +197,15 @@ const ScholarshipLoginPage = () => {
                   Login
                 </Heading>
                 <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
-                  Enter the phone number and password created for your scholar account.
+                  Enter your phone number and the PIN you received after sending OK to 9295.
                 </Text>
 
                 <HStack spacing={2}>
                   <Badge colorScheme="blue" px={3} py={1} borderRadius="full">
-                    1. Admin creates account
+                    1. Send OK to 9295
                   </Badge>
                   <Badge colorScheme="green" px={3} py={1} borderRadius="full">
-                    2. Login with password
+                    2. Login with PIN
                   </Badge>
                 </HStack>
 
@@ -236,11 +236,11 @@ const ScholarshipLoginPage = () => {
                     </FormControl>
 
                     <FormControl isRequired>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>PIN</FormLabel>
                       <Input
                         type="password"
                         size="lg"
-                        placeholder="Enter password"
+                        placeholder="Enter PIN received by SMS"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         bg={inputBg}
@@ -252,7 +252,7 @@ const ScholarshipLoginPage = () => {
                         }}
                       />
                       <FormHelperText>
-                        Minimum {passwordMinLength} characters
+                        Enter the PIN sent to your phone after texting OK to 9295
                       </FormHelperText>
                     </FormControl>
 

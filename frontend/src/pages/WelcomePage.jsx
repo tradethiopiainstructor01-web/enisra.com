@@ -100,26 +100,32 @@ const heroCards = [
 ];
 
 const themeColors = {
-  primaryGreen: '#4F7F3A',
-  primaryGreenHover: '#3E6A2F',
-  softGreenBg: '#E9F3E4',
-  primaryGold: '#D9A441',
-  primaryGoldHover: '#C28E2C',
-  softGoldBg: '#FFF9EE',
-  primaryBlue: '#3B82F6',
-  softBlueBg: '#EAF1FF',
-  bgMain: 'linear-gradient(180deg, #FAFCFB 0%, #F3F7F4 55%, #F7FAFF 100%)',
-  cardBg: '#FFFFFF',
-  border: '#E5E7EB',
-  sectionDivider: '#D1D5DB',
-  textPrimary: '#1F2937',
-  textSecondary: '#4B5563',
-  textMuted: '#6B7280',
-  placeholder: '#9CA3AF',
-  success: '#16A34A',
+  primaryGreen: '#6366F1',
+  primaryGreenHover: '#7C83FF',
+  softGreenBg: 'rgba(15, 23, 42, 0.72)',
+  primaryGold: '#22D3EE',
+  primaryGoldHover: '#67E8F9',
+  softGoldBg: 'linear-gradient(180deg, rgba(15, 23, 42, 0.68) 0%, rgba(2, 6, 23, 0.38) 100%)',
+  primaryBlue: '#22D3EE',
+  softBlueBg: 'rgba(34, 211, 238, 0.12)',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.22), transparent 28%), radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 24%), linear-gradient(180deg, #0F172A 0%, #020617 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.10)',
+  border: 'rgba(148, 163, 184, 0.20)',
+  sectionDivider: 'rgba(148, 163, 184, 0.18)',
+  textPrimary: '#F8FAFC',
+  textSecondary: '#CBD5F5',
+  textMuted: '#94A3B8',
+  placeholder: '#94A3B8',
+  success: '#22C55E',
   warning: '#F59E0B',
-  error: '#DC2626',
-  info: '#2563EB',
+  error: '#F87171',
+  info: '#22D3EE',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.42)',
+  accentGlow: '0 0 0 1px rgba(34, 211, 238, 0.18), 0 18px 45px rgba(34, 211, 238, 0.14)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #22D3EE 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #67E8F9 100%)',
+  highlightGradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(34, 211, 238, 0.9) 100%)',
 };
 
 const trainingHighlights = [
@@ -196,6 +202,11 @@ const WelcomePage = () => {
     success,
     warning,
     info,
+    surfaceGlow,
+    accentGlow,
+    buttonGradient,
+    buttonGradientHover,
+    highlightGradient,
   } = themeColors;
 
   const [showAllJobs, setShowAllJobs] = useState(false);
@@ -481,7 +492,8 @@ const WelcomePage = () => {
         bg={cardBg}
         borderBottom="1px solid"
         borderColor={border}
-        boxShadow="sm"
+        backdropFilter="blur(20px)"
+        boxShadow={surfaceGlow}
       >
         <Container maxW="7xl" py={4}>
           <Flex align="center" gap={{ base: 3, md: 6 }} justify="space-between" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
@@ -504,7 +516,7 @@ const WelcomePage = () => {
                 icon={<FaBell />}
                 variant="ghost"
                 color={primaryGreen}
-                _hover={{ bg: softGreenBg }}
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
               />
               <Button
                 as={RouterLink}
@@ -512,7 +524,7 @@ const WelcomePage = () => {
                 variant="ghost"
                 size="sm"
                 color={textPrimary}
-                _hover={{ bg: softGreenBg }}
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
               >
                 {t('jobs')}
               </Button>
@@ -523,6 +535,7 @@ const WelcomePage = () => {
                   variant="ghost"
                   size="sm"
                   color={textPrimary}
+                  _hover={{ color: primaryBlue, bg: softBlueBg }}
                 >
                   {t('login')}
                 </Button>
@@ -530,10 +543,11 @@ const WelcomePage = () => {
                   as={RouterLink}
                   to="/register"
                   size="sm"
-                  bg={primaryGreen}
+                  bgGradient={buttonGradient}
                   color="white"
                   borderRadius="full"
-                  _hover={{ bg: primaryGreenHover }}
+                  boxShadow="0 12px 28px rgba(99, 102, 241, 0.32)"
+                  _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
                 >
                   {t('register')}
                 </Button>
@@ -542,11 +556,14 @@ const WelcomePage = () => {
                   variant="outline"
                   borderColor={border}
                   color={textPrimary}
-                  _hover={{ borderColor: primaryGreen }}
+                  bg={cardBg}
+                  backdropFilter="blur(16px)"
+                  _hover={{ borderColor: primaryBlue }}
                   width="110px"
                   aria-label="Language selector"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
+                  sx={{ '> option': { background: '#0F172A', color: '#F8FAFC' } }}
                 >
                   <option value="en">English</option>
                   <option value="am">Amharic</option>
@@ -559,7 +576,9 @@ const WelcomePage = () => {
                 size="sm"
                 borderColor={border}
                 color={textPrimary}
-                _hover={{ borderColor: primaryGreen }}
+                bg={cardBg}
+                backdropFilter="blur(16px)"
+                _hover={{ borderColor: primaryBlue, color: primaryBlue, bg: softBlueBg }}
                 display={{ base: 'none', md: 'inline-flex' }}
               />
               <IconButton
@@ -569,7 +588,9 @@ const WelcomePage = () => {
                 size="sm"
                 borderColor={border}
                 color={textPrimary}
-                _hover={{ borderColor: primaryGreen }}
+                bg={cardBg}
+                backdropFilter="blur(16px)"
+                _hover={{ borderColor: primaryBlue, color: primaryBlue, bg: softBlueBg }}
                 display={{ base: 'inline-flex', md: 'none' }}
                 onClick={onOpen}
               />
@@ -579,25 +600,25 @@ const WelcomePage = () => {
       </Box>
 
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent>
+        <DrawerOverlay backdropFilter="blur(6px)" bg="blackAlpha.600" />
+        <DrawerContent bg="rgba(15, 23, 42, 0.94)" color={textPrimary} borderLeft="1px solid" borderColor={border}>
           <DrawerCloseButton />
           <DrawerHeader>Account</DrawerHeader>
           <DrawerBody>
             <Stack spacing={3} mt={2}>
-              <Button as={RouterLink} to="/login" onClick={onClose} variant="ghost">
+              <Button as={RouterLink} to="/login" onClick={onClose} variant="ghost" color={textPrimary} _hover={{ bg: softBlueBg, color: primaryBlue }}>
                 {t('login')}
               </Button>
-              <Button as={RouterLink} to="/jobs" onClick={onClose} variant="ghost">
+              <Button as={RouterLink} to="/jobs" onClick={onClose} variant="ghost" color={textPrimary} _hover={{ bg: softBlueBg, color: primaryBlue }}>
                 {t('jobs')}
               </Button>
               <Button
                 as={RouterLink}
                 to="/register"
                 onClick={onClose}
-                bg={primaryGreen}
+                bgGradient={buttonGradient}
                 color="white"
-                _hover={{ bg: primaryGreenHover }}
+                _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
               >
                 {t('register')}
               </Button>
@@ -605,6 +626,10 @@ const WelcomePage = () => {
                 variant="outline"
                 leftIcon={<FaUserCircle />}
                 onClick={onClose}
+                color={textPrimary}
+                borderColor={border}
+                bg={cardBg}
+                _hover={{ borderColor: primaryBlue, color: primaryBlue, bg: softBlueBg }}
               >
                 Profile
               </Button>
@@ -614,8 +639,8 @@ const WelcomePage = () => {
       </Drawer>
 
       <Drawer isOpen={isPartnerDrawerOpen} placement="left" onClose={onPartnerDrawerClose} size="sm">
-        <DrawerOverlay />
-        <DrawerContent onMouseLeave={onPartnerDrawerClose}>
+        <DrawerOverlay backdropFilter="blur(6px)" bg="blackAlpha.600" />
+        <DrawerContent onMouseLeave={onPartnerDrawerClose} bg="rgba(15, 23, 42, 0.94)" color={textPrimary} borderRight="1px solid" borderColor={border}>
           <DrawerCloseButton />
           <DrawerHeader>{hoveredPartner?.name || 'Company'}</DrawerHeader>
           <DrawerBody>
@@ -625,8 +650,8 @@ const WelcomePage = () => {
                 h="120px"
                 borderRadius="lg"
                 overflow="hidden"
-                bg="white"
-                boxShadow="sm"
+                bg="rgba(255,255,255,0.08)"
+                boxShadow={accentGlow}
                 borderWidth="1px"
                 borderColor={border}
               >
@@ -646,7 +671,9 @@ const WelcomePage = () => {
                   href={getPartnerWebsite(hoveredPartner)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  colorScheme="green"
+                  bgGradient={buttonGradient}
+                  color="white"
+                  _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
                 >
                   Visit Website
                 </Button>
@@ -672,7 +699,7 @@ const WelcomePage = () => {
                   <Box maxW={{ base: '100%', md: '460px' }} w="100%">
                     <InputGroup size="sm">
                       <InputLeftElement pointerEvents="none">
-                        <Icon as={FaSearch} color="gray.400" />
+                        <Icon as={FaSearch} color={textMuted} />
                       </InputLeftElement>
                       <InputRightElement width="2.25rem">
                         <IconButton
@@ -691,7 +718,8 @@ const WelcomePage = () => {
                         borderRadius="full"
                         size="sm"
                         color={textPrimary}
-                        _focus={{ borderColor: primaryGreen }}
+                        backdropFilter="blur(18px)"
+                        _focus={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
                         _placeholder={{ color: placeholder }}
                         value={jobSearchTerm}
                         onChange={(event) => {
@@ -716,10 +744,12 @@ const WelcomePage = () => {
                         size="xs"
                         bg={softGreenBg}
                         borderColor={border}
-                        _focus={{ borderColor: primaryGreen }}
-                        _hover={{ borderColor: primaryGreen }}
+                        backdropFilter="blur(18px)"
+                        _focus={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+                        _hover={{ borderColor: primaryBlue }}
                         color={textPrimary}
                         value={jobFilters.location}
+                        sx={{ '> option': { background: '#0F172A', color: '#F8FAFC' } }}
                         onChange={(event) =>
                           setJobFilters((prev) => {
                             setShowAllJobs(true);
@@ -740,10 +770,12 @@ const WelcomePage = () => {
                         size="xs"
                         bg={softGreenBg}
                         borderColor={border}
-                        _focus={{ borderColor: primaryGreen }}
-                        _hover={{ borderColor: primaryGreen }}
+                        backdropFilter="blur(18px)"
+                        _focus={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+                        _hover={{ borderColor: primaryBlue }}
                         color={textPrimary}
                         value={jobFilters.category}
+                        sx={{ '> option': { background: '#0F172A', color: '#F8FAFC' } }}
                         onChange={(event) =>
                           setJobFilters((prev) => {
                             setShowAllJobs(true);
@@ -764,10 +796,12 @@ const WelcomePage = () => {
                         size="xs"
                         bg={softGreenBg}
                         borderColor={border}
-                        _focus={{ borderColor: primaryGreen }}
-                        _hover={{ borderColor: primaryGreen }}
+                        backdropFilter="blur(18px)"
+                        _focus={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+                        _hover={{ borderColor: primaryBlue }}
                         color={textPrimary}
                         value={jobFilters.type}
+                        sx={{ '> option': { background: '#0F172A', color: '#F8FAFC' } }}
                         onChange={(event) =>
                           setJobFilters((prev) => {
                             setShowAllJobs(true);
@@ -789,11 +823,11 @@ const WelcomePage = () => {
                     as={RouterLink}
                     to="/register"
                     w="fit-content"
-                    bg={primaryGreen}
+                    bgGradient={buttonGradient}
                     color="white"
                     borderRadius="full"
-                    _hover={{ bg: primaryGreenHover }}
-                    boxShadow="lg"
+                    boxShadow="0 14px 34px rgba(99, 102, 241, 0.34)"
+                    _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 18px 38px rgba(34, 211, 238, 0.24)' }}
                   >
                     Register as Employer
                   </Button>
@@ -802,15 +836,17 @@ const WelcomePage = () => {
                     to="/jobs"
                     w="fit-content"
                     variant="outline"
-                    color={primaryGreen}
+                    color={textPrimary}
+                    borderColor="rgba(34, 211, 238, 0.42)"
                     borderRadius="full"
-                    _hover={{ bg: softGreenBg }}
+                    bg="rgba(255,255,255,0.04)"
+                    _hover={{ bg: softBlueBg, color: primaryBlue, borderColor: primaryBlue }}
                   >
                     Browse trusted jobs
                   </Button>
                 </Stack>
                 <HStack spacing={3} mt={4} flexWrap="wrap">
-                  <Badge colorScheme="green" borderRadius="full">
+                  <Badge bg={softBlueBg} color={primaryBlue} borderRadius="full" border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
                     HR-safe
                   </Badge>
                   <Text color={textSecondary} fontSize="sm">
@@ -821,24 +857,30 @@ const WelcomePage = () => {
               <Box
                 borderRadius="xl"
                 overflow="hidden"
-                boxShadow="dark-lg"
-                bg="white"
+                boxShadow={accentGlow}
+                bg="rgba(255,255,255,0.08)"
+                border="1px solid"
+                borderColor={border}
                 position="relative"
-                minH={{ base: '220px', md: '360px' }}
+                w="100%"
+                ml="0"
               >
                 <Center
                   position="absolute"
                   inset={0}
-                  bgGradient="linear(to-br, rgba(247, 248, 250, 0.85), rgba(233, 243, 228, 0.8))"
-                  mixBlendMode="soft-light"
+                  bgGradient="linear(to-br, rgba(99, 102, 241, 0.16), rgba(34, 211, 238, 0.12))"
+                  mixBlendMode="screen"
                   pointerEvents="none"
                 />
                 <Image
                   src={heroImageUrl}
                   alt="Three professionals reviewing a phone"
-                  objectFit="cover"
-                  width="100%"
-                  height="100%"
+                  objectFit="contain"
+                  w="100%"
+                  h="auto"
+                  display="block"
+                  position="relative"
+                  zIndex={1}
                 />
               </Box>
             </SimpleGrid>
@@ -858,20 +900,21 @@ const WelcomePage = () => {
                     borderColor={isHighlight ? 'transparent' : border}
                     bgGradient={
                       isHighlight
-                        ? `linear(to-br, ${primaryGold}, ${primaryGoldHover})`
+                        ? highlightGradient
                         : undefined
                     }
                     color={isHighlight ? 'white' : textPrimary}
                     p={6}
                     borderRadius="xl"
-                    boxShadow="xl"
+                    backdropFilter="blur(18px)"
+                    boxShadow={isHighlight ? accentGlow : surfaceGlow}
                     transition="border-color 0.3s ease, transform 0.3s ease"
                     _hover={{
-                      borderColor: isHighlight ? border : primaryGreen,
+                      borderColor: isHighlight ? 'rgba(255,255,255,0.2)' : primaryBlue,
                       transform: 'translateY(-2px)',
                     }}
                     _focusVisible={{
-                      boxShadow: `0 0 0 3px ${softGreenBg}`,
+                      boxShadow: `0 0 0 1px ${primaryBlue}, ${accentGlow}`,
                     }}
                   >
                     <Flex align="center" justify="space-between">
@@ -909,10 +952,10 @@ const WelcomePage = () => {
                       mt={6}
                       size="sm"
                       borderRadius="full"
-                      bg={isHighlight ? primaryGold : primaryGreen}
+                      bgGradient={buttonGradient}
                       color="white"
                       _hover={{
-                        bg: isHighlight ? primaryGoldHover : primaryGreenHover,
+                        bgGradient: buttonGradientHover,
                       }}
                     >
                       {card.cta}
@@ -929,9 +972,10 @@ const WelcomePage = () => {
             bg={cardBg}
             borderRadius="2xl"
             p={{ base: 6, md: 8 }}
-            boxShadow="xl"
+            boxShadow={surfaceGlow}
             border="1px solid"
             borderColor={border}
+            backdropFilter="blur(22px)"
           >
             <Flex
               direction={{ base: 'column', md: 'row' }}
@@ -948,7 +992,7 @@ const WelcomePage = () => {
                   Swipe to explore partner companies.
                 </Text>
               </Box>
-              <Badge colorScheme="green" borderRadius="full">
+              <Badge bg={softBlueBg} color={primaryBlue} borderRadius="full" border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
                 Trusted Partners
               </Badge>
             </Flex>
@@ -1003,10 +1047,12 @@ const WelcomePage = () => {
                     target={getPartnerWebsite(company) ? '_blank' : undefined}
                     rel={getPartnerWebsite(company) ? 'noopener noreferrer' : undefined}
                     minW={{ base: '160px', md: '200px' }}
-                    bg={softGreenBg}
+                    bg={cardBg}
                     borderRadius="xl"
                     border="1px solid"
                     borderColor={border}
+                    backdropFilter="blur(18px)"
+                    boxShadow={surfaceGlow}
                     p={4}
                     display="block"
                     textDecoration="none"
@@ -1021,7 +1067,8 @@ const WelcomePage = () => {
                     }}
                     _hover={{
                       transform: 'translateY(-2px)',
-                      borderColor: primaryGreen,
+                      borderColor: primaryBlue,
+                      boxShadow: accentGlow,
                     }}
                   >
                     <Box
@@ -1029,8 +1076,8 @@ const WelcomePage = () => {
                       h={{ base: '88px', md: '96px' }}
                       borderRadius="lg"
                       overflow="hidden"
-                      bg="white"
-                      boxShadow="sm"
+                      bg="rgba(255,255,255,0.08)"
+                      boxShadow={accentGlow}
                       mb={3}
                     >
                       <Image
@@ -1059,15 +1106,16 @@ const WelcomePage = () => {
               bg={cardBg}
               borderRadius="xl"
               p={6}
-              boxShadow="md"
+              boxShadow={surfaceGlow}
               borderColor={border}
               borderWidth="1px"
+              backdropFilter="blur(18px)"
             >
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="md" color={textPrimary}>
                   🎓 Scholarships & Free Trainings
                 </Heading>
-                <Badge colorScheme="green" borderRadius="full">
+                <Badge bg={softBlueBg} color={primaryBlue} borderRadius="full" border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
                   Local & International
                 </Badge>
               </Flex>
@@ -1075,10 +1123,10 @@ const WelcomePage = () => {
                 Thousands of learners accelerated through career-ready scholarships and free online trainings.
               </Text>
               <Button
-                bg={primaryGreen}
+                bgGradient={buttonGradient}
                 color="white"
                 borderRadius="full"
-                _hover={{ bg: primaryGreenHover }}
+                _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
               >
                 Explore Opportunities
               </Button>
@@ -1088,15 +1136,16 @@ const WelcomePage = () => {
               bg={cardBg}
               borderRadius="xl"
               p={6}
-              boxShadow="md"
+              boxShadow={surfaceGlow}
               borderColor={border}
               borderWidth="1px"
+              backdropFilter="blur(18px)"
             >
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="md" color={textPrimary}>
                   📢 Telegram Job Alerts
                 </Heading>
-                <Badge colorScheme="yellow" borderRadius="full">
+                <Badge bg="rgba(99, 102, 241, 0.14)" color={primaryGreen} borderRadius="full" border="1px solid" borderColor="rgba(99, 102, 241, 0.18)">
                   Real-time
                 </Badge>
               </Flex>
@@ -1104,17 +1153,17 @@ const WelcomePage = () => {
                 Scan the QR code or follow the link to join curated alerts for remote jobs, scholarships, and trainings.
               </Text>
               <Flex gap={4} align={{ base: 'flex-start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }}>
-                <Center w={{ base: 20, md: 24 }} h={{ base: 20, md: 24 }} bg={softBlueBg} borderRadius="md">
+                <Center w={{ base: 20, md: 24 }} h={{ base: 20, md: 24 }} bg={softBlueBg} borderRadius="md" border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
                   QR
                 </Center>
                 <Button
                   as={ChakraLink}
                   href={telegramChannelUrl}
-                  bg={primaryBlue}
+                  bgGradient={buttonGradient}
                   color="white"
                   borderRadius="full"
                   rightIcon={<FaTelegramPlane />}
-                  _hover={{ bg: info }}
+                  _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
                 >
                   Join Telegram Job Alerts
                 </Button>
@@ -1129,10 +1178,11 @@ const WelcomePage = () => {
               bg={cardBg}
               borderRadius="xl"
               p={6}
-              boxShadow="md"
+              boxShadow={surfaceGlow}
               maxH={{ base: 'none', lg: '600px' }}
               borderWidth="1px"
               borderColor={border}
+              backdropFilter="blur(18px)"
             >
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="md" color={textPrimary}>
@@ -1168,9 +1218,10 @@ const WelcomePage = () => {
                         bg={cardBg}
                         borderWidth="1px"
                         borderColor={border}
-                        boxShadow="sm"
+                        boxShadow={surfaceGlow}
                         transition="border-color 0.2s ease"
-                        _hover={{ borderColor: primaryGreen }}
+                        backdropFilter="blur(18px)"
+                        _hover={{ borderColor: primaryBlue, boxShadow: accentGlow }}
                       >
                         <Flex justify="space-between" align="center">
                           <Text fontSize="xl">{job.flag || '💼'}</Text>
@@ -1189,9 +1240,9 @@ const WelcomePage = () => {
                           <Button
                             size="sm"
                             borderRadius="full"
-                            bg={primaryGreen}
+                            bgGradient={buttonGradient}
                             color="white"
-                            _hover={{ bg: primaryGreenHover }}
+                            _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 12px 28px rgba(34, 211, 238, 0.22)' }}
                             onClick={() => handleApply(job)}
                           >
                             Apply Now
@@ -1202,6 +1253,7 @@ const WelcomePage = () => {
                             variant="outline"
                             borderColor={primaryBlue}
                             color={primaryBlue}
+                            bg="rgba(255,255,255,0.03)"
                             _hover={{ bg: softBlueBg }}
                             onClick={() => {
                               const jobId = job?._id || job?.id;
@@ -1229,10 +1281,10 @@ const WelcomePage = () => {
                 mt={6}
                 borderRadius="full"
                 border="1px solid"
-                borderColor={primaryGreen}
-                color={primaryGreen}
-                bg="transparent"
-                _hover={{ bg: softGreenBg }}
+                borderColor="rgba(34, 211, 238, 0.42)"
+                color={primaryBlue}
+                bg="rgba(255,255,255,0.03)"
+                _hover={{ bg: softBlueBg, borderColor: primaryBlue }}
                 onClick={() => setShowAllJobs((prev) => !prev)}
                 isDisabled={jobs.length <= 3}
               >
@@ -1244,15 +1296,16 @@ const WelcomePage = () => {
               bg={cardBg}
               borderRadius="xl"
               p={6}
-              boxShadow="md"
+              boxShadow={surfaceGlow}
               borderWidth="1px"
               borderColor={border}
+              backdropFilter="blur(18px)"
             >
               <Flex justify="space-between" align="center" mb={4}>
                 <Heading size="md" color={textPrimary}>
                   Free Training Section
                 </Heading>
-                <Badge variant="subtle" colorScheme="teal">
+                <Badge bg={softBlueBg} color={primaryBlue} border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
                   Learn & Grow
                 </Badge>
               </Flex>
@@ -1265,6 +1318,8 @@ const WelcomePage = () => {
                     bg={softBlueBg}
                     p={3}
                     borderRadius="md"
+                    border="1px solid"
+                    borderColor="rgba(34, 211, 238, 0.12)"
                   >
                     <Text color={textPrimary}>{topic}</Text>
                     <Icon as={FaCheckCircle} color={success} />
@@ -1274,9 +1329,9 @@ const WelcomePage = () => {
               <Flex align="center" gap={4} direction={{ base: 'column', sm: 'row' }}>
                 <Button
                   color="white"
-                  bg={primaryGreen}
+                  bgGradient={buttonGradient}
                   borderRadius="full"
-                  _hover={{ bg: primaryGreenHover }}
+                  _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
                   onClick={() => navigate('/')}
                 >
                   Start Free Training
@@ -1285,8 +1340,9 @@ const WelcomePage = () => {
                   flex={1}
                   w={{ base: '100%', sm: 'auto' }}
                   h="120px"
-                  bgGradient={`linear(to-br, ${primaryGold}, ${primaryBlue})`}
+                  bgGradient={highlightGradient}
                   borderRadius="xl"
+                  boxShadow={accentGlow}
                 />
               </Flex>
             </Box>
@@ -1295,7 +1351,7 @@ const WelcomePage = () => {
 
         <Box
           order={4}
-          bgGradient={`linear(to-r, ${primaryGold}, ${primaryGoldHover})`}
+          bgGradient={highlightGradient}
           color="white"
           borderRadius="2xl"
           mx="auto"
@@ -1303,6 +1359,7 @@ const WelcomePage = () => {
           py={6}
           maxW="7xl"
           my={6}
+          boxShadow={accentGlow}
         >
           <Flex
             align={{ base: 'flex-start', md: 'center' }}
@@ -1319,10 +1376,12 @@ const WelcomePage = () => {
               </Box>
             </HStack>
             <Button
-              bg={primaryGreen}
+              bg="rgba(255,255,255,0.12)"
               color="white"
               borderRadius="full"
-              _hover={{ bg: primaryGreenHover }}
+              border="1px solid"
+              borderColor="rgba(255,255,255,0.18)"
+              _hover={{ bg: 'rgba(255,255,255,0.18)' }}
               onClick={() => navigate('/login')}
             >
               Apply Now
@@ -1331,28 +1390,28 @@ const WelcomePage = () => {
         </Box>
       </Box>
 
-      <Box as="footer" bg="#0F172A" color="white" py={8} borderTop="1px solid" borderColor={border}>
+      <Box as="footer" bg="rgba(2, 6, 23, 0.92)" color="white" py={8} borderTop="1px solid" borderColor={border} backdropFilter="blur(18px)">
         <Container maxW="7xl">
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
             <VStack align="flex-start" spacing={2}>
               <Heading size="md" color="white">
                 Enisra
               </Heading>
-              <Text color="whiteAlpha.700">Copyright © Enisra</Text>
+              <Text color={textMuted}>Copyright © Enisra</Text>
             </VStack>
               <VStack align="flex-start" spacing={2}>
-                <Heading size="sm" color="whiteAlpha.900">
+                <Heading size="sm" color={textPrimary}>
                   Quick Links
                 </Heading>
-                <ChakraLink as={RouterLink} to="/" color={primaryBlue}>Jobs</ChakraLink>
-                <ChakraLink as={RouterLink} to="/" color={primaryBlue}>Trainings</ChakraLink>
-                <ChakraLink as={RouterLink} to="/" color={primaryBlue}>Scholarships</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color={textSecondary} _hover={{ color: primaryBlue }}>Jobs</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color={textSecondary} _hover={{ color: primaryBlue }}>Trainings</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color={textSecondary} _hover={{ color: primaryBlue }}>Scholarships</ChakraLink>
               </VStack>
               <VStack align="flex-start" spacing={2}>
-                <Heading size="sm" color="whiteAlpha.900">
+                <Heading size="sm" color={textPrimary}>
                   Contact
                 </Heading>
-                <ChakraLink color={primaryBlue} href={telegramChannelUrl}>
+                <ChakraLink color={textSecondary} _hover={{ color: primaryBlue }} href={telegramChannelUrl}>
                   Telegram
                 </ChakraLink>
               </VStack>
