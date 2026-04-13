@@ -16,7 +16,8 @@ import {
     Divider,
     Badge,
     VStack,
-    useColorModeValue
+    useColorModeValue,
+    Select
 } from "@chakra-ui/react";
 import { BsBell, BsChat, BsBriefcase } from "react-icons/bs";
 import { IoMoon } from "react-icons/io5";
@@ -30,7 +31,7 @@ import { useLanguage } from "../context/language.jsx";
 const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, navbarHeight = "52px" }) => {
     const { colorMode, toggleColorMode } = useColorMode();
     const gradient = useColorModeValue(
-        "linear(to-r,rgb(11, 11, 25),rgb(47, 24, 174))",
+        "linear(to-r, #1a365d, #2d5a87)",
         "linear(to-r, #0f172a, #111827)"
     );
     const textColor = useColorModeValue("gray.900", "gray.100");
@@ -179,9 +180,9 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, nav
                                             key={user._id}
                                             p={2}
                                             borderRadius="md"
-                                            bg="gray.100"
+                                            bg={useColorModeValue("gray.100", "gray.700")}
                                             cursor="pointer"
-                                            _hover={{ bg: "gray.200" }}
+                                            _hover={{ bg: useColorModeValue("gray.200", "gray.600") }}
                                             onClick={() => navigateToUser(user._id)}
                                         >
                                             <HStack>
@@ -268,7 +269,7 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, nav
                             border="none"
                             py={2}
                         >
-                            <Box p={4} textAlign="center" bg="gray.50" borderRadius="md" mx={2} mb={2}>
+                            <Box p={4} textAlign="center" bg={useColorModeValue("gray.50", "gray.700")} borderRadius="md" mx={2} mb={2}>
                                 <Avatar 
                                     size="xl" 
                                     name={currentUser?.username} 
@@ -301,14 +302,19 @@ const NavbarPage = ({ sidebarWidth = "0px", onOpenSidebar, isMobile = false, nav
                         icon={colorMode === "light" ? <IoMoon size={20} /> : <SunIcon boxSize={5} />}
                         onClick={toggleColorMode}
                         variant="solid"
-                        colorScheme={colorMode === "light" ? "purple" : "yellow"}
+                        bg={useColorModeValue("purple.600", "yellow.400")}
+                        color={useColorModeValue("white", "gray.800")}
+                        _hover={{ 
+                            transform: "scale(1.1)", 
+                            boxShadow: "lg",
+                            bg: useColorModeValue("purple.700", "yellow.500")
+                        }}
                         aria-label={toggleLabel}
                         rounded="full"
                         boxShadow="md"
                         size={{ base: "sm", sm: "md" }}
                         minW="44px"
                         minH="44px"
-                        _hover={{ transform: "scale(1.1)", boxShadow: "lg" }}
                         transition="all 0.2s"
                     />
                 </HStack>

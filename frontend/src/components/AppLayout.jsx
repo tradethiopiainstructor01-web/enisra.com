@@ -1,4 +1,4 @@
-import { Box, Drawer, DrawerCloseButton, DrawerContent, DrawerOverlay, Flex, useBreakpointValue, useDisclosure } from "@chakra-ui/react";
+import { Box, Drawer, DrawerCloseButton, DrawerContent, DrawerOverlay, Flex, useBreakpointValue, useDisclosure, useColorModeValue } from "@chakra-ui/react";
 import NavbarPage from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useState } from "react";
@@ -8,6 +8,8 @@ const AppLayout = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, sm: true, md: false }) ?? false;
   const isTablet = useBreakpointValue({ base: false, md: true, lg: false }) ?? false;
+  
+  const backgroundColor = useColorModeValue("gray.50", "gray.900");
 
   const handleToggleCollapse = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -23,7 +25,7 @@ const AppLayout = ({ children }) => {
   }) || "52px";
 
   return (
-    <Flex direction="column" minHeight="100vh" bg="gray.50">
+    <Flex direction="column" minHeight="100vh" bg={backgroundColor}>
       <NavbarPage 
         sidebarWidth={sidebarWidth} 
         onOpenSidebar={onOpen} 

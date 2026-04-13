@@ -27,6 +27,8 @@ import {
   Spinner,
   Stack,
   Text,
+  useColorMode,
+  useColorModeValue,
   useDisclosure,
   useToast,
   VStack,
@@ -39,7 +41,9 @@ import {
   FaGlobe,
   FaGraduationCap,
   FaMedal,
+  FaMoon,
   FaSearch,
+  FaSun,
   FaTelegramPlane,
   FaUserCircle,
 } from 'react-icons/fa';
@@ -99,7 +103,7 @@ const heroCards = [
   },
 ];
 
-const themeColors = {
+const darkThemeColors = {
   primaryGreen: '#6366F1',
   primaryGreenHover: '#7C83FF',
   softGreenBg: 'rgba(15, 23, 42, 0.72)',
@@ -126,6 +130,35 @@ const themeColors = {
   buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #22D3EE 100%)',
   buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #67E8F9 100%)',
   highlightGradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(34, 211, 238, 0.9) 100%)',
+};
+
+const lightThemeColors = {
+  primaryGreen: '#6366F1',
+  primaryGreenHover: '#7C83FF',
+  softGreenBg: 'rgba(99, 102, 241, 0.08)',
+  primaryGold: '#0891b2',
+  primaryGoldHover: '#06b6d4',
+  softGoldBg: 'linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+  primaryBlue: '#0891b2',
+  softBlueBg: 'rgba(8, 145, 178, 0.08)',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 28%), radial-gradient(circle at top right, rgba(8, 145, 178, 0.08), transparent 24%), linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.7)',
+  border: 'rgba(203, 213, 225, 0.5)',
+  sectionDivider: 'rgba(203, 213, 225, 0.4)',
+  textPrimary: '#1E293B',
+  textSecondary: '#475569',
+  textMuted: '#64748B',
+  placeholder: '#64748B',
+  success: '#16A34A',
+  warning: '#D97706',
+  error: '#DC2626',
+  info: '#0891b2',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.08)',
+  accentGlow: '0 0 0 1px rgba(8, 145, 178, 0.15), 0 18px 45px rgba(8, 145, 178, 0.1)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #0891b2 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #06b6d4 100%)',
+  highlightGradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(8, 145, 178, 0.8) 100%)',
 };
 
 const trainingHighlights = [
@@ -182,6 +215,8 @@ const buildScholarshipLoginRedirect = (targetPath) =>
   `/scholarship-login?redirect=${encodeURIComponent(targetPath)}`;
 
 const WelcomePage = () => {
+  const { colorMode, toggleColorMode } = useColorMode();
+
   const {
     bgMain,
     cardBg,
@@ -207,7 +242,7 @@ const WelcomePage = () => {
     buttonGradient,
     buttonGradientHover,
     highlightGradient,
-  } = themeColors;
+  } = colorMode === 'light' ? lightThemeColors : darkThemeColors;
 
   const [showAllJobs, setShowAllJobs] = useState(false);
   const [jobs, setJobs] = useState([]);
@@ -489,11 +524,12 @@ const WelcomePage = () => {
         position="sticky"
         top={0}
         zIndex={50}
-        bg={cardBg}
+        bg="rgba(15, 23, 42, 0.92)"
+        color="white"
         borderBottom="1px solid"
-        borderColor={border}
+        borderColor="rgba(148, 163, 184, 0.20)"
         backdropFilter="blur(20px)"
-        boxShadow={surfaceGlow}
+        boxShadow="0 24px 60px rgba(2, 6, 23, 0.42)"
       >
         <Container maxW="7xl" py={4}>
           <Flex align="center" gap={{ base: 3, md: 6 }} justify="space-between" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
@@ -512,6 +548,14 @@ const WelcomePage = () => {
 
             <HStack spacing={3} ml="auto">
               <IconButton
+                aria-label="Toggle color mode"
+                icon={colorMode === 'light' ? <FaMoon /> : <FaSun />}
+                onClick={toggleColorMode}
+                variant="ghost"
+                color={primaryGreen}
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
+              />
+              <IconButton
                 aria-label="Notifications"
                 icon={<FaBell />}
                 variant="ghost"
@@ -523,8 +567,8 @@ const WelcomePage = () => {
                 to="/jobs"
                 variant="ghost"
                 size="sm"
-                color={textPrimary}
-                _hover={{ bg: softBlueBg, color: primaryBlue }}
+                color="white"
+                _hover={{ bg: 'rgba(34, 211, 238, 0.12)', color: '#22D3EE' }}
               >
                 {t('jobs')}
               </Button>
@@ -534,8 +578,8 @@ const WelcomePage = () => {
                   to="/login"
                   variant="ghost"
                   size="sm"
-                  color={textPrimary}
-                  _hover={{ color: primaryBlue, bg: softBlueBg }}
+                  color="white"
+                  _hover={{ color: '#22D3EE', bg: 'rgba(34, 211, 238, 0.12)' }}
                 >
                   {t('login')}
                 </Button>
@@ -554,11 +598,11 @@ const WelcomePage = () => {
                 <Select
                   size="sm"
                   variant="outline"
-                  borderColor={border}
-                  color={textPrimary}
-                  bg={cardBg}
+                  borderColor="rgba(148, 163, 184, 0.20)"
+                  color="white"
+                  bg="rgba(255, 255, 255, 0.10)"
                   backdropFilter="blur(16px)"
-                  _hover={{ borderColor: primaryBlue }}
+                  _hover={{ borderColor: '#22D3EE' }}
                   width="110px"
                   aria-label="Language selector"
                   value={language}
@@ -574,11 +618,11 @@ const WelcomePage = () => {
                 icon={<FaUserCircle />}
                 variant="outline"
                 size="sm"
-                borderColor={border}
-                color={textPrimary}
-                bg={cardBg}
+                borderColor="rgba(148, 163, 184, 0.20)"
+                color="white"
+                bg="rgba(255, 255, 255, 0.10)"
                 backdropFilter="blur(16px)"
-                _hover={{ borderColor: primaryBlue, color: primaryBlue, bg: softBlueBg }}
+                _hover={{ borderColor: '#22D3EE', color: '#22D3EE', bg: 'rgba(34, 211, 238, 0.12)' }}
                 display={{ base: 'none', md: 'inline-flex' }}
               />
               <IconButton
@@ -586,11 +630,11 @@ const WelcomePage = () => {
                 icon={<FaBars />}
                 variant="outline"
                 size="sm"
-                borderColor={border}
-                color={textPrimary}
-                bg={cardBg}
+                borderColor="rgba(148, 163, 184, 0.20)"
+                color="white"
+                bg="rgba(255, 255, 255, 0.10)"
                 backdropFilter="blur(16px)"
-                _hover={{ borderColor: primaryBlue, color: primaryBlue, bg: softBlueBg }}
+                _hover={{ borderColor: '#22D3EE', color: '#22D3EE', bg: 'rgba(34, 211, 238, 0.12)' }}
                 display={{ base: 'inline-flex', md: 'none' }}
                 onClick={onOpen}
               />
@@ -606,6 +650,15 @@ const WelcomePage = () => {
           <DrawerHeader>Account</DrawerHeader>
           <DrawerBody>
             <Stack spacing={3} mt={2}>
+              <Button
+                leftIcon={colorMode === 'light' ? <FaMoon /> : <FaSun />}
+                onClick={toggleColorMode}
+                variant="ghost"
+                color={textPrimary}
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
+              >
+                {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </Button>
               <Button as={RouterLink} to="/login" onClick={onClose} variant="ghost" color={textPrimary} _hover={{ bg: softBlueBg, color: primaryBlue }}>
                 {t('login')}
               </Button>
@@ -1390,28 +1443,28 @@ const WelcomePage = () => {
         </Box>
       </Box>
 
-      <Box as="footer" bg="rgba(2, 6, 23, 0.92)" color="white" py={8} borderTop="1px solid" borderColor={border} backdropFilter="blur(18px)">
+      <Box as="footer" bg="rgba(15, 23, 42, 0.92)" color="white" py={8} borderTop="1px solid" borderColor="rgba(148, 163, 184, 0.20)" backdropFilter="blur(18px)">
         <Container maxW="7xl">
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
             <VStack align="flex-start" spacing={2}>
               <Heading size="md" color="white">
                 Enisra
               </Heading>
-              <Text color={textMuted}>Copyright © Enisra</Text>
+              <Text color="rgba(255,255,255,0.7)">Copyright © Enisra</Text>
             </VStack>
               <VStack align="flex-start" spacing={2}>
-                <Heading size="sm" color={textPrimary}>
+                <Heading size="sm" color="white">
                   Quick Links
                 </Heading>
-                <ChakraLink as={RouterLink} to="/" color={textSecondary} _hover={{ color: primaryBlue }}>Jobs</ChakraLink>
-                <ChakraLink as={RouterLink} to="/" color={textSecondary} _hover={{ color: primaryBlue }}>Trainings</ChakraLink>
-                <ChakraLink as={RouterLink} to="/" color={textSecondary} _hover={{ color: primaryBlue }}>Scholarships</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color="rgba(255,255,255,0.8)" _hover={{ color: primaryBlue }}>Jobs</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color="rgba(255,255,255,0.8)" _hover={{ color: primaryBlue }}>Trainings</ChakraLink>
+                <ChakraLink as={RouterLink} to="/" color="rgba(255,255,255,0.8)" _hover={{ color: primaryBlue }}>Scholarships</ChakraLink>
               </VStack>
               <VStack align="flex-start" spacing={2}>
-                <Heading size="sm" color={textPrimary}>
+                <Heading size="sm" color="white">
                   Contact
                 </Heading>
-                <ChakraLink color={textSecondary} _hover={{ color: primaryBlue }} href={telegramChannelUrl}>
+                <ChakraLink color="rgba(255,255,255,0.8)" _hover={{ color: primaryBlue }} href={telegramChannelUrl}>
                   Telegram
                 </ChakraLink>
               </VStack>

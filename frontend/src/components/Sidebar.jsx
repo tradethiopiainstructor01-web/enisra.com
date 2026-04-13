@@ -8,6 +8,7 @@ import {
   Text,
   Icon,
   useBreakpointValue,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { FiFolder, FiMenu, FiUsers, FiBookOpen, FiSearch, FiBriefcase, FiBarChart } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
@@ -15,6 +16,10 @@ import { FiFileText } from 'react-icons/fi';
 const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawer = false, topOffset = "52px", isTablet = false }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const breakpointValue = useBreakpointValue({ base: true, md: false });
+  
+  const sidebarBg = useColorModeValue("white", "gray.800");
+  const sidebarColor = useColorModeValue("gray.800", "white");
+  const hoverBg = useColorModeValue("gray.100", "gray.700");
   
   // Use controlled prop if provided, otherwise use internal state
   const effectiveIsCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : isCollapsed;
@@ -42,8 +47,8 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
       position={isDrawer ? "relative" : "fixed"}
       left={0}
       top={0}
-      bg="gray.800"
-      color="white"
+      bg={sidebarBg}
+      color={sidebarColor}
       transition="width 0.3s ease"
       zIndex="999"
       paddingTop={isDrawer ? "56px" : topOffset}
@@ -56,13 +61,13 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
           <IconButton
             icon={<Icon as={FiMenu} boxSize={{ base: 4, md: 5 }} />}
             variant="ghost"
-            color="white"
+            color={sidebarColor}
             onClick={toggleCollapse}
             aria-label="Toggle Sidebar"
             minW="44px"
             minH="44px"
             borderRadius="full"
-            _hover={{ bg: "whiteAlpha.200" }}
+            _hover={{ bg: hoverBg }}
             transition="all 0.2s"
           />
         </Flex>
@@ -76,7 +81,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -91,7 +96,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -106,7 +111,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -121,7 +126,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -136,7 +141,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -152,7 +157,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -167,7 +172,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
@@ -182,7 +187,7 @@ const Sidebar = ({ isCollapsed: controlledIsCollapsed, onToggleCollapse, isDrawe
             align="center" 
             p={{ base: 2, md: 3 }} 
             borderRadius="lg" 
-            _hover={{ bg: "gray.700", transform: "translateX(4px)" }}
+            _hover={{ bg: hoverBg, transform: "translateX(4px)" }}
             transition="all 0.2s"
             minH="44px"
           >
