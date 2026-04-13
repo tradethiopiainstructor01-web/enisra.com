@@ -99,7 +99,7 @@ const ComingSoonPage = () => {
           </Box>
 
           <Text fontSize="sm" color="gray.400">
-            &copy; {new Date().getFullYear()} Tradethiopia. All Rights Reserved.
+            &copy; {new Date().getFullYear()} TradEthiopia. All Rights Reserved.
           </Text>
         </Box>
       </Container>

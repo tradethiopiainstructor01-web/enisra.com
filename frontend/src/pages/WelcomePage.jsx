@@ -1202,13 +1202,28 @@ const WelcomePage = () => {
                   Real-time
                 </Badge>
               </Flex>
-              <Text mb={4} color={textSecondary}>
+              <Text mb={6} color={textSecondary}>
                 Scan the QR code or follow the link to join curated alerts for remote jobs, scholarships, and trainings.
               </Text>
               <Flex gap={4} align={{ base: 'flex-start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }}>
-                <Center w={{ base: 20, md: 24 }} h={{ base: 20, md: 24 }} bg={softBlueBg} borderRadius="md" border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
-                  QR
-                </Center>
+                <Box
+                  w={{ base: 20, md: 24 }}
+                  h={{ base: 20, md: 24 }}
+                  bg="white"
+                  borderRadius="md"
+                  border="1px solid"
+                  borderColor="rgba(34, 211, 238, 0.18)"
+                  overflow="hidden"
+                  flexShrink={0}
+                >
+                  <Image
+                    src="/assets/telegram-qr.png"
+                    alt="Enisra Telegram QR code"
+                    w="100%"
+                    h="100%"
+                    objectFit="cover"
+                  />
+                </Box>
                 <Button
                   as={ChakraLink}
                   href={telegramChannelUrl}
@@ -1222,6 +1237,7 @@ const WelcomePage = () => {
                 </Button>
               </Flex>
             </Box>
+
           </SimpleGrid>
         </Container>
 
@@ -1345,60 +1361,6 @@ const WelcomePage = () => {
               </Button>
             </Box>
 
-            <Box
-              bg={cardBg}
-              borderRadius="xl"
-              p={6}
-              boxShadow={surfaceGlow}
-              borderWidth="1px"
-              borderColor={border}
-              backdropFilter="blur(18px)"
-            >
-              <Flex justify="space-between" align="center" mb={4}>
-                <Heading size="md" color={textPrimary}>
-                  Free Training Section
-                </Heading>
-                <Badge bg={softBlueBg} color={primaryBlue} border="1px solid" borderColor="rgba(34, 211, 238, 0.18)">
-                  Learn & Grow
-                </Badge>
-              </Flex>
-              <Stack spacing={3} mb={4}>
-                {trainingHighlights.map((topic) => (
-                  <Flex
-                    key={topic}
-                    justify="space-between"
-                    align="center"
-                    bg={softBlueBg}
-                    p={3}
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="rgba(34, 211, 238, 0.12)"
-                  >
-                    <Text color={textPrimary}>{topic}</Text>
-                    <Icon as={FaCheckCircle} color={success} />
-                  </Flex>
-                ))}
-              </Stack>
-              <Flex align="center" gap={4} direction={{ base: 'column', sm: 'row' }}>
-                <Button
-                  color="white"
-                  bgGradient={buttonGradient}
-                  borderRadius="full"
-                  _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
-                  onClick={() => navigate('/')}
-                >
-                  Start Free Training
-                </Button>
-                <Box
-                  flex={1}
-                  w={{ base: '100%', sm: 'auto' }}
-                  h="120px"
-                  bgGradient={highlightGradient}
-                  borderRadius="xl"
-                  boxShadow={accentGlow}
-                />
-              </Flex>
-            </Box>
           </SimpleGrid>
         </Container>
 
@@ -1450,7 +1412,7 @@ const WelcomePage = () => {
               <Heading size="md" color="white">
                 Enisra
               </Heading>
-              <Text color="rgba(255,255,255,0.7)">Copyright © Enisra</Text>
+              <Text color="rgba(255,255,255,0.7)">Copyright © TradEthiopia</Text>
             </VStack>
               <VStack align="flex-start" spacing={2}>
                 <Heading size="sm" color="white">
