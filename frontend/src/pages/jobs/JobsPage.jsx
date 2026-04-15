@@ -5,7 +5,6 @@ import {
   Heading,
   SimpleGrid,
   Text,
-  useColorModeValue,
   Input,
   InputGroup,
   InputLeftElement,
@@ -23,10 +22,13 @@ import {
   useToast,
   VStack,
   Image,
+  Icon,
   useDisclosure,
-} from '@chakra-ui/react';
+  useColorMode,
+  } from '@chakra-ui/react';
 import { SearchIcon, RepeatIcon } from '@chakra-ui/icons';
 import { FiHeart } from 'react-icons/fi';
+import { FaBriefcase, FaMapMarkerAlt, FaBuilding, FaArrowRight } from 'react-icons/fa';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../utils/apiClient';
 import { getJobApplyAccess, getJobApplyAccessMessage, openJobApplicationEmail } from '../../utils/jobEmail';
@@ -48,18 +50,96 @@ const hasScholarshipAccess = () => {
 const buildScholarshipLoginRedirect = (targetPath) =>
   `/scholarship-login?redirect=${encodeURIComponent(targetPath)}`;
 
+const darkThemeColors = {
+  primaryGreen: '#6366F1',
+  primaryGreenHover: '#7C83FF',
+  softGreenBg: 'rgba(15, 23, 42, 0.72)',
+  primaryGold: '#22D3EE',
+  primaryGoldHover: '#67E8F9',
+  softGoldBg: 'linear-gradient(180deg, rgba(15, 23, 42, 0.68) 0%, rgba(2, 6, 23, 0.38) 100%)',
+  primaryBlue: '#22D3EE',
+  softBlueBg: 'rgba(34, 211, 238, 0.12)',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.22), transparent 28%), radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 24%), linear-gradient(180deg, #0F172A 0%, #020617 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.10)',
+  border: 'rgba(148, 163, 184, 0.20)',
+  sectionDivider: 'rgba(148, 163, 184, 0.18)',
+  textPrimary: '#F8FAFC',
+  textSecondary: '#CBD5F5',
+  textMuted: '#94A3B8',
+  placeholder: '#94A3B8',
+  success: '#22C55E',
+  warning: '#F59E0B',
+  error: '#F87171',
+  info: '#22D3EE',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.42)',
+  accentGlow: '0 0 0 1px rgba(34, 211, 238, 0.18), 0 18px 45px rgba(34, 211, 238, 0.14)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #22D3EE 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #67E8F9 100%)',
+  highlightGradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.92) 0%, rgba(34, 211, 238, 0.9) 100%)',
+  navBg: 'rgba(2, 6, 23, 0.96)',
+  navBorder: 'rgba(34, 211, 238, 0.18)',
+};
+
+const lightThemeColors = {
+  primaryGreen: '#6366F1',
+  primaryGreenHover: '#7C83FF',
+  softGreenBg: 'rgba(99, 102, 241, 0.08)',
+  primaryGold: '#0891b2',
+  primaryGoldHover: '#06b6d4',
+  softGoldBg: 'linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
+  primaryBlue: '#0891b2',
+  softBlueBg: 'rgba(8, 145, 178, 0.08)',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 28%), radial-gradient(circle at top right, rgba(8, 145, 178, 0.08), transparent 24%), linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.7)',
+  border: 'rgba(203, 213, 225, 0.5)',
+  sectionDivider: 'rgba(203, 213, 225, 0.4)',
+  textPrimary: '#1E293B',
+  textSecondary: '#475569',
+  textMuted: '#64748B',
+  placeholder: '#64748B',
+  success: '#16A34A',
+  warning: '#D97706',
+  error: '#DC2626',
+  info: '#0891b2',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.08)',
+  accentGlow: '0 0 0 1px rgba(8, 145, 178, 0.15), 0 18px 45px rgba(8, 145, 178, 0.1)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #0891b2 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #06b6d4 100%)',
+  highlightGradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(8, 145, 178, 0.8) 100%)',
+  navBg: 'rgba(2, 6, 23, 0.96)',
+  navBorder: 'rgba(34, 211, 238, 0.16)',
+};
+
 const JobsPage = () => {
+  const { colorMode } = useColorMode();
   const navigate = useNavigate();
   const toast = useToast();
   const { jobId } = useParams();
-  const bg = useColorModeValue('gray.50', 'gray.900');
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const muted = useColorModeValue('gray.600', 'gray.300');
-  const promoBg = useColorModeValue('gray.50', 'gray.800');
-  const navBg = useColorModeValue('white', 'gray.800');
-  const navBorder = useColorModeValue('gray.200', 'gray.700');
   const { t } = useLanguage();
+  const {
+    bgMain,
+    cardBg,
+    border,
+    sectionDivider,
+    textPrimary,
+    textSecondary,
+    textMuted,
+    placeholder,
+    primaryGreen,
+    primaryBlue,
+    softBlueBg,
+    success,
+    warning,
+    info,
+    surfaceGlow,
+    accentGlow,
+    buttonGradient,
+    buttonGradientHover,
+    navBg,
+    navBorder,
+  } = colorMode === 'light' ? lightThemeColors : darkThemeColors;
 
   const [jobs, setJobs] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -443,22 +523,46 @@ const JobsPage = () => {
   };
 
   return (
-    <Box bg={bg} minH="100vh" py={{ base: 8, md: 10 }}>
+    <Box bg={bgMain} minH="100vh" pt={0} pb={{ base: 8, md: 10 }}>
       <Box
+        as="header"
         position="sticky"
         top={0}
-        zIndex="sticky"
+        left={0}
+        right={0}
+        width="100%"
+        zIndex={50}
         bg={navBg}
         borderBottomWidth="1px"
         borderColor={navBorder}
-        boxShadow="sm"
-        py={3}
+        boxShadow={surfaceGlow}
+        backdropFilter="blur(20px)"
       >
-        <Container maxW="7xl">
-          <Flex align="center" justify="space-between" wrap="wrap" gap={3}>
-            <Heading size="md">{t('jobs')}</Heading>
-            <HStack spacing={2} flexWrap="wrap" justify="flex-end">
-              <Button as={RouterLink} to="/" size="sm" variant="ghost">
+        <Container maxW="7xl" py={4}>
+          <Flex
+            align="center"
+            justify="space-between"
+            gap={{ base: 3, md: 6 }}
+            flexWrap={{ base: 'wrap', md: 'nowrap' }}
+          >
+            <Heading
+              size={{ base: 'md', md: 'lg' }}
+              color="white"
+              letterSpacing="tight"
+              pl={{ base: 1, md: 2 }}
+            >
+              {t('jobs')}
+            </Heading>
+            <HStack spacing={2} flexWrap="wrap" justify="flex-end" ml="auto">
+              <Button
+                as={RouterLink}
+                to="/"
+                size="sm"
+                variant="ghost"
+                borderRadius="full"
+                color="white"
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
+              >
                 {t('home')}
               </Button>
               <Button
@@ -466,16 +570,43 @@ const JobsPage = () => {
                 to="/scholarship-login"
                 size="sm"
                 variant="ghost"
+                borderRadius="full"
+                color="white"
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
               >
                 {t('scholarships')}
               </Button>
-              <Button as={RouterLink} to="/free-training-courses" size="sm" variant="ghost">
+              <Button
+                as={RouterLink}
+                to="/free-training-courses"
+                size="sm"
+                variant="ghost"
+                borderRadius="full"
+                color="white"
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
+              >
                 {t('freeTrainings')}
               </Button>
-              <Button as={RouterLink} to="/employee/profile" size="sm" variant="ghost">
+              <Button
+                as={RouterLink}
+                to="/employee/profile"
+                size="sm"
+                variant="ghost"
+                borderRadius="full"
+                color="white"
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
+              >
                 {t('profile')}
               </Button>
-              <Button as={RouterLink} to="/login" size="sm" colorScheme="teal">
+              <Button
+                as={RouterLink}
+                to="/login"
+                size="sm"
+                borderRadius="full"
+                color="white"
+                bgGradient={buttonGradient}
+                _hover={{ bgGradient: buttonGradientHover, boxShadow: accentGlow }}
+              >
                 {t('login')}
               </Button>
             </HStack>
@@ -484,47 +615,94 @@ const JobsPage = () => {
       </Box>
 
       <Container maxW="7xl">
-        <Card bg={cardBg} borderWidth="1px" borderColor={borderColor} borderRadius="2xl" boxShadow="lg">
+        <Card
+          mt={{ base: 6, md: 8 }}
+          bg={cardBg}
+          borderWidth="1px"
+          borderColor={border}
+          borderRadius="2xl"
+          boxShadow={surfaceGlow}
+          backdropFilter="blur(18px)"
+          overflow="hidden"
+        >
           <CardBody>
-            <Heading size="lg" mb={2}>{t('jobs')}</Heading>
-            <Text color={muted} mb={5}>
-              {t('browseJobsSubtitle')}
-            </Text>
+            <Box
+              mb={6}
+              px={{ base: 4, md: 5 }}
+              py={{ base: 4, md: 5 }}
+              borderRadius="2xl"
+              bg={softBlueBg}
+              borderWidth="1px"
+              borderColor={border}
+            >
+              <Heading size="lg" mb={2} color={textPrimary}>{t('jobs')}</Heading>
+              <Text color={textSecondary}>
+                {t('browseJobsSubtitle')}
+              </Text>
+            </Box>
 
             <SimpleGrid columns={{ base: 1, md: 4 }} spacing={3} mb={4}>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
+              <InputGroup size="lg">
+                <InputLeftElement pointerEvents="none" color={placeholder}>
                   <SearchIcon />
                 </InputLeftElement>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('heroSearchPlaceholder')}
-              />
-            </InputGroup>
-            <Select
-              placeholder={t('location')}
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-            >
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('heroSearchPlaceholder')}
+                  borderRadius="xl"
+                  borderColor={border}
+                  bg={softBlueBg}
+                  color={textPrimary}
+                  _placeholder={{ color: placeholder }}
+                  _hover={{ borderColor: primaryBlue }}
+                  _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+                />
+              </InputGroup>
+              <Select
+                placeholder={t('location')}
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                size="lg"
+                borderRadius="xl"
+                borderColor={border}
+                bg={softBlueBg}
+                color={textPrimary}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+              >
                 {filteredLocations.map((loc) => (
                   <option key={loc} value={loc}>{loc}</option>
                 ))}
               </Select>
-            <Select
-              placeholder={t('category')}
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
+              <Select
+                placeholder={t('category')}
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                size="lg"
+                borderRadius="xl"
+                borderColor={border}
+                bg={softBlueBg}
+                color={textPrimary}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+              >
                 {filteredCategories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </Select>
-            <Select
-              placeholder={t('type')}
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
+              <Select
+                placeholder={t('type')}
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                size="lg"
+                borderRadius="xl"
+                borderColor={border}
+                bg={softBlueBg}
+                color={textPrimary}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
+              >
                 {filteredTypes.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
@@ -532,40 +710,70 @@ const JobsPage = () => {
             </SimpleGrid>
 
             <HStack spacing={2} mb={6} justify="flex-start">
-              <Button leftIcon={<RepeatIcon />} variant="outline" onClick={() => fetchJobs()} isLoading={loading}>
+              <Button
+                leftIcon={<RepeatIcon />}
+                variant="outline"
+                onClick={() => fetchJobs()}
+                isLoading={loading}
+                borderRadius="full"
+                borderColor={primaryBlue}
+                color={primaryBlue}
+                bg="rgba(255,255,255,0.03)"
+                _hover={{ bg: softBlueBg, borderColor: primaryBlue }}
+              >
                 {t('refresh')}
               </Button>
-              <Button variant="ghost" onClick={resetFilters}>
+              <Button variant="ghost" onClick={resetFilters} borderRadius="full" color={textSecondary} _hover={{ bg: softBlueBg, color: primaryBlue }}>
                 {t('clearFilters')}
               </Button>
             </HStack>
 
             {error ? (
-              <Text color="red.500" mb={4}>{error}</Text>
+              <Text color={warning} mb={4}>{error}</Text>
             ) : null}
 
             {loading ? (
-              <Flex justify="center" py={8}><Spinner size="xl" /></Flex>
+              <Flex justify="center" py={8}><Spinner size="xl" color={primaryGreen} /></Flex>
             ) : jobs.length === 0 ? (
-              <Text color={muted}>{t('noJobs')}</Text>
+              <Text color={textMuted}>{t('noJobs')}</Text>
             ) : (
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                 {jobs.map((job) => {
                   const jobIdentifier = getJobIdentifier(job);
                   const isFavorite = jobIdentifier ? favoriteIds.has(jobIdentifier) : false;
+                  const hasVerifiedFlag = typeof job.verified === 'boolean';
+                  const badgeLabel = hasVerifiedFlag
+                    ? job.verified
+                      ? 'Verified Employer'
+                      : 'In Review'
+                    : 'Open';
+                  const badgeBg = hasVerifiedFlag ? (job.verified ? success : warning) : info;
 
                   return (
                     <Box
                       key={job._id || job.id || job.title}
                       p={4}
                       borderWidth="1px"
-                      borderColor={borderColor}
+                      borderColor={border}
                       borderRadius="lg"
                       bg={cardBg}
-                      boxShadow="sm"
+                      boxShadow={surfaceGlow}
+                      backdropFilter="blur(18px)"
+                      transition="border-color 0.2s ease, transform 0.2s ease"
+                      _hover={{ borderColor: primaryBlue, boxShadow: accentGlow, transform: 'translateY(-2px)' }}
                     >
                       <Flex justify="space-between" align="flex-start" gap={3} mb={1}>
-                        <Heading size="sm">{job.title || 'Untitled job'}</Heading>
+                        <VStack align="flex-start" spacing={2} flex="1">
+                          <Flex justify="space-between" align="center" w="full">
+                            <HStack spacing={2}>
+                              <Icon as={FaBriefcase} color={primaryBlue} />
+                              <Badge bg={badgeBg} color="white" borderRadius="full">
+                                {badgeLabel}
+                              </Badge>
+                            </HStack>
+                          </Flex>
+                          <Heading size="sm" color={textPrimary}>{job.title || 'Untitled job'}</Heading>
+                        </VStack>
                         {jobIdentifier ? (
                           <Tooltip label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}>
                             <IconButton
@@ -573,7 +781,9 @@ const JobsPage = () => {
                               icon={<FiHeart />}
                               size="sm"
                               variant={isFavorite ? 'solid' : 'ghost'}
-                              colorScheme={isFavorite ? 'red' : 'gray'}
+                              bg={isFavorite ? 'rgba(248, 113, 113, 0.16)' : 'transparent'}
+                              color={isFavorite ? warning : textMuted}
+                              _hover={{ bg: softBlueBg, color: primaryBlue }}
                               isLoading={favoriteJobId === jobIdentifier}
                               onClick={() => handleFavoriteToggle(jobIdentifier)}
                             />
@@ -582,33 +792,51 @@ const JobsPage = () => {
                       </Flex>
 
                       <HStack spacing={2} flexWrap="wrap" mb={2}>
-                        {job.category ? <Badge colorScheme="purple">{job.category}</Badge> : null}
-                        {job.type ? <Badge colorScheme="blue">{job.type}</Badge> : null}
-                        {job.location ? <Badge colorScheme="green">{job.location}</Badge> : null}
+                        {job.category ? <Badge bg="rgba(99, 102, 241, 0.14)" color={primaryGreen}>{job.category}</Badge> : null}
+                        {job.type ? <Badge bg={softBlueBg} color={primaryBlue}>{job.type}</Badge> : null}
+                        {job.location ? <Badge bg="rgba(34, 197, 94, 0.14)" color={success}>{job.location}</Badge> : null}
                       </HStack>
                       {job.company ? (
-                        <Text fontSize="sm" color={muted}>{t('company')}: {job.company}</Text>
+                        <HStack spacing={2} align="flex-start">
+                          <Icon as={FaBuilding} color={textMuted} mt="3px" />
+                          <Text fontSize="sm" color={textSecondary}>{t('company')}: {job.company}</Text>
+                        </HStack>
                       ) : null}
                       {job.companyAddress ? (
-                        <Text fontSize="sm" color={muted}>Company address: {job.companyAddress}</Text>
+                        <Text fontSize="sm" color={textMuted}>Company address: {job.companyAddress}</Text>
                       ) : null}
                       {job.deadline ? (
-                        <Text fontSize="sm" color={muted}>{t('deadline')}: {safeDate(job.deadline)}</Text>
+                        <Text fontSize="sm" color={textSecondary} mt={2}>{t('deadline')}: {safeDate(job.deadline)}</Text>
+                      ) : null}
+                      {job.location ? (
+                        <HStack spacing={2} mt={2}>
+                          <Icon as={FaMapMarkerAlt} color={textMuted} />
+                          <Text fontSize="sm" color={textMuted}>{job.location}</Text>
+                        </HStack>
                       ) : null}
                       {job.description ? (
-                        <Text fontSize="sm" mt={2} noOfLines={3}>{job.description}</Text>
+                        <Text fontSize="sm" mt={2} noOfLines={3} color={textSecondary}>{job.description}</Text>
                       ) : null}
                       <HStack spacing={3} mt={4}>
                         <Button
                           size="sm"
                           variant="outline"
+                          borderRadius="full"
+                          borderColor={primaryBlue}
+                          color={primaryBlue}
+                          bg="rgba(255,255,255,0.03)"
+                          _hover={{ bg: softBlueBg }}
                           onClick={() => openJobDetails(job)}
                         >
                           Read more
                         </Button>
                         <Button
                           size="sm"
-                          colorScheme="teal"
+                          borderRadius="full"
+                          color="white"
+                          bgGradient={buttonGradient}
+                          rightIcon={<FaArrowRight />}
+                          _hover={{ bgGradient: buttonGradientHover, boxShadow: accentGlow }}
                           onClick={() => handleApply(job)}
                         >
                           Apply
@@ -620,9 +848,9 @@ const JobsPage = () => {
               </SimpleGrid>
             )}
 
-            <Divider my={8} />
+            <Divider my={8} borderColor={sectionDivider} />
 
-            <Box bg={promoBg} borderWidth="1px" borderColor={borderColor} borderRadius="lg" p={4}>
+            <Box bg={softBlueBg} borderWidth="1px" borderColor={border} borderRadius="lg" p={4} backdropFilter="blur(18px)">
               <Flex
                 direction={{ base: 'column', md: 'row' }}
                 align={{ base: 'flex-start', md: 'center' }}
@@ -631,24 +859,24 @@ const JobsPage = () => {
                 mb={4}
               >
                 <Box>
-                  <Heading size="md">Companies That Work With Us</Heading>
-                  <Text color={muted} fontSize="sm">
+                  <Heading size="md" color={textPrimary}>Companies That Work With Us</Heading>
+                  <Text color={textSecondary} fontSize="sm">
                     Swipe to explore partner companies.
                   </Text>
                 </Box>
-                <Badge colorScheme="teal" borderRadius="full">
+                <Badge bg={softBlueBg} color={primaryBlue} borderRadius="full" border="1px solid" borderColor={border}>
                   Trusted Partners
                 </Badge>
               </Flex>
               {partnersLoading ? (
                 <Flex align="center" gap={2} py={4}>
-                  <Spinner size="sm" />
-                  <Text color={muted}>Loading partners...</Text>
+                  <Spinner size="sm" color={primaryGreen} />
+                  <Text color={textSecondary}>Loading partners...</Text>
                 </Flex>
               ) : partnersError ? (
-                <Text color="red.500">{partnersError}</Text>
+                <Text color={warning}>{partnersError}</Text>
               ) : partnerList.length === 0 ? (
-                <Text color={muted}>No partner companies to show right now.</Text>
+                <Text color={textMuted}>No partner companies to show right now.</Text>
               ) : (
                 <Flex
                   ref={partnersCarouselRef}
@@ -689,9 +917,11 @@ const JobsPage = () => {
                       minW={{ base: '160px', md: '200px' }}
                       p={4}
                       borderWidth="1px"
-                      borderColor={borderColor}
+                      borderColor={border}
                       borderRadius="xl"
                       bg={cardBg}
+                      boxShadow={surfaceGlow}
+                      backdropFilter="blur(18px)"
                     >
                       <Box
                         w="100%"
@@ -711,7 +941,7 @@ const JobsPage = () => {
                           p={3}
                         />
                       </Box>
-                      <Text fontWeight="semibold" color={muted} textAlign="center">
+                      <Text fontWeight="semibold" color={textSecondary} textAlign="center">
                         {partner.name || 'Partner'}
                       </Text>
                     </Box>

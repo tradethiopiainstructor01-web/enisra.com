@@ -1205,16 +1205,21 @@ const WelcomePage = () => {
               <Text mb={6} color={textSecondary}>
                 Scan the QR code or follow the link to join curated alerts for remote jobs, scholarships, and trainings.
               </Text>
-              <Flex gap={4} align={{ base: 'flex-start', sm: 'center' }} direction={{ base: 'column', sm: 'row' }}>
+              <Flex
+                gap={4}
+                align={{ base: 'center', sm: 'center' }}
+                direction={{ base: 'column', sm: 'row' }}
+              >
                 <Box
-                  w={{ base: 20, md: 24 }}
-                  h={{ base: 20, md: 24 }}
+                  w={{ base: 28, sm: 20, md: 24 }}
+                  h={{ base: 28, sm: 20, md: 24 }}
                   bg="white"
                   borderRadius="md"
                   border="1px solid"
                   borderColor="rgba(34, 211, 238, 0.18)"
                   overflow="hidden"
                   flexShrink={0}
+                  mx={{ base: 'auto', sm: 0 }}
                 >
                   <Image
                     src="/assets/telegram-qr.png"
@@ -1232,6 +1237,7 @@ const WelcomePage = () => {
                   borderRadius="full"
                   rightIcon={<FaTelegramPlane />}
                   _hover={{ bgGradient: buttonGradientHover, boxShadow: '0 14px 32px rgba(34, 211, 238, 0.24)' }}
+                  alignSelf={{ base: 'center', sm: 'flex-start' }}
                 >
                   Join Telegram Job Alerts
                 </Button>
@@ -1242,7 +1248,7 @@ const WelcomePage = () => {
         </Container>
 
         <Container ref={jobsSectionRef} maxW="7xl" py={12} order={1}>
-          <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={8}>
+          <SimpleGrid columns={1} spacing={8}>
             <Box
               bg={cardBg}
               borderRadius="xl"
@@ -1260,7 +1266,13 @@ const WelcomePage = () => {
                 <Text color={textSecondary}>Scrollable list</Text>
               </Flex>
               <Divider borderColor={sectionDivider} mb={4} />
-              <Stack spacing={4} maxH={{ base: 'none', lg: '420px' }} overflowY={{ base: 'visible', lg: 'auto' }} pr={{ base: 0, lg: 2 }}>
+              <SimpleGrid
+                columns={{ base: 1, md: 2, lg: 3 }}
+                spacing={4}
+                maxH={{ base: 'none', lg: '420px' }}
+                overflowY={{ base: 'visible', lg: 'auto' }}
+                pr={{ base: 0, lg: 2 }}
+              >
                 {jobsLoading ? (
                   <Flex align="center" gap={2} py={6}>
                     <Spinner size="sm" color={primaryGreen} />
@@ -1345,7 +1357,7 @@ const WelcomePage = () => {
                 ) : (
                   <Text color={textSecondary}>No jobs available yet.</Text>
                 )}
-              </Stack>
+              </SimpleGrid>
               <Button
                 mt={6}
                 borderRadius="full"

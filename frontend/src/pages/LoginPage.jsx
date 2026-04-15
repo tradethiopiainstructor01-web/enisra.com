@@ -2,20 +2,24 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
+  Badge,
   Button,
   Container,
+  Divider,
   Flex,
   Heading,
+  HStack,
   Icon,
   Input,
   InputGroup,
   InputLeftElement,
   Stack,
   Text,
-  useColorModeValue,
+  VStack,
+  useColorMode,
   useToast
 } from '@chakra-ui/react';
-import { FaLock, FaUser } from 'react-icons/fa';
+import { FaCheckCircle, FaLock, FaUser } from 'react-icons/fa';
 import axiosInstance from '../services/axiosInstance';
 import { useUserStore } from '../store/user';
 
@@ -56,7 +60,46 @@ const normalizeRole = (role = '') =>
 
 const resolveRoleDestination = (role) => ROLE_ROUTE_MAP[normalizeRole(role)] || '/';
 
+const darkThemeColors = {
+  primaryBlue: '#22D3EE',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.22), transparent 28%), radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 24%), linear-gradient(180deg, #0F172A 0%, #020617 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.10)',
+  border: 'rgba(148, 163, 184, 0.20)',
+  textPrimary: '#F8FAFC',
+  textSecondary: '#CBD5F5',
+  placeholder: '#94A3B8',
+  warning: '#F59E0B',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.42)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #22D3EE 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #67E8F9 100%)',
+  softBlueBg: 'rgba(34, 211, 238, 0.12)',
+};
+
+const lightThemeColors = {
+  primaryBlue: '#0891b2',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 28%), radial-gradient(circle at top right, rgba(8, 145, 178, 0.08), transparent 24%), linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.7)',
+  border: 'rgba(203, 213, 225, 0.5)',
+  textPrimary: '#1E293B',
+  textSecondary: '#475569',
+  placeholder: '#64748B',
+  warning: '#D97706',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.08)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #0891b2 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #06b6d4 100%)',
+  softBlueBg: 'rgba(8, 145, 178, 0.08)',
+};
+
+const loginHighlights = [
+  'Access saved jobs and job alerts',
+  'Continue with your role-based dashboard',
+  'Manage favorites and applications faster',
+];
+
 const LoginPage = () => {
+  const { colorMode } = useColorMode();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -67,9 +110,20 @@ const LoginPage = () => {
   const toast = useToast();
   const setCurrentUser = useUserStore((state) => state.setCurrentUser);
   const currentUser = useUserStore((state) => state.currentUser);
-  const formBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const inputBg = useColorModeValue('gray.50', 'gray.700');
+  const {
+    primaryBlue,
+    bgMain,
+    cardBg,
+    border,
+    textPrimary,
+    textSecondary,
+    placeholder,
+    warning,
+    surfaceGlow,
+    buttonGradient,
+    buttonGradientHover,
+    softBlueBg,
+  } = colorMode === 'light' ? lightThemeColors : darkThemeColors;
   const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
   const googleButtonRef = useRef(null);
   const [isGoogleScriptReady, setIsGoogleScriptReady] = useState(false);
@@ -256,50 +310,106 @@ const LoginPage = () => {
   };
 
   return (
-    <Container 
-      maxW="lg" 
-      minH="100vh" 
+    <Box bg={bgMain} minH="100vh">
+    <Container
+      maxW="5xl"
+      minH="100vh"
       py={{ base: 10, sm: 16, md: 20 }}
       px={{ base: 2, sm: 4 }}
     >
       <Flex
-        direction="column"
-        align="center"
-        bg={formBg}
-        borderRadius="2xl"
+        bg={cardBg}
+        borderRadius="3xl"
         borderWidth="1px"
-        borderColor={borderColor}
-        p={{ base: 6, sm: 8, md: 10 }}
-        boxShadow="lg"
+        borderColor={border}
+        boxShadow={surfaceGlow}
+        backdropFilter="blur(18px)"
         width="100%"
-        maxWidth={{ base: '95%', sm: 'lg' }}
+        overflow="hidden"
+        direction={{ base: 'column', md: 'row' }}
       >
-        <Heading 
-          mb={{ base: 4, sm: 6 }} 
-          size={{ base: 'lg', sm: 'xl', md: '2xl' }}
-          textAlign="center"
-          lineHeight="1.2"
+        <Box
+          flex="1"
+          px={{ base: 6, md: 8 }}
+          py={{ base: 8, md: 10 }}
+          bg={buttonGradient}
+          color="white"
         >
-          Welcome back
-        </Heading>
-        <Text 
-          mb={{ base: 6, sm: 8 }} 
-          textAlign="center" 
-          color="gray.500"
-          fontSize={{ base: 'sm', sm: 'md' }}
-          lineHeight="1.4"
-        >
-          Log in to access personalized job matches, saved opportunities, and scholarship alerts.
-        </Text>
-        <Stack as="form" spacing={{ base: 3, sm: 4 }} w="100%" onSubmit={handleSubmit}>
+          <VStack align="start" spacing={5}>
+            <HStack spacing={3}>
+              <Flex
+                align="center"
+                justify="center"
+                w="46px"
+                h="46px"
+                borderRadius="xl"
+                bg="whiteAlpha.260"
+                border="1px solid"
+                borderColor="whiteAlpha.400"
+              >
+                <Icon as={FaUser} boxSize={5} />
+              </Flex>
+              <Heading size="md">Account Login</Heading>
+            </HStack>
+            <Text opacity={0.95} fontSize={{ base: 'sm', md: 'md' }}>
+              Sign in to continue where you left off and access jobs, saved opportunities, and your account tools.
+            </Text>
+            <VStack align="start" spacing={3} pt={2}>
+              {loginHighlights.map((item) => (
+                <HStack
+                  key={item}
+                  bg="whiteAlpha.170"
+                  px={3}
+                  py={2}
+                  borderRadius="lg"
+                  border="1px solid"
+                  borderColor="whiteAlpha.280"
+                >
+                  <Icon as={FaCheckCircle} />
+                  <Text fontSize="sm">{item}</Text>
+                </HStack>
+              ))}
+            </VStack>
+          </VStack>
+        </Box>
+
+        <Box flex="1.1" px={{ base: 6, md: 8 }} py={{ base: 8, md: 10 }}>
+          <Stack spacing={5}>
+            <Heading
+              size={{ base: 'lg', sm: 'xl', md: '2xl' }}
+              lineHeight="1.2"
+              color={textPrimary}
+            >
+              Welcome back
+            </Heading>
+            <Text
+              color={textSecondary}
+              fontSize={{ base: 'sm', sm: 'md' }}
+              lineHeight="1.4"
+            >
+              Log in to access personalized job matches, saved opportunities, and scholarship alerts.
+            </Text>
+
+            <HStack spacing={2}>
+              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
+                Secure login
+              </Badge>
+              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
+                Role-based access
+              </Badge>
+            </HStack>
+
+            <Divider borderColor={border} />
+
+            <Stack as="form" spacing={{ base: 3, sm: 4 }} w="100%" onSubmit={handleSubmit}>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
-              <Icon as={FaUser} color="gray.400" boxSize={{ base: 4, sm: 5 }} />
+              <Icon as={FaUser} color={placeholder} boxSize={{ base: 4, sm: 5 }} />
             </InputLeftElement>
             <Input
               placeholder="Email or username"
               type="text"
-              bg={inputBg}
+              bg={softBlueBg}
               value={formData.email}
               onChange={handleFieldChange('email')}
               autoComplete="username"
@@ -307,16 +417,21 @@ const LoginPage = () => {
               minH="48px"
               pr={12}
               fontSize={{ base: 'sm', sm: 'md' }}
+              color={textPrimary}
+              borderColor={border}
+              _placeholder={{ color: placeholder }}
+              _hover={{ borderColor: primaryBlue }}
+              _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
             />
           </InputGroup>
           <InputGroup>
             <InputLeftElement pointerEvents="none">
-              <Icon as={FaLock} color="gray.400" boxSize={{ base: 4, sm: 5 }} />
+              <Icon as={FaLock} color={placeholder} boxSize={{ base: 4, sm: 5 }} />
             </InputLeftElement>
             <Input
               placeholder="Password"
               type="password"
-              bg={inputBg}
+              bg={softBlueBg}
               value={formData.password}
               onChange={handleFieldChange('password')}
               autoComplete="current-password"
@@ -324,22 +439,26 @@ const LoginPage = () => {
               minH="48px"
               pr={12}
               fontSize={{ base: 'sm', sm: 'md' }}
+              color={textPrimary}
+              borderColor={border}
+              _placeholder={{ color: placeholder }}
+              _hover={{ borderColor: primaryBlue }}
+              _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
             />
           </InputGroup>
           {errorMessage && (
             <Text 
-              color="red.500" 
+              color={warning}
               fontSize={{ base: 'xs', sm: 'sm' }} 
               textAlign="center"
               p={2}
-              bg="red.50"
+              bg={softBlueBg}
               borderRadius="md"
             >
               {errorMessage}
             </Text>
           )}
           <Button 
-            colorScheme="green" 
             size={{ base: 'md', sm: 'lg' }} 
             type="submit" 
             isLoading={isLoading}
@@ -347,7 +466,9 @@ const LoginPage = () => {
             fontSize={{ base: 'sm', sm: 'md' }}
             fontWeight="medium"
             borderRadius="lg"
-            _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
+            color="white"
+            bgGradient={buttonGradient}
+            _hover={{ transform: 'translateY(-1px)', boxShadow: surfaceGlow, bgGradient: buttonGradientHover }}
             transition="all 0.2s"
           >
             Log In
@@ -363,47 +484,52 @@ const LoginPage = () => {
                 alignItems="center"
               />
               {!isGoogleScriptReady && (
-                <Text fontSize={{ base: 'xs', sm: 'sm' }} color="gray.500" textAlign="center">
+                <Text fontSize={{ base: 'xs', sm: 'sm' }} color={textSecondary} textAlign="center">
                   Loading Google sign-in...
                 </Text>
               )}
               {isGoogleLoading && (
-                <Text fontSize={{ base: 'xs', sm: 'sm' }} color="gray.600" textAlign="center">
+                <Text fontSize={{ base: 'xs', sm: 'sm' }} color={textSecondary} textAlign="center">
                   Signing in with Google...
                 </Text>
               )}
             </Stack>
           ) : (
-            <Text fontSize={{ base: 'xs', sm: 'sm' }} color="orange.500" textAlign="center">
+            <Text fontSize={{ base: 'xs', sm: 'sm' }} color={warning} textAlign="center">
               Google sign-in is not configured. Add `VITE_GOOGLE_CLIENT_ID`.
             </Text>
           )}
-        </Stack>
-        <Stack direction="row" spacing={3} mt={{ base: 3, sm: 4 }}>
-          <Button
-            as={RouterLink}
-            to="/"
-            variant="ghost"
-            size={{ base: 'sm', sm: 'sm' }}
-            color="gray.500"
-            fontSize={{ base: 'sm', sm: 'md' }}
-            _hover={{ bg: 'gray.100' }}
-          >
-            Back to home
-          </Button>
-          <Button
-            as={RouterLink}
-            to="/register"
-            variant="outline"
-            size={{ base: 'sm', sm: 'sm' }}
-            colorScheme="green"
-            fontSize={{ base: 'sm', sm: 'md' }}
-          >
-            Sign up
-          </Button>
-        </Stack>
+            <Stack direction="row" spacing={3} mt={{ base: 3, sm: 4 }}>
+              <Button
+                as={RouterLink}
+                to="/"
+                variant="ghost"
+                size={{ base: 'sm', sm: 'sm' }}
+                color={textSecondary}
+                fontSize={{ base: 'sm', sm: 'md' }}
+                _hover={{ bg: softBlueBg, color: primaryBlue }}
+              >
+                Back to home
+              </Button>
+              <Button
+                as={RouterLink}
+                to="/register"
+                variant="outline"
+                size={{ base: 'sm', sm: 'sm' }}
+                borderColor={primaryBlue}
+                color={primaryBlue}
+                fontSize={{ base: 'sm', sm: 'md' }}
+                _hover={{ bg: softBlueBg }}
+              >
+                Sign up
+              </Button>
+            </Stack>
+          </Stack>
+          </Stack>
+        </Box>
       </Flex>
     </Container>
+    </Box>
   );
 };
 

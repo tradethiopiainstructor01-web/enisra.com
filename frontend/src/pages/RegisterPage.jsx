@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
+  Badge,
   Button,
   Container,
+  Divider,
   Flex,
   FormControl,
   FormLabel,
@@ -14,15 +16,56 @@ import {
   InputLeftElement,
   Stack,
   Text,
-  useColorModeValue,
+  useColorMode,
   useToast,
-  Badge,
   HStack,
+  VStack,
 } from '@chakra-ui/react';
-import { FaEnvelope, FaLock, FaPhone } from 'react-icons/fa';
+import { FaCheckCircle, FaEnvelope, FaLock, FaPhone } from 'react-icons/fa';
 import axiosInstance from '../services/axiosInstance';
 
+const darkThemeColors = {
+  primaryGreen: '#6366F1',
+  primaryBlue: '#22D3EE',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.22), transparent 28%), radial-gradient(circle at top right, rgba(34, 211, 238, 0.14), transparent 24%), linear-gradient(180deg, #0F172A 0%, #020617 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.10)',
+  border: 'rgba(148, 163, 184, 0.20)',
+  textPrimary: '#F8FAFC',
+  textSecondary: '#CBD5F5',
+  placeholder: '#94A3B8',
+  warning: '#F59E0B',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.42)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #22D3EE 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #67E8F9 100%)',
+  softBlueBg: 'rgba(34, 211, 238, 0.12)',
+};
+
+const lightThemeColors = {
+  primaryGreen: '#6366F1',
+  primaryBlue: '#0891b2',
+  bgMain:
+    'radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 28%), radial-gradient(circle at top right, rgba(8, 145, 178, 0.08), transparent 24%), linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%)',
+  cardBg: 'rgba(255, 255, 255, 0.7)',
+  border: 'rgba(203, 213, 225, 0.5)',
+  textPrimary: '#1E293B',
+  textSecondary: '#475569',
+  placeholder: '#64748B',
+  warning: '#D97706',
+  surfaceGlow: '0 24px 60px rgba(2, 6, 23, 0.08)',
+  buttonGradient: 'linear-gradient(90deg, #6366F1 0%, #0891b2 100%)',
+  buttonGradientHover: 'linear-gradient(90deg, #7C83FF 0%, #06b6d4 100%)',
+  softBlueBg: 'rgba(8, 145, 178, 0.08)',
+};
+
+const registerHighlights = [
+  'Create an employee or employer account',
+  'Track applications and job activity in one place',
+  'Use the same trusted Enisra experience across the platform',
+];
+
 const RegisterPage = () => {
+  const { colorMode } = useColorMode();
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -36,10 +79,21 @@ const RegisterPage = () => {
   const [ctaLabel, setCtaLabel] = useState('Create employee account');
   const navigate = useNavigate();
   const toast = useToast();
-
-  const bg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const inputBg = useColorModeValue('gray.50', 'gray.700');
+  const {
+    primaryGreen,
+    primaryBlue,
+    bgMain,
+    cardBg,
+    border,
+    textPrimary,
+    textSecondary,
+    placeholder,
+    warning,
+    surfaceGlow,
+    buttonGradient,
+    buttonGradientHover,
+    softBlueBg,
+  } = colorMode === 'light' ? lightThemeColors : darkThemeColors;
 
   const handleChange = (field) => (event) => {
     setFormData((prev) => ({ ...prev, [field]: event.target.value }));
@@ -118,166 +172,265 @@ const RegisterPage = () => {
   };
 
   return (
+    <Box bg={bgMain} minH="100vh">
     <Container 
-      maxW="md" 
+      maxW="5xl" 
       minH="100vh" 
       py={{ base: 12, sm: 16 }}
       px={{ base: 2, sm: 4 }}
     >
       <Flex
-        direction="column"
-        bg={bg}
-        borderRadius="2xl"
+        bg={cardBg}
+        borderRadius="3xl"
         borderWidth="1px"
-        borderColor={borderColor}
-        p={{ base: 6, sm: 8, md: 10 }}
-        boxShadow="xl"
+        borderColor={border}
+        boxShadow={surfaceGlow}
+        backdropFilter="blur(18px)"
         width="100%"
-        maxWidth={{ base: '95%', sm: 'md' }}
+        overflow="hidden"
+        direction={{ base: 'column', md: 'row' }}
       >
-        <Heading 
-          size={{ base: 'lg', sm: 'xl', md: '2xl' }} 
-          mb={{ base: 3, sm: 4 }}
-          textAlign="center"
-          lineHeight="1.2"
+        <Box
+          flex="1"
+          px={{ base: 6, md: 8 }}
+          py={{ base: 8, md: 10 }}
+          bg={buttonGradient}
+          color="white"
         >
-          Create an account
-        </Heading>
-        <Text 
-          color="gray.500" 
-          mb={{ base: 6, sm: 8 }}
-          fontSize={{ base: 'sm', sm: 'md' }}
-          textAlign="center"
-          lineHeight="1.4"
-        >
-          Join Enisra to post jobs, track applicants, and grow your team with trusted talent.
-        </Text>
-        <Stack spacing={{ base: 2, sm: 2 }} mb={{ base: 5, sm: 6 }}>
-          <Text fontSize="sm" color="gray.500">
-            Select the experience that matches your role
-          </Text>
-          <HStack spacing={3}>
-            <Button
-              size="sm"
-              colorScheme={accountType === 'employee' ? 'green' : 'gray'}
-              onClick={() => handleAccountSwitch('employee')}
-              borderRadius="full"
-              px={6}
+          <VStack align="start" spacing={5}>
+            <HStack spacing={3}>
+              <Flex
+                align="center"
+                justify="center"
+                w="46px"
+                h="46px"
+                borderRadius="xl"
+                bg="whiteAlpha.260"
+                border="1px solid"
+                borderColor="whiteAlpha.400"
+              >
+                <Icon as={FaEnvelope} boxSize={5} />
+              </Flex>
+              <Heading size="md">Create Account</Heading>
+            </HStack>
+            <Text opacity={0.95} fontSize={{ base: 'sm', md: 'md' }}>
+              Join Enisra to post jobs, track applicants, and grow your team with trusted talent.
+            </Text>
+            <VStack align="start" spacing={3} pt={2}>
+              {registerHighlights.map((item) => (
+                <HStack
+                  key={item}
+                  bg="whiteAlpha.170"
+                  px={3}
+                  py={2}
+                  borderRadius="lg"
+                  border="1px solid"
+                  borderColor="whiteAlpha.280"
+                >
+                  <Icon as={FaCheckCircle} />
+                  <Text fontSize="sm">{item}</Text>
+                </HStack>
+              ))}
+            </VStack>
+          </VStack>
+        </Box>
+
+        <Box flex="1.1" px={{ base: 6, md: 8 }} py={{ base: 8, md: 10 }}>
+          <Stack spacing={5}>
+            <Heading
+              size={{ base: 'lg', sm: 'xl', md: '2xl' }}
+              lineHeight="1.2"
+              color={textPrimary}
             >
-              Employee
-            </Button>
-            <Button
-              size="sm"
-              colorScheme={accountType === 'employer' ? 'green' : 'gray'}
-              onClick={() => handleAccountSwitch('employer')}
-              borderRadius="full"
-              px={6}
+              Create an account
+            </Heading>
+            <Text
+              color={textSecondary}
+              fontSize={{ base: 'sm', sm: 'md' }}
+              lineHeight="1.4"
             >
-              Employer
-            </Button>
-          </HStack>
-        </Stack>
-        <Stack spacing={4} as="form" onSubmit={handleSubmit}>
+              Choose your role and complete the form to get started.
+            </Text>
+
+            <Stack spacing={{ base: 2, sm: 2 }}>
+              <Text fontSize="sm" color={textSecondary}>
+                Select the experience that matches your role
+              </Text>
+              <HStack spacing={3}>
+                <Button
+                  size="sm"
+                  bg={accountType === 'employee' ? softBlueBg : 'transparent'}
+                  color={accountType === 'employee' ? primaryBlue : textSecondary}
+                  border="1px solid"
+                  borderColor={accountType === 'employee' ? primaryBlue : border}
+                  onClick={() => handleAccountSwitch('employee')}
+                  borderRadius="full"
+                  px={6}
+                  _hover={{ bg: softBlueBg }}
+                >
+                  Employee
+                </Button>
+                <Button
+                  size="sm"
+                  bg={accountType === 'employer' ? softBlueBg : 'transparent'}
+                  color={accountType === 'employer' ? primaryBlue : textSecondary}
+                  border="1px solid"
+                  borderColor={accountType === 'employer' ? primaryBlue : border}
+                  onClick={() => handleAccountSwitch('employer')}
+                  borderRadius="full"
+                  px={6}
+                  _hover={{ bg: softBlueBg }}
+                >
+                  Employer
+                </Button>
+              </HStack>
+            </Stack>
+
+            <HStack spacing={2}>
+              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
+                Employee
+              </Badge>
+              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
+                Employer
+              </Badge>
+            </HStack>
+
+            <Divider borderColor={border} />
+
+            <Stack spacing={4} as="form" onSubmit={handleSubmit}>
           <FormControl isRequired>
-            <FormLabel>Full Name</FormLabel>
+            <FormLabel color={textPrimary}>Full Name</FormLabel>
             <Input
               placeholder="Jane Doe"
-              bg={inputBg}
+              bg={softBlueBg}
               value={formData.fullName}
               onChange={handleChange('fullName')}
               autoComplete="name"
+              color={textPrimary}
+              borderColor={border}
+              _placeholder={{ color: placeholder }}
+              _hover={{ borderColor: primaryBlue }}
+              _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
             />
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Phone Number</FormLabel>
+            <FormLabel color={textPrimary}>Phone Number</FormLabel>
             <InputGroup>
               <InputLeftElement pointerEvents="none">
-                <Icon as={FaPhone} color="gray.400" />
+                <Icon as={FaPhone} color={placeholder} />
               </InputLeftElement>
               <Input
                 placeholder="(555) 555-5555"
                 type="tel"
-                bg={inputBg}
+                bg={softBlueBg}
                 value={formData.phoneNumber}
                 onChange={handleChange('phoneNumber')}
                 autoComplete="tel"
+                color={textPrimary}
+                borderColor={border}
+                _placeholder={{ color: placeholder }}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
               />
             </InputGroup>
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Email</FormLabel>
+            <FormLabel color={textPrimary}>Email</FormLabel>
             <InputGroup>
               <InputLeftElement pointerEvents="none">
-                <Icon as={FaEnvelope} color="gray.400" />
+                <Icon as={FaEnvelope} color={placeholder} />
               </InputLeftElement>
               <Input
                 placeholder="email@enisra.com"
                 type="email"
-                bg={inputBg}
+                bg={softBlueBg}
                 value={formData.email}
                 onChange={handleChange('email')}
                 autoComplete="email"
+                color={textPrimary}
+                borderColor={border}
+                _placeholder={{ color: placeholder }}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
               />
             </InputGroup>
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Password</FormLabel>
+            <FormLabel color={textPrimary}>Password</FormLabel>
             <InputGroup>
               <InputLeftElement pointerEvents="none">
-                <Icon as={FaLock} color="gray.400" />
+                <Icon as={FaLock} color={placeholder} />
               </InputLeftElement>
               <Input
                 placeholder="Enter password"
                 type="password"
-                bg={inputBg}
+                bg={softBlueBg}
                 value={formData.password}
                 onChange={handleChange('password')}
                 autoComplete="new-password"
+                color={textPrimary}
+                borderColor={border}
+                _placeholder={{ color: placeholder }}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
               />
             </InputGroup>
           </FormControl>
 
           <FormControl isRequired>
-            <FormLabel>Confirm Password</FormLabel>
+            <FormLabel color={textPrimary}>Confirm Password</FormLabel>
             <InputGroup>
               <InputLeftElement pointerEvents="none">
-                <Icon as={FaLock} color="gray.400" />
+                <Icon as={FaLock} color={placeholder} />
               </InputLeftElement>
               <Input
                 placeholder="Re-enter password"
                 type="password"
-                bg={inputBg}
+                bg={softBlueBg}
                 value={formData.confirmPassword}
                 onChange={handleChange('confirmPassword')}
                 autoComplete="new-password"
+                color={textPrimary}
+                borderColor={border}
+                _placeholder={{ color: placeholder }}
+                _hover={{ borderColor: primaryBlue }}
+                _focusVisible={{ borderColor: primaryBlue, boxShadow: `0 0 0 1px ${primaryBlue}` }}
               />
             </InputGroup>
           </FormControl>
 
           {errorMessage && (
-            <Text fontSize="sm" color="red.500" textAlign="center" role="alert">
+            <Text fontSize="sm" color={warning} textAlign="center" role="alert" bg={softBlueBg} p={2} borderRadius="md">
               {errorMessage}
             </Text>
           )}
 
-          <Button colorScheme="green" type="submit" isLoading={isLoading}>
-            Create account
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            color="white"
+            bgGradient={buttonGradient}
+            _hover={{ bgGradient: buttonGradientHover, boxShadow: surfaceGlow }}
+          >
+            {ctaLabel}
           </Button>
-        </Stack>
-
-        <Text mt={6} textAlign="center" fontSize="sm">
-          Already have an account?{' '}
-          <RouterLink to="/login">
-            <Text as="span" color="green.500" fontWeight="bold">
-              Log in
+            <Text mt={2} textAlign="center" fontSize="sm" color={textSecondary}>
+              Already have an account?{' '}
+              <RouterLink to="/login">
+                <Text as="span" color={primaryGreen} fontWeight="bold">
+                  Log in
+                </Text>
+              </RouterLink>
             </Text>
-          </RouterLink>
-        </Text>
+          </Stack>
+          </Stack>
+        </Box>
       </Flex>
     </Container>
+    </Box>
   );
 };
 
