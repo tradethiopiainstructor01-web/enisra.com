@@ -286,15 +286,6 @@ const RegisterPage = () => {
               </HStack>
             </Stack>
 
-            <HStack spacing={2}>
-              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
-                Employee
-              </Badge>
-              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
-                Employer
-              </Badge>
-            </HStack>
-
             <Divider borderColor={border} />
 
             <Stack spacing={4} as="form" onSubmit={handleSubmit}>

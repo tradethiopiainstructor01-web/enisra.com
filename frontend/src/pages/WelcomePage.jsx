@@ -173,7 +173,20 @@ const heroImageUrl = '/assets/newhero.png';
 const partnerDescriptions = {
   'trade ethiopia':
     'Trade Ethiopia connects businesses with market opportunities, partnerships, and practical growth support.',
+  "st. mary's university":
+    "St. Mary's University is a private higher education institution in Addis Ababa offering undergraduate and graduate programs.",
+  'st mary university':
+    "St. Mary's University is a private higher education institution in Addis Ababa offering undergraduate and graduate programs.",
 };
+
+const staticPartnerEntries = [
+  {
+    _id: 'static-st-mary-university',
+    name: "St. Mary's University",
+    logoUrl: 'https://www.edmap.et/wp-content/uploads/2022/11/pict0-3583.jpg',
+    website: 'https://smuc.edu.et',
+  },
+];
 
 const normalizeWebsiteUrl = (value = '') => {
   const trimmed = value.toString().trim();
@@ -193,6 +206,9 @@ const getPartnerWebsite = (company) => {
   if (companyName.includes('trade ethiopia')) {
     return 'https://www.tradeethiopian.com';
   }
+  if (companyName.includes("st. mary's university") || companyName.includes('st mary university')) {
+    return 'https://smuc.edu.et';
+  }
   return '';
 };
 
@@ -201,6 +217,14 @@ const getPartnerDescription = (company) => {
   const matched = Object.entries(partnerDescriptions).find(([key]) => companyName.includes(key));
   if (matched) return matched[1];
   return 'Visit the company website to learn more about their services and opportunities.';
+};
+
+const getPartnerImageFit = (company) => {
+  const companyName = (company?.name || '').toString().toLowerCase();
+  if (companyName.includes("st. mary's university") || companyName.includes('st mary university')) {
+    return 'contain';
+  }
+  return 'contain';
 };
 
 const isMobileInteraction = () => {
@@ -373,15 +397,7 @@ const WelcomePage = () => {
 
   const visibleJobs = showAllJobs ? jobs : jobs.slice(0, 3);
   const partnerList = partners;
-  const partnersCarouselItems = useMemo(() => {
-    if (!partnerList.length) return [];
-    const repeats = Math.max(1, partnersRepeatCount);
-    const items = [];
-    for (let i = 0; i < repeats; i += 1) {
-      items.push(...partnerList);
-    }
-    return items;
-  }, [partnerList, partnersRepeatCount]);
+  const partnersCarouselItems = useMemo(() => partnerList, [partnerList]);
 
   const openPartnerDrawer = (company) => {
     setHoveredPartner(company);
@@ -415,11 +431,23 @@ const WelcomePage = () => {
         const response = await apiClient.get('partners');
         if (!isMounted) return;
         const payload = response?.data?.data ?? response?.data ?? [];
-        setPartners(Array.isArray(payload) ? payload : []);
+        const apiPartners = Array.isArray(payload) ? payload : [];
+        const mergedPartners = [...apiPartners];
+
+        staticPartnerEntries.forEach((entry) => {
+          const alreadyIncluded = mergedPartners.some((partner) =>
+            (partner?.name || '').toString().trim().toLowerCase() === entry.name.toLowerCase()
+          );
+          if (!alreadyIncluded) {
+            mergedPartners.push(entry);
+          }
+        });
+
+        setPartners(mergedPartners);
       } catch (error) {
         if (!isMounted) return;
         setPartnersError(error?.message || 'Failed to load partner companies');
-        setPartners([]);
+        setPartners(staticPartnerEntries);
       } finally {
         if (isMounted) setPartnersLoading(false);
       }
@@ -433,88 +461,7 @@ const WelcomePage = () => {
   }, []);
 
   useEffect(() => {
-    const el = partnersCarouselRef.current;
-    if (!el) return;
-    if (partnersLoading || partnersError) return;
-    if (partnerList.length < 2) return;
-
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) return;
-
-    // Ensure we have enough repeated content so the loop point is reachable even on wide screens.
-    const cycleStart = el.children?.[partnerList.length];
-    const cycleLength = cycleStart ? cycleStart.offsetLeft : 0;
-    const clientWidth = el.clientWidth || 0;
-    const halfCycles =
-      cycleLength > 0 && clientWidth > 0 ? Math.max(1, Math.ceil(clientWidth / cycleLength)) : 1;
-    const desiredRepeatCount = halfCycles * 2;
-
-    if (desiredRepeatCount !== partnersRepeatCount) {
-      setPartnersRepeatCount(desiredRepeatCount);
-      return;
-    }
-
-    // Reset so the loop always starts clean when partners data changes.
-    el.scrollLeft = 0;
-
-    let loopPoint = 0;
-    const updateLoopPoint = () => {
-      const loopIndex = partnerList.length * halfCycles;
-      const loopChild = el.children?.[loopIndex];
-      loopPoint = loopChild ? loopChild.offsetLeft : el.scrollWidth / 2;
-    };
-
-    const handleResize = () => {
-      // Re-evaluate repeats if the container width changes (responsive / orientation changes).
-      const nextCycleStart = el.children?.[partnerList.length];
-      const nextCycleLength = nextCycleStart ? nextCycleStart.offsetLeft : 0;
-      const nextClientWidth = el.clientWidth || 0;
-      const nextHalfCycles =
-        nextCycleLength > 0 && nextClientWidth > 0
-          ? Math.max(1, Math.ceil(nextClientWidth / nextCycleLength))
-          : 1;
-      const nextRepeatCount = nextHalfCycles * 2;
-
-      if (nextRepeatCount !== partnersRepeatCount) {
-        setPartnersRepeatCount(nextRepeatCount);
-        return;
-      }
-
-      updateLoopPoint();
-    };
-
-    updateLoopPoint();
-    window.addEventListener('resize', handleResize);
-
-    // Pixels per second. Keep it gentle so logos remain readable.
-    const speed = 28;
-    let rafId = 0;
-    let lastTs = performance.now();
-
-    const tick = (ts) => {
-      const delta = ts - lastTs;
-      lastTs = ts;
-
-      if (!partnersCarouselPausedRef.current) {
-        el.scrollLeft += (speed * delta) / 1000;
-
-        if (loopPoint > 0 && el.scrollLeft >= loopPoint) {
-          el.scrollLeft -= loopPoint;
-        }
-      }
-
-      rafId = window.requestAnimationFrame(tick);
-    };
-
-    rafId = window.requestAnimationFrame(tick);
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', handleResize);
-    };
+    return;
   }, [partnersLoading, partnersError, partnerList, partnersRepeatCount]);
 
   return (
@@ -693,9 +640,9 @@ const WelcomePage = () => {
 
       <Drawer isOpen={isPartnerDrawerOpen} placement="left" onClose={onPartnerDrawerClose} size="sm">
         <DrawerOverlay backdropFilter="blur(6px)" bg="blackAlpha.600" />
-        <DrawerContent onMouseLeave={onPartnerDrawerClose} bg="rgba(15, 23, 42, 0.94)" color={textPrimary} borderRight="1px solid" borderColor={border}>
+        <DrawerContent onMouseLeave={onPartnerDrawerClose} bg="white" color="gray.900" borderRight="1px solid" borderColor="gray.200">
           <DrawerCloseButton />
-          <DrawerHeader>{hoveredPartner?.name || 'Company'}</DrawerHeader>
+          <DrawerHeader color="gray.900">{hoveredPartner?.name || 'Company'}</DrawerHeader>
           <DrawerBody>
             <Stack spacing={4}>
               <Box
@@ -703,21 +650,21 @@ const WelcomePage = () => {
                 h="120px"
                 borderRadius="lg"
                 overflow="hidden"
-                bg="rgba(255,255,255,0.08)"
+                bg="white"
                 boxShadow={accentGlow}
                 borderWidth="1px"
-                borderColor={border}
+                borderColor="gray.200"
               >
                 <Image
                   src={hoveredPartner?.logoUrl || hoveredPartner?.logo}
                   alt={hoveredPartner?.name || 'Company logo'}
                   w="100%"
                   h="100%"
-                  objectFit="contain"
-                  p={3}
+                  objectFit={getPartnerImageFit(hoveredPartner)}
+                  p={getPartnerImageFit(hoveredPartner) === 'cover' ? 0 : 3}
                 />
               </Box>
-              <Text color={textSecondary}>{getPartnerDescription(hoveredPartner)}</Text>
+              <Text color="gray.700">{getPartnerDescription(hoveredPartner)}</Text>
               {getPartnerWebsite(hoveredPartner) ? (
                 <Button
                   as={ChakraLink}
@@ -1093,6 +1040,11 @@ const WelcomePage = () => {
                 <Text color={textSecondary}>No partner companies to show right now.</Text>
               ) : (
                 partnersCarouselItems.map((company, idx) => (
+                  (() => {
+                    const isActivePartner =
+                      (hoveredPartner?._id || hoveredPartner?.name) === (company?._id || company?.name);
+
+                    return (
                   <Box
                     key={`${company._id || company.name}-${idx}`}
                     as={getPartnerWebsite(company) ? ChakraLink : 'div'}
@@ -1100,12 +1052,13 @@ const WelcomePage = () => {
                     target={getPartnerWebsite(company) ? '_blank' : undefined}
                     rel={getPartnerWebsite(company) ? 'noopener noreferrer' : undefined}
                     minW={{ base: '160px', md: '200px' }}
-                    bg={cardBg}
+                    minH={{ base: '196px', md: '214px' }}
+                    bg={isActivePartner ? 'white' : cardBg}
                     borderRadius="xl"
                     border="1px solid"
-                    borderColor={border}
+                    borderColor={isActivePartner ? primaryBlue : border}
                     backdropFilter="blur(18px)"
-                    boxShadow={surfaceGlow}
+                    boxShadow={isActivePartner ? accentGlow : surfaceGlow}
                     p={4}
                     display="block"
                     textDecoration="none"
@@ -1126,10 +1079,10 @@ const WelcomePage = () => {
                   >
                     <Box
                       w="100%"
-                      h={{ base: '88px', md: '96px' }}
+                      h={{ base: '104px', md: '120px' }}
                       borderRadius="lg"
                       overflow="hidden"
-                      bg="rgba(255,255,255,0.08)"
+                      bg="rgba(255,255,255,0.10)"
                       boxShadow={accentGlow}
                       mb={3}
                     >
@@ -1138,14 +1091,32 @@ const WelcomePage = () => {
                         alt={company.name}
                         w="100%"
                         h="100%"
-                        objectFit="contain"
-                        p={3}
+                        objectFit={getPartnerImageFit(company)}
+                        p={getPartnerImageFit(company) === 'cover' ? 0 : 3}
                       />
                     </Box>
-                    <Text fontWeight="semibold" color={textPrimary} textAlign="center">
+                    <Text
+                      fontWeight="semibold"
+                      color={isActivePartner ? 'gray.900' : textPrimary}
+                      textAlign="center"
+                      noOfLines={2}
+                    >
                       {company.name}
                     </Text>
+                    {getPartnerWebsite(company) ? (
+                      <Text
+                        mt={2}
+                        fontSize="xs"
+                        color={isActivePartner ? 'gray.600' : textSecondary}
+                        textAlign="center"
+                        noOfLines={1}
+                      >
+                        {getPartnerWebsite(company).replace(/^https?:\/\//, '')}
+                      </Text>
+                    ) : null}
                   </Box>
+                    );
+                  })()
                 ))
               )}
             </Flex>

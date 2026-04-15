@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" role="img" aria-labelledby="title desc">
+  <title id="title">St. Mary's University</title>
+  <desc id="desc">Text-based partner logo card for St. Mary's University.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#102a43" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="160" rx="24" fill="url(#bg)" />
+  <circle cx="64" cy="80" r="34" fill="#ffffff" opacity="0.96" />
+  <circle cx="64" cy="80" r="24" fill="#dc2626" opacity="0.9" />
+  <path d="M64 60l5.8 12.2L83 74l-9.5 9.1L75.7 96 64 89.5 52.3 96l2.2-12.9L45 74l13.2-1.8L64 60z" fill="#ffffff"/>
+  <text x="112" y="70" fill="#ffffff" font-size="22" font-family="Segoe UI, Arial, sans-serif" font-weight="700">
+    St. Mary's
+  </text>
+  <text x="112" y="100" fill="#dbeafe" font-size="22" font-family="Segoe UI, Arial, sans-serif" font-weight="700">
+    University
+  </text>
+</svg>

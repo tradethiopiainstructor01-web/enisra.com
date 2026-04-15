@@ -390,15 +390,6 @@ const LoginPage = () => {
               Log in to access personalized job matches, saved opportunities, and scholarship alerts.
             </Text>
 
-            <HStack spacing={2}>
-              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
-                Secure login
-              </Badge>
-              <Badge bg={softBlueBg} color={primaryBlue} px={3} py={1} borderRadius="full">
-                Role-based access
-              </Badge>
-            </HStack>
-
             <Divider borderColor={border} />
 
             <Stack as="form" spacing={{ base: 3, sm: 4 }} w="100%" onSubmit={handleSubmit}>
