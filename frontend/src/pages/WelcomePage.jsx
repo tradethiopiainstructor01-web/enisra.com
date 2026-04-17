@@ -173,6 +173,12 @@ const heroImageUrl = '/assets/newhero.png';
 const partnerDescriptions = {
   'trade ethiopia':
     'Trade Ethiopia connects businesses with market opportunities, partnerships, and practical growth support.',
+  tradeethiopia:
+    'Trade Ethiopia connects businesses with market opportunities, partnerships, and practical growth support.',
+  tesbinn:
+    'TESBINN equips learners and business communities with practical trade, innovation, and business skills through focused training programs.',
+  'addis ababa university':
+    'Addis Ababa University is a leading Ethiopian public university offering broad academic, research, and community programs.',
   "st. mary's university":
     "St. Mary's University is a private higher education institution in Addis Ababa offering undergraduate and graduate programs.",
   'st mary university':
@@ -180,6 +186,24 @@ const partnerDescriptions = {
 };
 
 const staticPartnerEntries = [
+  {
+    _id: 'static-tradeethiopia-group',
+    name: 'TradeEthiopia Group',
+    logoUrl: '/assets/tradeethiopia-group.jpg',
+    website: 'https://www.tradethiopia.com',
+  },
+  {
+    _id: 'static-tesbinn-school',
+    name: 'TradeEthiopia Business and Innovation School',
+    logoUrl: '/assets/tesbinn-school.jpg',
+    website: 'https://tesbinn.com/',
+  },
+  {
+    _id: 'static-addis-ababa-university',
+    name: 'Addis Ababa University',
+    logoUrl: '/assets/addis-ababa-university.jpg',
+    website: 'https://www.aau.edu.et',
+  },
   {
     _id: 'static-st-mary-university',
     name: "St. Mary's University",
@@ -203,8 +227,8 @@ const getPartnerWebsite = (company) => {
   if (directWebsite) return directWebsite;
 
   const companyName = (company?.name || '').toString().toLowerCase();
-  if (companyName.includes('trade ethiopia')) {
-    return 'https://www.tradeethiopian.com';
+  if (companyName.includes('trade ethiopia') || companyName.includes('tradeethiopia')) {
+    return 'https://www.tradethiopia.com';
   }
   if (companyName.includes("st. mary's university") || companyName.includes('st mary university')) {
     return 'https://smuc.edu.et';
